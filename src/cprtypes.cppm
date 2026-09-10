@@ -15,12 +15,12 @@ export namespace mcr {
     /**
      * @brief Curl's transfer offset type, available without including curl headers.
      */
-    using cpr_off_t    = curl_off_t;
+    using CprOffT   = curl_off_t;
 
     /**
      * @brief Integral progress callback argument type used by the current curl dependency.
      */
-    using cpr_pf_arg_t = cpr_off_t;
+    using CprPfArgT = CprOffT;
 
     /**
      * @brief An owned string whose concatenation preserves its derived option type.
@@ -40,26 +40,26 @@ export namespace mcr {
          * @brief Take ownership of a string.
          * @param str String to store.
          */
-        explicit StringHolder(std::string str) : str_{ std::move(str) } {}
+        explicit StringHolder(std::string str) : m_str{ std::move(str) } {}
 
         /**
          * @brief Copy a string view, including any embedded null bytes.
          * @param str View to copy; its lifetime need not outlive this object.
          */
-        explicit StringHolder(std::string_view str) : str_{ str } {}
+        explicit StringHolder(std::string_view str) : m_str{ str } {}
 
         /**
          * @brief Copy a null-terminated string.
          * @param str Pointer to a valid null-terminated string.
          */
-        explicit StringHolder(char const* str) : str_{ str } {}
+        explicit StringHolder(char const* str) : m_str{ str } {}
 
         /**
          * @brief Copy a specified number of bytes.
          * @param str Pointer to at least len readable bytes.
          * @param len Number of bytes to copy, including any embedded null bytes.
          */
-        StringHolder(char const* str, std::size_t len) : str_{ str, len } {}
+        StringHolder(char const* str, std::size_t len) : m_str{ str, len } {}
 
         /**
          * @brief Join string fragments without separators.
@@ -67,7 +67,7 @@ export namespace mcr {
          */
         StringHolder(std::initializer_list<std::string> args) {
             for (auto const& arg : args) {
-                str_ += arg;
+                m_str += arg;
             }
         }
 
@@ -85,7 +85,7 @@ export namespace mcr {
          * @return An independent copy of the text.
          */
         [[nodiscard]] explicit operator std::string() const {
-            return str_;
+            return m_str;
         }
 
         /**
@@ -94,7 +94,7 @@ export namespace mcr {
          * @return A new option containing the combined text.
          */
         [[nodiscard]] T operator+(char const* rhs) const {
-            return T(str_ + rhs);
+            return T(m_str + rhs);
         }
 
         /**
@@ -103,7 +103,7 @@ export namespace mcr {
          * @return A new option containing the combined text.
          */
         [[nodiscard]] T operator+(std::string const& rhs) const {
-            return T(str_ + rhs);
+            return T(m_str + rhs);
         }
 
         /**
@@ -112,7 +112,7 @@ export namespace mcr {
          * @return A new option containing the combined text.
          */
         [[nodiscard]] T operator+(StringHolder<T> const& rhs) const {
-            return T(str_ + rhs.str_);
+            return T(m_str + rhs.m_str);
         }
 
         /**
@@ -120,7 +120,7 @@ export namespace mcr {
          * @param rhs Null-terminated suffix to append.
          */
         void operator+=(char const* rhs) {
-            str_ += rhs;
+            m_str += rhs;
         }
 
         /**
@@ -128,7 +128,7 @@ export namespace mcr {
          * @param rhs Suffix to append.
          */
         void operator+=(std::string const& rhs) {
-            str_ += rhs;
+            m_str += rhs;
         }
 
         /**
@@ -136,7 +136,7 @@ export namespace mcr {
          * @param rhs Option of the same type whose text is appended.
          */
         void operator+=(StringHolder<T> const& rhs) {
-            str_ += rhs.str_;
+            m_str += rhs.m_str;
         }
 
         /**
@@ -145,7 +145,7 @@ export namespace mcr {
          * @return True if both strings have identical contents.
          */
         [[nodiscard]] bool operator==(char const* rhs) const {
-            return str_ == rhs;
+            return m_str == rhs;
         }
 
         /**
@@ -154,7 +154,7 @@ export namespace mcr {
          * @return True if both strings have identical contents.
          */
         [[nodiscard]] bool operator==(std::string const& rhs) const {
-            return str_ == rhs;
+            return m_str == rhs;
         }
 
         /**
@@ -163,7 +163,7 @@ export namespace mcr {
          * @return True if both options have identical contents.
          */
         [[nodiscard]] bool operator==(StringHolder<T> const& rhs) const {
-            return str_ == rhs.str_;
+            return m_str == rhs.m_str;
         }
 
         /**
@@ -172,7 +172,7 @@ export namespace mcr {
          * @return True if the string contents differ.
          */
         [[nodiscard]] bool operator!=(char const* rhs) const {
-            return str_ != rhs;
+            return m_str != rhs;
         }
 
         /**
@@ -181,7 +181,7 @@ export namespace mcr {
          * @return True if the string contents differ.
          */
         [[nodiscard]] bool operator!=(std::string const& rhs) const {
-            return str_ != rhs;
+            return m_str != rhs;
         }
 
         /**
@@ -190,43 +190,43 @@ export namespace mcr {
          * @return True if the stored contents differ.
          */
         [[nodiscard]] bool operator!=(StringHolder<T> const& rhs) const {
-            return str_ != rhs.str_;
+            return m_str != rhs.m_str;
         }
 
         /**
          * @brief Access the owned text without copying or permitting mutation.
          * @return A reference to the stored string.
          */
-        [[nodiscard]] std::string const& str() {
-            return str_;
+        [[nodiscard]] std::string const& Str() {
+            return m_str;
         }
 
         /**
          * @brief Access the owned text of a const option.
          * @return A reference to the stored string.
          */
-        [[nodiscard]] std::string const& str() const {
-            return str_;
+        [[nodiscard]] std::string const& Str() const {
+            return m_str;
         }
 
         /**
          * @brief Access the text as a null-terminated string.
          * @return A pointer into owned storage, subject to std::string invalidation rules.
          */
-        [[nodiscard]] char const* c_str() const {
-            return str_.c_str();
+        [[nodiscard]] char const* CStr() const {
+            return m_str.c_str();
         }
 
         /**
          * @brief Access the contiguous stored bytes.
-         * @return A pointer to str().size() bytes followed by a null terminator.
+         * @return A pointer to Str().size() bytes followed by a null terminator.
          */
-        [[nodiscard]] char const* data() const {
-            return str_.data();
+        [[nodiscard]] char const* Data() const {
+            return m_str.data();
         }
 
     protected:
-        std::string str_; ///< Owned text, available to derived option types as in cpr.
+        std::string m_str; ///< Owned text, available to derived option types as in cpr.
     };
 
     /**
@@ -238,7 +238,7 @@ export namespace mcr {
      */
     template <typename T>
     std::ostream& operator<<(std::ostream& os, StringHolder<T> const& value) {
-        return os << value.str();
+        return os << value.Str();
     }
 
     /**

@@ -7,14 +7,14 @@
 import std;
 import mr;
 
-static_assert(std::is_same_v<mcr::cpr_off_t, curl_off_t>);
-static_assert(std::is_same_v<mcr::cpr_pf_arg_t, mcr::cpr_off_t>);
+static_assert(std::is_same_v<mcr::CprOffT, curl_off_t>);
+static_assert(std::is_same_v<mcr::CprPfArgT, mcr::CprOffT>);
 static_assert(std::is_nothrow_move_constructible_v<mcr::Url>);
 static_assert(std::is_nothrow_move_assignable_v<mcr::Url>);
 static_assert(!std::is_default_constructible_v<mcr::StringHolder<mcr::Url>>);
 static_assert(!std::is_convertible_v<mcr::Url, std::string>);
 static_assert(std::is_same_v<decltype(std::declval<mcr::Url const&>() + "/path"), mcr::Url>);
-static_assert(std::is_same_v<decltype(std::declval<mcr::Url&>().str()), std::string const&>);
+static_assert(std::is_same_v<decltype(std::declval<mcr::Url&>().Str()), std::string const&>);
 
 namespace {
 
@@ -37,7 +37,7 @@ namespace {
         bool           passed{ true };
         mcr::Url const empty;
         passed &= check(
-            empty.str().empty() && empty.c_str()[0] == '\0',
+            empty.Str().empty() && empty.CStr()[0] == '\0',
             "default URL must be empty and null-terminated"
         );
 
@@ -55,41 +55,41 @@ namespace {
 
         mcr::Url const from_temporary(std::string(128, 'x'));
         passed &=
-            check(from_temporary.str() == std::string(128, 'x'), "URL must retain a temporary string's contents");
+            check(from_temporary.Str() == std::string(128, 'x'), "URL must retain a temporary string's contents");
 
         char const     bytes[]{ 'a', '\0', 'b', 'c' };
         mcr::Url const from_bytes(bytes, sizeof(bytes));
         mcr::Url const binary_view(std::string_view{ bytes, sizeof(bytes) });
         passed &= check(
-            from_bytes.str() == std::string(bytes, sizeof(bytes)),
+            from_bytes.Str() == std::string(bytes, sizeof(bytes)),
             "byte ranges must preserve embedded nulls without requiring a terminator"
         );
         passed &= check(binary_view == from_bytes, "string views must preserve embedded nulls");
         passed &= check(
-            from_bytes.data()[2] == 'b' && from_bytes.c_str()[sizeof(bytes)] == '\0',
+            from_bytes.Data()[2] == 'b' && from_bytes.CStr()[sizeof(bytes)] == '\0',
             "byte access must expose owned storage and its terminator"
         );
         passed &= check(
-            mcr::Url(bytes, 0).str().empty() && mcr::Url(std::string_view{}).str().empty(),
+            mcr::Url(bytes, 0).Str().empty() && mcr::Url(std::string_view{}).Str().empty(),
             "zero-length ranges and empty views must produce empty URLs"
         );
 
         mcr::Url const fragments{ "https://", "example.test", "/api" };
         passed &= check(fragments == from_string, "initializer lists must concatenate fragments in order");
         passed &= check(
-            mcr::Url(std::initializer_list<std::string>{}).str().empty(),
+            mcr::Url(std::initializer_list<std::string>{}).Str().empty(),
             "empty fragment lists must produce empty URLs"
         );
         mcr::Url const binary_fragments{ std::string(bytes, 3), "suffix" };
         passed &= check(
-            binary_fragments.str() == std::string(bytes, 3) + "suffix",
+            binary_fragments.Str() == std::string(bytes, 3) + "suffix",
             "fragment concatenation must preserve embedded nulls"
         );
 
         mcr::Url copied(from_temporary);
         copied += "/copy";
         passed &= check(
-            from_temporary.str() == std::string(128, 'x') && copied.str().ends_with("/copy"),
+            from_temporary.Str() == std::string(128, 'x') && copied.Str().ends_with("/copy"),
             "copied URLs must have independent storage"
         );
         mcr::Url moved(std::move(copied));
@@ -98,7 +98,7 @@ namespace {
         mcr::Url move_assigned;
         move_assigned  = std::move(moved);
         passed        &= check(
-            assigned == move_assigned && assigned.str() == std::string(128, 'x') + "/copy",
+            assigned == move_assigned && assigned.Str() == std::string(128, 'x') + "/copy",
             "copy and move assignment must preserve the destination text"
         );
 
@@ -161,14 +161,14 @@ namespace {
         mcr::Url binary_appended{ binary };
         binary_appended += binary;
         passed          &= check(
-            binary_appended.str() == std::string(bytes, sizeof(bytes)) + std::string(bytes, sizeof(bytes)),
+            binary_appended.Str() == std::string(bytes, sizeof(bytes)) + std::string(bytes, sizeof(bytes)),
             "holder append must preserve embedded nulls"
         );
 
         std::ostringstream stream;
         stream << base << '|' << binary;
         passed &= check(
-            stream.str() == base.str() + '|' + binary.str(),
+            stream.str() == base.Str() + '|' + binary.Str(),
             "stream output must support chaining and preserve embedded nulls"
         );
 

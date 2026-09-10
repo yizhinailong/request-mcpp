@@ -9,19 +9,19 @@ import mr;
 mcr::Url url{ "https://example.test", "/api" };
 url += mcr::Url{ "/items" };
 mcr::Header headers{ { "Content-Type", "application/json" } };
-std::println("{}: {}", url.str(), headers.at("content-type"));
+std::println("{}: {}", url.Str(), headers.at("content-type"));
 ```
 
-- `cpr_off_t` aliases the configured curl's `curl_off_t`. `cpr_pf_arg_t`
-  aliases `cpr_off_t` for progress callbacks in the current curl dependency.
+- `CprOffT` aliases the configured curl's `curl_off_t`. `CprPfArgT`
+  aliases `CprOffT` for progress callbacks in the current curl dependency.
   Consumers do not need to include curl headers to use either alias.
 - `StringHolder<T>` owns its text and returns `T` from concatenation.
   `Url` supports strings, string views, C strings, byte ranges, and lists of
   fragments. Views and ranges are copied; explicit lengths preserve embedded
   null bytes. URLs are stored without validation or encoding.
-- `str()`, `c_str()`, `data()`, explicit conversion to `std::string`, stream
+- `Str()`, `CStr()`, `Data()`, explicit conversion to `std::string`, stream
   output, copy/move operations, comparisons, and void-returning `+=` preserve
-  cpr's interfaces. The protected `str_` member remains available to derived
+  cpr's behavior. The protected `m_str` member remains available to derived
   string option types.
 - `Header` is a map using `CaseInsensitiveCompare`. Names compare without case;
   values and the spelling of the first inserted key remain unchanged. As in
@@ -31,6 +31,19 @@ std::println("{}: {}", url.str(), headers.at("content-type"));
 Differences from the referenced cpr implementation:
 
 - Public types live in `mcr` and are exported through C++23 modules.
+- Type aliases and public member functions use PascalCase; non-public data
+  members use the `m_` prefix. Consumers and derived option types must update
+  these names when migrating from cpr or the previous library interface:
+
+  | Previous / cpr name | Current name |
+  | --- | --- |
+  | `cpr_off_t` | `CprOffT` |
+  | `cpr_pf_arg_t` | `CprPfArgT` |
+  | `str()` | `Str()` |
+  | `c_str()` | `CStr()` |
+  | `data()` | `Data()` |
+  | `str_` | `m_str` |
+
 - Only the current curl dependency is supported; legacy progress callback
   argument types and curl version compatibility branches are omitted.
 - `StringHolder<T>::operator+=(StringHolder<T> const&)` appends the other
