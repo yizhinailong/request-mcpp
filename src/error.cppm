@@ -88,7 +88,8 @@ export namespace mr {
      * @return A reference to the immutable mapping, valid until program shutdown.
      * @note The function-local static follows cpr's workaround for MSVC /MT double destruction.
      */
-    [[nodiscard]] inline auto get_error_code_to_string_mapping() -> std::unordered_map<ErrorCode, std::string> const& {
+    [[nodiscard]] inline auto get_error_code_to_string_mapping()
+        -> std::unordered_map<ErrorCode, std::string> const& {
         static std::unordered_map<ErrorCode, std::string> const s_mapping{
             {                       ErrorCode::OK,                       "OK" },
             {     ErrorCode::UNSUPPORTED_PROTOCOL,     "UNSUPPORTED_PROTOCOL" },
@@ -292,7 +293,8 @@ export namespace mr {
      * @brief Convert a curl status into an expected-based operation result.
      * @param curl_code Numeric CURLcode returned by a curl operation.
      * @param error_message Diagnostic to preserve on failure, such as the contents of CURLOPT_ERRORBUFFER.
-     * @return A successful Result<void> for CURLE_OK; otherwise an unexpected Error with the mapped code and supplied message.
+     * @return A successful Result<void> for CURLE_OK;
+     * otherwise an unexpected Error with the mapped code and supplied message.
      */
     [[nodiscard]] inline auto check_curl_error(std::int32_t curl_code, std::string error_message = {}) -> Result<void> {
         if (curl_code == CURLE_OK) {
