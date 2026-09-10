@@ -1,3 +1,7 @@
+/**
+ * @file error.cppm
+ * @brief Error codes, diagnostics, and expected-based results for HTTP operations.
+ */
 module;
 
 #include <curl/curl.h>
@@ -8,9 +12,12 @@ import std;
 
 export namespace mr {
 
-    // Preserve cpr's values. These are not the numeric values of CURLcode.
+    /**
+     * @brief Error codes for HTTP operations, preserving cpr's names and values.
+     * @note These values differ from CURLcode. Use error_code_from_curl() to convert curl errors.
+     */
     enum class ErrorCode : std::uint16_t {
-        OK                       = 0,
+        OK                       = 0, ///< No error occurred.
         UNSUPPORTED_PROTOCOL     = 1,
         FAILED_INIT              = 2,
         URL_MALFORMAT            = 3,
@@ -73,11 +80,15 @@ export namespace mr {
         SSL_CLIENTCERT           = 60,
         UNRECOVERABLE_POLL       = 61,
         TOO_LARGE                = 62,
-        UNKNOWN_ERROR            = 1000,
+        UNKNOWN_ERROR            = 1000, ///< An unsupported or unrecognized curl error occurred.
     };
 
+    /**
+     * @brief Get the mapping from error codes to their symbolic names.
+     * @return A reference to the immutable mapping, valid until program shutdown.
+     * @note The function-local static follows cpr's workaround for MSVC /MT double destruction.
+     */
     [[nodiscard]] inline auto get_error_code_to_string_mapping() -> std::unordered_map<ErrorCode, std::string> const& {
-        // Keep the function-local static used by cpr to avoid MSVC /MT double destruction.
         static std::unordered_map<ErrorCode, std::string> const s_mapping{
             {                       ErrorCode::OK,                       "OK" },
             {     ErrorCode::UNSUPPORTED_PROTOCOL,     "UNSUPPORTED_PROTOCOL" },
@@ -147,12 +158,22 @@ export namespace mr {
         return s_mapping;
     }
 
-    // Keep cpr's lookup behavior without adding an overload to namespace std.
+    /**
+     * @brief Get the symbolic name of an error code.
+     * @param code Error code to look up.
+     * @return A copy of the error code's name.
+     * @throws std::out_of_range If code is not a defined ErrorCode value.
+     * @note Preserves cpr's lookup behavior and exposes the function in namespace mr.
+     */
     [[nodiscard]] inline auto to_string(ErrorCode code) -> std::string {
         return get_error_code_to_string_mapping().at(code);
     }
 
-    // Use the curl constants from the manifest's dependency, not an enum cast.
+    /**
+     * @brief Convert a curl status to the corresponding library error code.
+     * @param curl_code Numeric CURLcode returned by a curl operation.
+     * @return The mapped error code, or ErrorCode::UNKNOWN_ERROR for unsupported or unrecognized codes.
+     */
     [[nodiscard]] constexpr auto error_code_from_curl(std::int32_t curl_code) noexcept -> ErrorCode {
         switch (curl_code) {
             case CURLE_OK                      : return ErrorCode::OK;
@@ -222,30 +243,57 @@ export namespace mr {
         }
     }
 
+    /**
+     * @brief An error code and its owned diagnostic message.
+     */
     struct Error {
-        ErrorCode   code{ ErrorCode::OK };
-        std::string message;
+        ErrorCode   code{ ErrorCode::OK }; ///< Error classification; defaults to success.
+        std::string message;               ///< Caller-supplied diagnostic, which may be empty.
 
+        /**
+         * @brief Construct an Error with ErrorCode::OK and an empty message.
+         */
         Error() = default;
 
+        /**
+         * @brief Construct an error from a library error code.
+         * @param error_code Error classification to store.
+         * @param error_message Diagnostic to take ownership of; defaults to an empty string.
+         */
         explicit Error(ErrorCode error_code, std::string error_message = {})
             : code{ error_code }, message{ std::move(error_message) } {}
 
+        /**
+         * @brief Construct an error by mapping a curl status.
+         * @param curl_code Numeric CURLcode to convert with error_code_from_curl().
+         * @param error_message Diagnostic to take ownership of; defaults to an empty string.
+         */
         explicit Error(std::int32_t curl_code, std::string error_message = {})
             : code{ error_code_from_curl(curl_code) }, message{ std::move(error_message) } {}
 
-        // Like cpr::Error, true means an error is present.
+        /**
+         * @brief Check whether this object describes a failure.
+         * @return True if code differs from ErrorCode::OK; false otherwise.
+         */
         [[nodiscard]] explicit operator bool() const noexcept {
             return code != ErrorCode::OK;
         }
     };
 
-    // Result<T> holds a value on success, or Error on failure. Result<void> is a status.
-    // Its bool conversion follows std::expected: true means success.
+    /**
+     * @brief An operation result containing a value on success or an Error on failure.
+     * @tparam T Success value type; void represents an operation with no return value.
+     * @note The bool conversion follows std::expected: true means success.
+     */
     template <typename T = void>
     using Result = std::expected<T, Error>;
 
-    // Preserve the caller's diagnostic (for example, CURLOPT_ERRORBUFFER).
+    /**
+     * @brief Convert a curl status into an expected-based operation result.
+     * @param curl_code Numeric CURLcode returned by a curl operation.
+     * @param error_message Diagnostic to preserve on failure, such as the contents of CURLOPT_ERRORBUFFER.
+     * @return A successful Result<void> for CURLE_OK; otherwise an unexpected Error with the mapped code and supplied message.
+     */
     [[nodiscard]] inline auto check_curl_error(std::int32_t curl_code, std::string error_message = {}) -> Result<void> {
         if (curl_code == CURLE_OK) {
             return {};

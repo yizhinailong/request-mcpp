@@ -36,6 +36,8 @@ clang-format -i src/main.cpp tests/test_smoke.cpp
 
 Preserve C++23 module style, including `import std;`. Use lowercase filenames with underscores, such as `argument_parser.cpp`, and keep implementation in `src/`. No separate lint configuration is checked in.
 
+Use Doxygen documentation comments: `/** ... */` with `@brief`, `@param`, `@tparam`, `@return`, and `@throws` where applicable, and `///<` for member descriptions.
+
 ## Testing Guidelines
 
 Tests are standalone programs with their own `main()`; no external framework is configured. Follow `tests/test_*.cpp`, with one executable per file. Return zero on success and nonzero on failure. Cover changed behavior and edge cases, then run `mcpp test`. For HTTP tests, use a local fixture server with controlled responses. The smoke test checks compilation and execution; no coverage threshold is configured.
