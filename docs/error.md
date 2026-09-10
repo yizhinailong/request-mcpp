@@ -1,12 +1,12 @@
 # Error handling
 
-Import the library entry module `mr` to use `mr::ErrorCode`, `mr::Error`, and
-`mr::Result<T>` (`std::expected<T, mr::Error>`). `Result<void>` represents an
+Import the library entry module `mr` to use `mcr::ErrorCode`, `mcr::Error`, and
+`mcr::Result<T>` (`std::expected<T, mcr::Error>`). `Result<void>` represents an
 operation with no return value. The entry module re-exports `mr.error`, which
 can also be imported directly.
 
-`mr::check_curl_error(curl_code, message)` returns a successful `Result<void>`
-for `CURLE_OK` and `std::unexpected<mr::Error>` for every other curl status.
+`mcr::check_curl_error(curl_code, message)` returns a successful `Result<void>`
+for `CURLE_OK` and `std::unexpected<mcr::Error>` for every other curl status.
 The message is owned by the error and preserved as supplied; it defaults to an
 empty string. Pass the curl error buffer when a detailed diagnostic is available.
 
@@ -15,8 +15,8 @@ import std;
 import mr;
 
 auto finish_transfer(std::int32_t curl_code, std::string diagnostic,
-                     std::string body) -> mr::Result<std::string> {
-    auto status = mr::check_curl_error(curl_code, std::move(diagnostic));
+                     std::string body) -> mcr::Result<std::string> {
+    auto status = mcr::check_curl_error(curl_code, std::move(diagnostic));
     if (!status) {
         return std::unexpected{std::move(status.error())};
     }
@@ -24,7 +24,7 @@ auto finish_transfer(std::int32_t curl_code, std::string diagnostic,
 }
 
 // After checking !result, inspect result.error().code and result.error().message.
-// mr::to_string(result.error().code) returns the symbolic error name.
+// mcr::to_string(result.error().code) returns the symbolic error name.
 ```
 
 Compatibility with cpr:
@@ -37,7 +37,7 @@ Compatibility with cpr:
   `ErrorCode::OPERATION_TIMEDOUT` is 18. Unsupported or unknown curl codes map
   to `UNKNOWN_ERROR`.
 - The function-local static `std::unordered_map<ErrorCode, std::string>` is
-  preserved. String conversion is `mr::to_string(code)` instead of adding an
+  preserved. String conversion is `mcr::to_string(code)` instead of adding an
   overload to `std`. As in cpr, `.at()` throws `std::out_of_range` for an invalid
   enum value; the defined `UNKNOWN_ERROR` has its own entry.
 - `Error` constructors accept a message by value, allowing both copying and

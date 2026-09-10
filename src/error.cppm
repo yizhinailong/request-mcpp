@@ -10,7 +10,7 @@ export module mr.error;
 
 import std;
 
-export namespace mr {
+export namespace mcr {
 
     /**
      * @brief Error codes for HTTP operations, preserving cpr's names and values.
@@ -164,7 +164,7 @@ export namespace mr {
      * @param code Error code to look up.
      * @return A copy of the error code's name.
      * @throws std::out_of_range If code is not a defined ErrorCode value.
-     * @note Preserves cpr's lookup behavior and exposes the function in namespace mr.
+     * @note Preserves cpr's lookup behavior and exposes the function in namespace mcr.
      */
     [[nodiscard]] inline auto to_string(ErrorCode code) -> std::string {
         return get_error_code_to_string_mapping().at(code);
@@ -305,4 +305,4 @@ export namespace mr {
         };
     }
 
-} // namespace mr
+} // namespace mcr

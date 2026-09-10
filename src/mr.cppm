@@ -4,4 +4,5 @@
  */
 export module mr;
 
+export import mr.cprtypes;
 export import mr.error;
