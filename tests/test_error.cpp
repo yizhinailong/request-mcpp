@@ -1,7 +1,7 @@
 #include <curl/curl.h>
 
 import std;
-import mr.error;
+import mr;
 
 namespace {
 

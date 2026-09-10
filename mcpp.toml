@@ -4,5 +4,8 @@ version = "0.1.0"
 description = "A modular C++23 package"
 license = "MIT"
 
+[lib]
+path = "src/mr.cppm"
+
 [dependencies.compat]
 curl = "8.21.0"

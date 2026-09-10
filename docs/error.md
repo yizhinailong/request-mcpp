@@ -1,8 +1,9 @@
 # Error handling
 
-Import `mr.error` to use `mr::ErrorCode`, `mr::Error`, and
+Import the library entry module `mr` to use `mr::ErrorCode`, `mr::Error`, and
 `mr::Result<T>` (`std::expected<T, mr::Error>`). `Result<void>` represents an
-operation with no return value.
+operation with no return value. The entry module re-exports `mr.error`, which
+can also be imported directly.
 
 `mr::check_curl_error(curl_code, message)` returns a successful `Result<void>`
 for `CURLE_OK` and `std::unexpected<mr::Error>` for every other curl status.
@@ -11,7 +12,7 @@ empty string. Pass the curl error buffer when a detailed diagnostic is available
 
 ```cpp
 import std;
-import mr.error;
+import mr;
 
 auto finish_transfer(std::int32_t curl_code, std::string diagnostic,
                      std::string body) -> mr::Result<std::string> {
