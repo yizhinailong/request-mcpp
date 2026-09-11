@@ -2,6 +2,7 @@
 
 The workflow structure follows `FileMonitor`: an independent version workflow
 creates an annotated tag and explicitly dispatches a Windows workflow at that tag.
+After the Windows build and tests succeed, a separate job publishes a GitHub Release.
 All CI logic is inline in the two workflow YAML files; no separate scripts are
 required. Inline Python uses the standard `tomllib` parser for package versions,
 and PowerShell handles Git operations, workflow dispatch, and tool installation.
@@ -18,8 +19,7 @@ establishes a baseline without a tag.
 Existing tags are never overwritten. Reusing a version tagged at a different
 commit fails the workflow; choose an unused version. Retrying the same push
 reuses its existing tag (including earlier lightweight tags) and dispatches
-Windows tests again. No commit, version bump, or GitHub Release is generated
-by these workflows.
+Windows tests again. The workflows do not commit files or bump the package version.
 
 The version workflow also supports manual runs on the default branch. A manual
 run compares the selected commit with its first parent, so it still cannot tag
@@ -47,12 +47,24 @@ The hosted Windows image supplies the Visual Studio/Windows SDK installation req
 the LLVM MSVC target. Update the version and checksum together in
 the `Install mcpp` step in `windows-ci.yml` when upgrading mcpp.
 
-Only the tag job requests `contents: write` and `actions: write`; Windows tests
-use read-only repository access. The built-in token is sufficient, with no additional secret
-required. Repository rules must allow that job to create version tags. A failed
+The tag job requests `contents: write` and `actions: write`, and the release job
+requests `contents: write`; Windows tests use read-only repository access.
+The built-in token is sufficient, with no additional secret required.
+Repository rules must allow the tag job to create version tags. A failed
 Windows test leaves the tag in place and marks the independent Windows CI run
 as failed; rerun that workflow after investigating. A successful version run
 means the tag exists and Windows CI was dispatched, not that tests have passed.
+
+The `release` job runs only for `v*` tag refs after the `test` job succeeds.
+It uses `gh release create --verify-tag --generate-notes` to publish a release
+titled `mcr <version>`. The tag must already exist; publishing a release cannot
+create an additional tag. Prerelease versions such as `0.2.0-rc.1` are marked
+as prereleases. An existing release is left intact when the workflow is retried.
+Branch-based manual runs and failed builds or tests do not publish releases.
+GitHub provides the source archives associated with the release tag; this module
+library does not add executable build artifacts. See the
+[GitHub CLI release documentation](https://cli.github.com/manual/gh_release_create)
+for the release creation flags.
 
 Local validation:
 
