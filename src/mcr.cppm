@@ -4,6 +4,7 @@
  */
 export module mcr;
 
+export import mcr.accept_encoding;
 export import mcr.error;
 export import mcr.redirect;
 export import mcr.reserve_size;
