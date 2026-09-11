@@ -1,0 +1,95 @@
+name: Windows CI
+
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: windows-ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    name: Windows x64 build and test
+    runs-on: windows-2025
+    timeout-minutes: 45
+    defaults:
+      run:
+        shell: pwsh
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          ref: ${{ github.ref }}
+          persist-credentials: false
+
+      - name: Set up Python for TOML parsing
+        uses: actions/setup-python@v7
+        with:
+          python-version: '3.13'
+
+      - name: Verify tag matches package version
+        if: github.ref_type == 'tag'
+        shell: python
+        run: |
+          import os
+          import tomllib
+
+          with open("mcpp.toml", "rb") as manifest:
+              version = tomllib.load(manifest)["package"]["version"]
+          expected = f"v{version}"
+          actual = os.environ["GITHUB_REF_NAME"]
+          if actual != expected:
+              raise ValueError(f"Tag {actual} must match package version {expected}")
+          print(f"Verified {actual} matches [package].version.")
+
+      - name: Set up MSVC environment
+        uses: ilammy/msvc-dev-cmd@v1.13.0
+        with:
+          arch: amd64
+
+      - name: Install mcpp
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $mcppVersion = '2026.9.11.1'
+          $mcppSha256 = 'ca46b1dadf674b4e8aa183f84832631119d36eae6807f1996b9f940c4c890ad0'
+          $archiveName = "mcpp-$mcppVersion-windows-x86_64"
+          $archivePath = Join-Path $env:RUNNER_TEMP "$archiveName.zip"
+          $installRoot = Join-Path $env:RUNNER_TEMP $archiveName
+
+          Invoke-WebRequest -Uri "https://github.com/mcpp-community/mcpp/releases/download/v$mcppVersion/$archiveName.zip" -OutFile $archivePath
+          if ((Get-FileHash -LiteralPath $archivePath -Algorithm SHA256).Hash -ne $mcppSha256) {
+              throw 'The mcpp release archive checksum does not match.'
+          }
+          Expand-Archive -LiteralPath $archivePath -DestinationPath $env:RUNNER_TEMP -Force
+
+          $mcppBin = Join-Path $installRoot 'bin'
+          $mcppExe = Join-Path $mcppBin 'mcpp.exe'
+          if (!(Test-Path -LiteralPath $mcppExe)) {
+              throw 'The mcpp release archive does not contain bin/mcpp.exe.'
+          }
+          # Keep the bundled registry/bin/xlings.exe in this isolated MCPP_HOME.
+          $env:MCPP_HOME = $installRoot
+          $env:PATH = "$mcppBin;$env:PATH"
+          "MCPP_HOME=$installRoot" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+          $mcppBin | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+          & $mcppExe --version
+          if ($LASTEXITCODE -ne 0) {
+              throw "mcpp --version failed with exit code $LASTEXITCODE."
+          }
+
+      - name: Install LLVM toolchain
+        run: mcpp toolchain install llvm 22.1.8
+
+      - name: Select LLVM toolchain
+        run: mcpp toolchain default llvm@22.1.8
+
+      - name: Build
+        run: mcpp build
+
+      - name: Test
+        run: mcpp test
