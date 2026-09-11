@@ -6,6 +6,7 @@ export module mcr;
 
 export import mcr.accept_encoding;
 export import mcr.callback;
+export import mcr.cookies;
 export import mcr.curlholder;
 export import mcr.error;
 export import mcr.redirect;
