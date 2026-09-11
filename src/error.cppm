@@ -6,7 +6,7 @@ module;
 
 #include <curl/curl.h>
 
-export module mr.error;
+export module mcr.error;
 
 import std;
 

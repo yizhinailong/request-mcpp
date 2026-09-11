@@ -5,7 +5,7 @@
 #include <curl/curl.h>
 
 import std;
-import mr;
+import mcr;
 
 static_assert(std::is_same_v<mcr::CprOffT, curl_off_t>);
 static_assert(std::is_same_v<mcr::CprPfArgT, mcr::CprOffT>);

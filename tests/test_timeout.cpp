@@ -3,7 +3,7 @@
  * @brief Verify timeout conversions and long-range checks through the library entry module.
  */
 import std;
-import mr;
+import mcr;
 
 static_assert(!std::is_default_constructible_v<mcr::Timeout>);
 static_assert(std::is_convertible_v<std::int32_t, mcr::Timeout>);

@@ -1,10 +1,10 @@
 # Common request types
 
-Import `mr` or `mr.cprtypes` to use the types in namespace `mcr`.
+Import `mcr` or `mcr.cprtypes` to use the types in namespace `mcr`.
 
 ```cpp
 import std;
-import mr;
+import mcr;
 
 mcr::Url url{ "https://example.test", "/api" };
 url += mcr::Url{ "/items" };

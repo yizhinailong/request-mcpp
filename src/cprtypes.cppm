@@ -6,7 +6,7 @@ module;
 
 #include <curl/curl.h>
 
-export module mr.cprtypes;
+export module mcr.cprtypes;
 
 import std;
 

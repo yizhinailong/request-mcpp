@@ -2,7 +2,7 @@
  * @file timeout.cppm
  * @brief Request timeout durations with checked conversion to curl's millisecond argument.
  */
-export module mr.timeout;
+export module mcr.timeout;
 
 import std;
 

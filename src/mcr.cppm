@@ -1,0 +1,11 @@
+/**
+ * @file mcr.cppm
+ * @brief Library entry module re-exporting the public request-mcpp interfaces.
+ */
+export module mcr;
+
+export import mcr.cprtypes;
+export import mcr.error;
+export import mcr.timeout;
+export import mcr.unix_socket;
+export import mcr.verbose;

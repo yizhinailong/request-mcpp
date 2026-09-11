@@ -1,8 +1,8 @@
 # Error handling
 
-Import the library entry module `mr` to use `mcr::ErrorCode`, `mcr::Error`, and
+Import the library entry module `mcr` to use `mcr::ErrorCode`, `mcr::Error`, and
 `mcr::Result<T>` (`std::expected<T, mcr::Error>`). `Result<void>` represents an
-operation with no return value. The entry module re-exports `mr.error`, which
+operation with no return value. The entry module re-exports `mcr.error`, which
 can also be imported directly.
 
 `mcr::check_curl_error(curl_code, message)` returns a successful `Result<void>`
@@ -12,7 +12,7 @@ empty string. Pass the curl error buffer when a detailed diagnostic is available
 
 ```cpp
 import std;
-import mr;
+import mcr;
 
 auto finish_transfer(std::int32_t curl_code, std::string diagnostic,
                      std::string body) -> mcr::Result<std::string> {

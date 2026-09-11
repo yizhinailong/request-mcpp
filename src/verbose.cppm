@@ -2,7 +2,7 @@
  * @file verbose.cppm
  * @brief Option controlling verbose transfer diagnostics.
  */
-export module mr.verbose;
+export module mcr.verbose;
 
 export namespace mcr {
 

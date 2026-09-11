@@ -2,7 +2,7 @@
  * @file unix_socket.cppm
  * @brief Owned Unix domain socket path for HTTP connections.
  */
-export module mr.unix_socket;
+export module mcr.unix_socket;
 
 import std;
 

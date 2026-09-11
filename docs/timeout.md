@@ -1,10 +1,10 @@
 # Request timeout
 
-Import `mr` or `mr.timeout` to use `mcr::Timeout`.
+Import `mcr` or `mcr.timeout` to use `mcr::Timeout`.
 
 ```cpp
 import std;
-import mr;
+import mcr;
 
 using namespace std::chrono_literals;
 
