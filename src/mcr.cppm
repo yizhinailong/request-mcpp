@@ -5,6 +5,7 @@
 export module mcr;
 
 export import mcr.error;
+export import mcr.singleton;
 export import mcr.status_codex;
 export import mcr.threadpool;
 export import mcr.timeout;
