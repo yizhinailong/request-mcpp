@@ -1,0 +1,47 @@
+name: Version
+
+on:
+  push:
+    branches: [main]
+    paths: [mcpp.toml]
+
+permissions:
+  contents: read
+
+jobs:
+  tag:
+    if: ${{ !github.event.deleted }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write
+    outputs:
+      tag: ${{ steps.version.outputs.tag }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.13'
+
+      - name: Test version tagging rules
+        run: python -B -m unittest discover -s .github/scripts -p 'test_*.py'
+
+      - name: Tag changed package version
+        id: version
+        env:
+          BEFORE_SHA: ${{ github.event.before }}
+          CURRENT_SHA: ${{ github.sha }}
+        run: python -B .github/scripts/version_tag.py
+
+  windows:
+    needs: tag
+    if: ${{ needs.tag.outputs.tag != '' }}
+    # GITHUB_TOKEN tag pushes do not trigger push workflows, so call CI explicitly.
+    uses: ./.github/workflows/windows.ci.yml
+    with:
+      ref: refs/tags/${{ needs.tag.outputs.tag }}
+
