@@ -9,6 +9,7 @@ export import mcr.callback;
 export import mcr.cookies;
 export import mcr.curlholder;
 export import mcr.error;
+export import mcr.interface;
 export import mcr.redirect;
 export import mcr.reserve_size;
 export import mcr.resolve;
