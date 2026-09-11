@@ -20,4 +20,5 @@ export import mcr.threadpool;
 export import mcr.timeout;
 export import mcr.types;
 export import mcr.unix_socket;
+export import mcr.util;
 export import mcr.verbose;
