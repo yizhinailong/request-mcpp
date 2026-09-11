@@ -4,7 +4,7 @@
  */
 export module mcr.user_agent;
 
-export import mcr.cprtypes;
+export import mcr.types;
 
 import std;
 

@@ -1,12 +1,12 @@
 /**
- * @file cprtypes.cppm
+ * @file types.cppm
  * @brief Curl-compatible transfer types, owned URL strings, and HTTP headers.
  */
 module;
 
 #include <curl/curl.h>
 
-export module mcr.cprtypes;
+export module mcr.types;
 
 import std;
 

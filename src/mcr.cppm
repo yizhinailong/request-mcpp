@@ -4,10 +4,10 @@
  */
 export module mcr;
 
-export import mcr.cprtypes;
 export import mcr.error;
 export import mcr.status_codex;
 export import mcr.timeout;
+export import mcr.types;
 export import mcr.unix_socket;
 export import mcr.user_agent;
 export import mcr.verbose;

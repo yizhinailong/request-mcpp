@@ -1,5 +1,5 @@
 /**
- * @file test_cprtypes.cpp
+ * @file test_types.cpp
  * @brief Verify owned string options and case-insensitive headers through the library entry module.
  */
 #include <curl/curl.h>
@@ -20,7 +20,7 @@ namespace {
 
     auto check(bool condition, std::string_view message) -> bool {
         if (!condition) {
-            std::println("test_cprtypes: {}", message);
+            std::println("test_types: {}", message);
         }
         return condition;
     }
@@ -251,6 +251,6 @@ int main() {
     if (!passed) {
         return 1;
     }
-    std::println("test_cprtypes: ok");
+    std::println("test_types: ok");
     return 0;
 }

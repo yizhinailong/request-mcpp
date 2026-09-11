@@ -1,6 +1,6 @@
 # Common request types
 
-Import `mcr` or `mcr.cprtypes` to use the types in namespace `mcr`.
+Import `mcr` or `mcr.types` to use the types in namespace `mcr`.
 
 ```cpp
 import std;
