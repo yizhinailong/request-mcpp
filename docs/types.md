@@ -16,9 +16,11 @@ std::println("{}: {}", url.Str(), headers.at("content-type"));
   aliases `CprOffT` for progress callbacks in the current curl dependency.
   Consumers do not need to include curl headers to use either alias.
 - `StringHolder<T>` owns its text and returns `T` from concatenation.
-  `Url` supports strings, string views, C strings, byte ranges, and lists of
+  `Url` and `UserAgent` support strings, string views, C strings, byte ranges, and lists of
   fragments. Views and ranges are copied; explicit lengths preserve embedded
-  null bytes. URLs are stored without validation or encoding.
+  null bytes. Both types store their text without validation or encoding.
+- `UserAgent` is exported by `mcr.types` alongside `Url`. Code previously
+  importing `mcr.user_agent` should use `mcr.types` or the entry module `mcr`.
 - `Str()`, `CStr()`, `Data()`, explicit conversion to `std::string`, stream
   output, copy/move operations, comparisons, and void-returning `+=` preserve
   cpr's behavior. The protected `m_str` member remains available to derived
