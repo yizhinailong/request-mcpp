@@ -14,6 +14,7 @@ export import mcr.limit_rate;
 export import mcr.local_port;
 export import mcr.local_port_range;
 export import mcr.low_speed;
+export import mcr.proxies;
 export import mcr.redirect;
 export import mcr.reserve_size;
 export import mcr.resolve;
