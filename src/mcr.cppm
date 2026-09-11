@@ -10,6 +10,8 @@ export import mcr.cookies;
 export import mcr.curlholder;
 export import mcr.error;
 export import mcr.interface;
+export import mcr.local_port;
+export import mcr.local_port_range;
 export import mcr.redirect;
 export import mcr.reserve_size;
 export import mcr.resolve;
