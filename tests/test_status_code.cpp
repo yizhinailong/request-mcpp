@@ -1,5 +1,5 @@
 /**
- * @file test_status_codex.cpp
+ * @file test_status_code.cpp
  * @brief Verify HTTP status classification boundaries through the library entry module.
  */
 import std;
@@ -48,7 +48,7 @@ int main() {
             is_redirect(entry.code) != (entry.response_class == 3) ||
             is_client_error(entry.code) != (entry.response_class == 4) ||
             is_server_error(entry.code) != (entry.response_class == 5)) {
-            std::println("test_status_codex: incorrect classification for {}", entry.code);
+            std::println("test_status_code: incorrect classification for {}", entry.code);
             passed = false;
         }
     }
@@ -56,6 +56,6 @@ int main() {
     if (!passed) {
         return 1;
     }
-    std::println("test_status_codex: ok");
+    std::println("test_status_code: ok");
     return 0;
 }

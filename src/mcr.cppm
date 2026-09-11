@@ -10,7 +10,7 @@ export import mcr.reserve_size;
 export import mcr.resolve;
 export import mcr.secure_string;
 export import mcr.singleton;
-export import mcr.status_codex;
+export import mcr.status_code;
 export import mcr.threadpool;
 export import mcr.timeout;
 export import mcr.types;
