@@ -5,6 +5,7 @@
 export module mcr;
 
 export import mcr.accept_encoding;
+export import mcr.async;
 export import mcr.async_wrapper;
 export import mcr.auth;
 export import mcr.bearer;
