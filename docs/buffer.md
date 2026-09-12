@@ -69,4 +69,5 @@ behavior above. Valid contiguous byte ranges retain the reference behavior.
 
 Run `mcpp build` and `mcpp test` to verify borrowing, binary subranges,
 supported storage types, empty and reversed ranges, filename ownership,
-and copy/move behavior. Multipart/request integration is not yet implemented.
+and copy/move behavior. [`Part`](multipart.md) can borrow these buffers;
+MIME serialization and request integration are not yet implemented.

@@ -63,8 +63,10 @@ layer. The descriptor and collection behavior otherwise follows the reference.
 
 In cpr's multipart session code, `filepath` goes to `curl_mime_filedata`, while
 the transmitted filename is the override or the result of
-`std::filesystem::path(filepath).filename().string()`. Multipart/session
-integration is not yet implemented here. Run `mcpp build` and `mcpp test` to
+`std::filesystem::path(filepath).filename().string()`. The
+[`multipart module`](multipart.md) provides the corresponding descriptors;
+MIME serialization and session integration are not yet implemented here.
+Run `mcpp build` and `mcpp test` to
 verify descriptor ownership, override detection, both list constructors,
 iteration, appends, removals, copying/moving, and standard filesystem path
 interoperation without accessing real files.

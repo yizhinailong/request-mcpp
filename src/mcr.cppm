@@ -28,6 +28,7 @@ export import mcr.limit_rate;
 export import mcr.local_port;
 export import mcr.local_port_range;
 export import mcr.low_speed;
+export import mcr.multipart;
 export import mcr.parameters;
 export import mcr.payload;
 export import mcr.proxies;
