@@ -5,6 +5,7 @@
 export module mcr;
 
 export import mcr.accept_encoding;
+export import mcr.async_wrapper;
 export import mcr.callback;
 export import mcr.cert_info;
 export import mcr.cookies;
