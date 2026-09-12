@@ -1,6 +1,8 @@
-# Request timeout
+# Request and connection timeouts
 
 Import `mcr` or `mcr.timeout` to use `mcr::Timeout`.
+Import `mcr` or `mcr.connect_timeout` to use `mcr::ConnectTimeout`; the latter
+also re-exports `mcr.timeout`.
 
 ```cpp
 import std;
@@ -37,6 +39,36 @@ The interface and behavior follow cpr's `include/cpr/timeout.h` and
 namespace `mcr`, diagnostic prefix `mcr::Timeout`, and passing the integer
 constructor argument by value instead of by const reference.
 
+`ConnectTimeout` publicly derives from `Timeout`, following cpr's
+`include/cpr/connect_timeout.h`. It adds no state and inherits both `ms` and
+`Milliseconds()`, including the base class's range checks and diagnostics.
+Its distinct type allows a session to distinguish connection timeout options
+from overall request timeout options.
+
+```cpp
+mcr::ConnectTimeout connect{ 1500 };
+mcr::ConnectTimeout from_milliseconds = 500ms;
+mcr::ConnectTimeout from_seconds{ 2s };
+connect.ms = 750ms;
+```
+
+The two constructors accept `std::int32_t` and
+`std::chrono::milliseconds const&`, and neither is explicit. Unlike `Timeout`,
+the derived type does not expose a generic duration constructor. Direct
+construction from seconds or minutes works through chrono's lossless
+conversion to milliseconds. Copy-initialization from seconds would require
+two user-defined conversions and is not supported. Sub-millisecond and
+floating-point durations require an explicit `duration_cast` to milliseconds.
+There is no default constructor. The integer is passed by value, matching
+the existing base class rather than cpr's const-reference parameter.
+
+In cpr, `Session::SetConnectTimeout` applies the inherited millisecond value
+to `CURLOPT_CONNECTTIMEOUT_MS`. It covers DNS resolution and protocol
+handshakes until a connection is established. Zero selects curl's built-in
+300-second connection timeout; an overall request timeout can still impose a
+shorter limit. These modules only represent options and do not apply them to
+requests yet.
+
 Run `mcpp build` and `mcpp test` to validate conversions, truncation, public
-member updates, and platform-dependent range checks. This module represents
-the timeout option; request/session integration will apply it to curl.
+member updates, connection constructor constraints, and platform-dependent
+range checks for both timeout types.

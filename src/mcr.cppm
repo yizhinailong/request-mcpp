@@ -8,6 +8,7 @@ export import mcr.accept_encoding;
 export import mcr.async_wrapper;
 export import mcr.callback;
 export import mcr.cert_info;
+export import mcr.connect_timeout;
 export import mcr.connection_pool;
 export import mcr.cookies;
 export import mcr.curlholder;

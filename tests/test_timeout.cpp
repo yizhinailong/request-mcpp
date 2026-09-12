@@ -1,6 +1,6 @@
 /**
  * @file test_timeout.cpp
- * @brief Verify timeout conversions and long-range checks through the library entry module.
+ * @brief Verify request and connection timeout construction and inherited long-range checks.
  */
 import std;
 import mcr;
@@ -9,6 +9,19 @@ static_assert(!std::is_default_constructible_v<mcr::Timeout>);
 static_assert(std::is_convertible_v<std::int32_t, mcr::Timeout>);
 static_assert(std::is_convertible_v<std::chrono::seconds, mcr::Timeout>);
 static_assert(std::is_same_v<decltype(std::declval<mcr::Timeout const&>().Milliseconds()), long>);
+static_assert(std::is_base_of_v<mcr::Timeout, mcr::ConnectTimeout>);
+static_assert(!std::is_same_v<mcr::Timeout, mcr::ConnectTimeout>);
+static_assert(std::is_convertible_v<mcr::ConnectTimeout*, mcr::Timeout*>);
+static_assert(!std::is_default_constructible_v<mcr::ConnectTimeout>);
+static_assert(std::is_convertible_v<std::int32_t, mcr::ConnectTimeout>);
+static_assert(std::is_convertible_v<std::chrono::milliseconds, mcr::ConnectTimeout>);
+static_assert(std::is_constructible_v<mcr::ConnectTimeout, std::chrono::seconds>);
+static_assert(!std::is_convertible_v<std::chrono::seconds, mcr::ConnectTimeout>);
+static_assert(!std::is_constructible_v<mcr::ConnectTimeout, std::chrono::microseconds>);
+static_assert(!std::is_constructible_v<mcr::ConnectTimeout, std::chrono::duration<double>>);
+static_assert(!std::is_constructible_v<mcr::ConnectTimeout, mcr::Timeout>);
+static_assert(std::is_same_v<decltype(mcr::ConnectTimeout::ms), std::chrono::milliseconds>);
+static_assert(std::is_same_v<decltype(std::declval<mcr::ConnectTimeout const&>().Milliseconds()), long>);
 
 namespace {
 
@@ -65,6 +78,30 @@ namespace {
         return passed;
     }
 
+    auto check_connection_construction() -> bool {
+        using namespace std::chrono_literals;
+
+        bool passed{ true };
+        for (std::int32_t const count : { 0, 1, -1, 1500, (std::numeric_limits<std::int32_t>::min)(), (std::numeric_limits<std::int32_t>::max)() }) {
+            mcr::ConnectTimeout const integer  = count;
+            mcr::ConnectTimeout const chrono   = std::chrono::milliseconds{ count };
+            passed                            &= check(integer.ms == chrono.ms && integer.Milliseconds() == count, "both connection timeout constructors must preserve the full int32 millisecond range");
+        }
+        passed &= check(mcr::ConnectTimeout{ 2s }.Milliseconds() == 2000 && mcr::ConnectTimeout{ 1min }.Milliseconds() == 60000, "whole-millisecond chrono conversions must work through the milliseconds constructor");
+        passed &= check(mcr::ConnectTimeout{ std::chrono::duration_cast<std::chrono::milliseconds>(1999us) }.Milliseconds() == 1, "sub-millisecond durations require an explicit cast for connection timeouts");
+
+        mcr::ConnectTimeout original{ 1500ms };
+        mcr::ConnectTimeout copied{ original };
+        mcr::Timeout&       base{ original };
+        base.ms   = 2s;
+        passed   &= check(original.Milliseconds() == 2000 && copied.Milliseconds() == 1500, "the derived option must use inherited storage and retain independent copies");
+        copied    = 42;
+        original  = 500ms;
+        passed   &= check(copied.Milliseconds() == 42 && original.Milliseconds() == 500, "implicit integer and millisecond construction must support assignment");
+        return passed;
+    }
+
+    template <typename TimeoutType>
     auto check_range() -> bool {
         using MillisecondsRep = std::chrono::milliseconds::rep;
 
@@ -73,13 +110,13 @@ namespace {
 
         bool passed{ true };
         passed &= check(
-            mcr::Timeout{ std::chrono::milliseconds{ LONG_MIN_MS } }.Milliseconds() == (std::numeric_limits<long>::min)() &&
-                mcr::Timeout{ std::chrono::milliseconds{ LONG_MAX_MS } }.Milliseconds() == (std::numeric_limits<long>::max)(),
+            TimeoutType{ std::chrono::milliseconds{ LONG_MIN_MS } }.Milliseconds() == (std::numeric_limits<long>::min)() &&
+                TimeoutType{ std::chrono::milliseconds{ LONG_MAX_MS } }.Milliseconds() == (std::numeric_limits<long>::max)(),
             "both long boundaries must convert without throwing or losing precision"
         );
 
         if constexpr (std::numeric_limits<MillisecondsRep>::digits > std::numeric_limits<long>::digits) {
-            mcr::Timeout timeout{ std::chrono::milliseconds{ LONG_MAX_MS } };
+            TimeoutType timeout{ std::chrono::milliseconds{ LONG_MAX_MS } };
             ++timeout.ms;
             try {
                 (void)timeout.Milliseconds();
@@ -113,7 +150,9 @@ namespace {
 
 int main() {
     bool passed{ check_construction() };
-    passed &= check_range();
+    passed &= check_connection_construction();
+    passed &= check_range<mcr::Timeout>();
+    passed &= check_range<mcr::ConnectTimeout>();
     if (!passed) {
         return 1;
     }
