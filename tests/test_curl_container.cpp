@@ -1,15 +1,21 @@
 /**
  * @file test_curl_container.cpp
- * @brief Verify cpr's distinct query/form formatting policies and container ownership.
+ * @brief Verify Parameters and the common container's query/form formatting and ownership.
  */
 #include <curl/curl.h>
 
 import std;
 import mcr;
 
-using Parameters = mcr::CurlContainer<mcr::Parameter>;
+using Parameters = mcr::Parameters;
 using Pairs      = mcr::CurlContainer<mcr::Pair>;
 
+static_assert(std::derived_from<Parameters, mcr::CurlContainer<mcr::Parameter>>);
+static_assert(!std::is_same_v<Parameters, mcr::CurlContainer<mcr::Parameter>>);
+static_assert(std::is_convertible_v<std::initializer_list<mcr::Parameter>, Parameters>);
+static_assert(!std::is_convertible_v<mcr::Parameter, Parameters>);
+static_assert(std::is_nothrow_move_constructible_v<Parameters>);
+static_assert(std::is_nothrow_move_assignable_v<Parameters>);
 static_assert(!std::is_same_v<mcr::Parameter, mcr::Pair>);
 static_assert(!std::is_default_constructible_v<mcr::Parameter>);
 static_assert(!std::is_default_constructible_v<mcr::Pair>);
@@ -40,10 +46,11 @@ namespace {
     }
 
     auto check_without_curl() -> bool {
-        Parameters empty_parameters;
-        Pairs      empty_pairs;
-        bool       passed{ check(empty_parameters.encode && empty_pairs.encode && empty_parameters.GetContent().empty() && empty_pairs.GetContent().empty(), "default containers must enable encoding and produce empty raw content") };
-        Parameters parameters{
+        Parameters       empty_parameters;
+        Parameters const empty_list = std::initializer_list<mcr::Parameter>{};
+        Pairs            empty_pairs;
+        bool             passed{ check(empty_parameters.encode && empty_list.encode && empty_pairs.encode && empty_parameters.GetContent().empty() && empty_list.GetContent().empty() && empty_pairs.GetContent().empty(), "default containers and empty parameter lists must enable encoding and produce empty raw content") };
+        Parameters       parameters{
             { "key one", "hello world" },
             {    "flag",            "" },
             { "key one",         "x+y" }
@@ -61,9 +68,8 @@ namespace {
         return passed;
     }
 
-    template <typename Element>
+    template <typename Container, typename Element>
     auto check_ownership(mcr::CurlHolder const& holder) -> bool {
-        using Container = mcr::CurlContainer<Element>;
         std::string key{ "first" };
         std::string value{ "one" };
         Element     element{ key, value };
@@ -173,9 +179,8 @@ namespace {
         return passed;
     }
 
-    template <typename Element>
+    template <typename Container>
     auto check_holder_lifetime() -> bool {
-        using Container = mcr::CurlContainer<Element>;
         mcr::CurlHolder source;
         mcr::CurlHolder owner{ std::move(source) };
         Container       empty;
@@ -205,12 +210,12 @@ int main() {
     }
     try {
         mcr::CurlHolder holder;
-        passed &= check_ownership<mcr::Parameter>(holder);
-        passed &= check_ownership<mcr::Pair>(holder);
+        passed &= check_ownership<Parameters, mcr::Parameter>(holder);
+        passed &= check_ownership<Pairs, mcr::Pair>(holder);
         passed &= check_encoding(holder);
         passed &= check_empty_entries(holder);
-        passed &= check_holder_lifetime<mcr::Parameter>();
-        passed &= check_holder_lifetime<mcr::Pair>();
+        passed &= check_holder_lifetime<Parameters>();
+        passed &= check_holder_lifetime<Pairs>();
     } catch (std::exception const& error) {
         std::println("test_curl_container: unexpected exception: {}", error.what());
         passed = false;
