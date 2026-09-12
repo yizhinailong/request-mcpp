@@ -66,9 +66,9 @@ protected `m_container_list` name, returning `std::string` without top-level
 template definitions at link time. Encoding uses the existing `UrlEncode`
 method and appends its result with an explicit length.
 
-This module supplies the base for [`Parameters`](parameters.md) and the future
-`Payload` wrapper. Run `mcpp build` and `mcpp test`. Tests exercise the public
-`Parameters` wrapper alongside `CurlContainer<Pair>`, adapt cpr's
+This module supplies the base for [`Parameters`](parameters.md) and
+[`Payload`](payload.md). Run `mcpp build` and `mcpp test`. Tests exercise both
+public wrappers, adapt cpr's
 `test/structures_tests.cpp` and cover both formatting policies, encoding
 switches, empty entries, duplicates, appends, binary and UTF-8 strings,
-independent ownership, derived access, and holder lifetime behavior.
+independent ownership, payload iterator ranges, derived access, and holder lifetime behavior.

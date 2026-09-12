@@ -1,6 +1,6 @@
 /**
  * @file test_curl_container.cpp
- * @brief Verify Parameters and the common container's query/form formatting and ownership.
+ * @brief Verify Parameters, Payload, and their common query/form formatting and ownership.
  */
 #include <curl/curl.h>
 
@@ -8,7 +8,7 @@ import std;
 import mcr;
 
 using Parameters = mcr::Parameters;
-using Pairs      = mcr::CurlContainer<mcr::Pair>;
+using Pairs      = mcr::Payload;
 
 static_assert(std::derived_from<Parameters, mcr::CurlContainer<mcr::Parameter>>);
 static_assert(!std::is_same_v<Parameters, mcr::CurlContainer<mcr::Parameter>>);
@@ -16,6 +16,13 @@ static_assert(std::is_convertible_v<std::initializer_list<mcr::Parameter>, Param
 static_assert(!std::is_convertible_v<mcr::Parameter, Parameters>);
 static_assert(std::is_nothrow_move_constructible_v<Parameters>);
 static_assert(std::is_nothrow_move_assignable_v<Parameters>);
+static_assert(std::derived_from<Pairs, mcr::CurlContainer<mcr::Pair>>);
+static_assert(!std::is_same_v<Pairs, mcr::CurlContainer<mcr::Pair>>);
+static_assert(std::is_convertible_v<std::initializer_list<mcr::Pair>, Pairs>);
+static_assert(!std::is_convertible_v<mcr::Pair, Pairs>);
+static_assert(!std::is_default_constructible_v<Pairs>);
+static_assert(std::is_nothrow_move_constructible_v<Pairs>);
+static_assert(std::is_nothrow_move_assignable_v<Pairs>);
 static_assert(!std::is_same_v<mcr::Parameter, mcr::Pair>);
 static_assert(!std::is_default_constructible_v<mcr::Parameter>);
 static_assert(!std::is_default_constructible_v<mcr::Pair>);
@@ -48,8 +55,8 @@ namespace {
     auto check_without_curl() -> bool {
         Parameters       empty_parameters;
         Parameters const empty_list = std::initializer_list<mcr::Parameter>{};
-        Pairs            empty_pairs;
-        bool             passed{ check(empty_parameters.encode && empty_list.encode && empty_pairs.encode && empty_parameters.GetContent().empty() && empty_list.GetContent().empty() && empty_pairs.GetContent().empty(), "default containers and empty parameter lists must enable encoding and produce empty raw content") };
+        Pairs            empty_pairs{};
+        bool             passed{ check(empty_parameters.encode && empty_list.encode && empty_pairs.encode && empty_parameters.GetContent().empty() && empty_list.GetContent().empty() && empty_pairs.GetContent().empty(), "empty parameter and payload collections must enable encoding and produce empty raw content") };
         Parameters       parameters{
             { "key one", "hello world" },
             {    "flag",            "" },
@@ -65,6 +72,51 @@ namespace {
         parameters.encode  = false;
         pairs.encode       = false;
         passed            &= check(parameters.GetContent() == "key one=hello world&flag&key one=x+y" && pairs.GetContent() == "key one=hello world&flag=&key one=x+y", "holderless content must be independent of the encoding flag");
+        return passed;
+    }
+
+    auto check_payload_ranges() -> bool {
+        std::vector<mcr::Pair> source{
+            { "outside", "prefix" },
+            {     "key",  "first" },
+            {     "key", "second" },
+            {   "empty",       "" },
+            { "outside", "suffix" }
+        };
+        Pairs const subrange{ source.cbegin() + 1, source.cend() - 1 };
+        source[1].value = "changed";
+        bool passed{ check(subrange.encode && subrange.GetContent() == "key=first&key=second&empty=", "iterator construction must copy the exact subrange with duplicates and empty values in order") };
+
+        std::list<mcr::Pair> const linked{
+            { "first", "one" },
+            {  "last", "two" }
+        };
+        Pairs const from_list{ linked.begin(), linked.end() };
+        Pairs const reversed{ linked.rbegin(), linked.rend() };
+        passed &= check(from_list.GetContent() == "first=one&last=two" && reversed.GetContent() == "last=two&first=one", "payload ranges must support noncontiguous iterators and follow their traversal order");
+
+        std::istringstream words{ "first second third" };
+        auto               input{
+            std::ranges::subrange{ std::istream_iterator<std::string>{ words }, std::istream_iterator<std::string>{} }
+            |
+            std::views::transform([](std::string const& word) { return mcr::Pair{ "word", word }; }
+            )
+        };
+        static_assert(std::input_iterator<decltype(input.begin())> && !std::forward_iterator<decltype(input.begin())>);
+        Pairs const from_input{ input.begin(), input.end() };
+        passed &= check(from_input.GetContent() == "word=first&word=second&word=third", "single-pass input iterators yielding temporary pairs must be consumed exactly once");
+
+        std::vector<mcr::Pair> move_source{
+            { std::string(64, 'k'), std::string(64, 'v') }
+        };
+        Pairs const from_move_iterators{ std::make_move_iterator(move_source.begin()), std::make_move_iterator(move_source.end()) };
+        passed                      &= check(move_source.front().key == std::string(64, 'k') && move_source.front().value == std::string(64, 'v') && from_move_iterators.GetContent() == std::string(64, 'k') + '=' + std::string(64, 'v'), "range construction must retain cpr's copy semantics even for move iterators");
+
+        Pairs const      empty_list  = std::initializer_list<mcr::Pair>{};
+        Pairs const      empty_range{ source.end(), source.end() };
+        mcr::Pair const* null_pair{ nullptr };
+        Pairs const      empty_pointers{ null_pair, null_pair };
+        passed &= check(empty_list.encode && empty_range.encode && empty_pointers.encode && empty_list.GetContent().empty() && empty_range.GetContent().empty() && empty_pointers.GetContent().empty(), "empty lists and equal iterator ranges must produce empty payloads without dereferencing iterators");
         return passed;
     }
 
@@ -93,9 +145,9 @@ namespace {
         original.Add(Element{ "extra", "five" });
         original.encode = true;
         Container moved{ std::move(copied) };
-        Container assigned;
+        Container assigned{};
         assigned = moved;
-        Container move_assigned;
+        Container move_assigned{};
         move_assigned  = std::move(assigned);
         passed        &= check(!move_assigned.encode && move_assigned.GetContent() == expected && original.GetContent() == expected + "&extra=five", "copies and moves must preserve ordered content and the encoding flag without sharing state");
         return passed;
@@ -183,7 +235,7 @@ namespace {
     auto check_holder_lifetime() -> bool {
         mcr::CurlHolder source;
         mcr::CurlHolder owner{ std::move(source) };
-        Container       empty;
+        Container       empty{};
         bool            passed{ check(empty.GetContent(source).empty(), "empty containers must not consult the supplied holder") };
         Container       values{
             { "key", "a b" }
@@ -204,6 +256,7 @@ namespace {
 
 int main() {
     bool passed{ check_without_curl() };
+    passed &= check_payload_ranges();
     if (curl_global_init(CURL_GLOBAL_DEFAULT) != CURLE_OK) {
         std::println("test_curl_container: curl global initialization failed");
         return 1;
