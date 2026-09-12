@@ -11,6 +11,7 @@ export import mcr.cert_info;
 export import mcr.connect_timeout;
 export import mcr.connection_pool;
 export import mcr.cookies;
+export import mcr.curl_container;
 export import mcr.curlholder;
 export import mcr.curlmultiholder;
 export import mcr.error;
