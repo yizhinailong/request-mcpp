@@ -32,23 +32,76 @@ export import mcr.multipart;
 export import mcr.parameters;
 export import mcr.payload;
 export import mcr.proxies;
+export import mcr.proxy_auth;
 export import mcr.range;
 export import mcr.redirect;
 export import mcr.reserve_size;
 export import mcr.resolve;
 export import mcr.response;
 export import mcr.sse;
+export import mcr.ssl_options;
 export import mcr.timeout;
 export import mcr.unix_socket;
 export import mcr.verbose;
 
 import mcr.util;
+import mcr.curlmultiholder;
 import std;
 
 export namespace mcr {
 
     using AsyncResponse = AsyncWrapper<Response>;                                           ///< Asynchronous transfer result.
     using Content       = std::variant<std::monostate, Payload, Body, BodyView, Multipart>; ///< Persistent request content.
+
+    class Session;
+    class MultiPerform;
+
+    /** @brief Intercept a synchronous request, including requests executed by an async task. */
+    class Interceptor {
+    public:
+        /** @brief Methods supported by Proceed overloads. */
+        enum class ProceedHttpMethod : std::uint8_t {
+            GET_REQUEST,
+            POST_REQUEST,
+            PUT_REQUEST,
+            DELETE_REQUEST,
+            PATCH_REQUEST,
+            HEAD_REQUEST,
+            OPTIONS_REQUEST,
+            DOWNLOAD_CALLBACK_REQUEST,
+            DOWNLOAD_FILE_REQUEST
+        };
+        virtual ~Interceptor()                               = default;
+        /** @brief Modify, forward, retry, or replace a request. @param session Current session. @return Response to pass to the preceding interceptor. */
+        virtual auto Intercept(Session& session) -> Response = 0;
+
+    protected:
+        /** @brief Continue with the current method and download destination. @param session Current session. @return Downstream response. */
+        static auto Proceed(Session& session) -> Response;
+        /** @brief Continue using a different HTTP method. @param session Current session. @param method Method to execute. @return Downstream response. */
+        static auto Proceed(Session& session, ProceedHttpMethod method) -> Response;
+        /** @brief Continue with a file download. @param session Current session. @param method Must be DOWNLOAD_FILE_REQUEST. @param file Borrowed stream. @return Downstream response. */
+        static auto Proceed(Session& session, ProceedHttpMethod method, std::ofstream& file) -> Response;
+        /** @brief Continue with a callback download. @param session Current session. @param method Must be DOWNLOAD_CALLBACK_REQUEST. @param write Consumer to copy. @return Downstream response. */
+        static auto Proceed(Session& session, ProceedHttpMethod method, WriteCallback const& write) -> Response;
+    };
+
+    /** @brief Intercept a complete MultiPerform batch. */
+    class InterceptorMulti {
+    public:
+        using ProceedHttpMethod                                              = Interceptor::ProceedHttpMethod; ///< Matching cpr method tags.
+        virtual ~InterceptorMulti()                                          = default;
+        /** @brief Modify, forward, retry, or replace a batch. @param multi Current batch. @return Responses in session order. */
+        virtual auto Intercept(MultiPerform& multi) -> std::vector<Response> = 0;
+
+    protected:
+        /** @brief Reprepare sessions and continue the remaining chain. @param multi Current batch. @return Downstream responses. */
+        static auto Proceed(MultiPerform& multi) -> std::vector<Response>;
+        /** @brief Select a callback download destination. @param multi Current batch. @param index Session index. @param write Consumer to copy. */
+        static auto PrepareDownloadSession(MultiPerform& multi, std::size_t index, WriteCallback const& write) -> void;
+        /** @brief Select a file download destination. @param multi Current batch. @param index Session index. @param file Borrowed stream. */
+        static auto PrepareDownloadSession(MultiPerform& multi, std::size_t index, std::ofstream& file) -> void;
+    };
 
     /**
      * @brief Reuse a curl connection cache, cookies, options, and content across requests.
@@ -58,32 +111,41 @@ export namespace mcr {
      * Content persists until replaced or removed; HEAD and Download ignore it without removing it.
      * Curl option failures throw std::runtime_error. Transfer failures are reported in Response::error.
      * Callback exceptions are rethrown after curl returns, never through curl's C frames.
-     * Advanced SSL options, proxy authentication, and interceptors are not part of this initial port.
      */
     class Session : public std::enable_shared_from_this<Session> {
     private:
-        std::shared_ptr<CurlHolder>       m_curl{ std::make_shared<CurlHolder>() }; ///< Owned transfer resources.
-        Url                               m_url;                                    ///< Base URL before adding parameters.
-        Parameters                        m_parameters;                             ///< Persistent URL parameters.
-        Header                            m_header;                                 ///< Persistent request headers.
-        Proxies                           m_proxies;                                ///< Persistent proxy selection.
-        AcceptEncoding                    m_accept_encoding;                        ///< Compression preference.
-        Content                           m_content;                                ///< Owned or borrowed request content.
-        ReadCallback                      m_read;                                   ///< Optional upload producer.
-        HeaderCallback                    m_header_callback;                        ///< Optional header observer.
-        WriteCallback                     m_write;                                  ///< Optional response consumer.
-        ProgressCallback                  m_progress;                               ///< Optional progress observer.
-        DebugCallback                     m_debug;                                  ///< Optional diagnostics observer.
-        ServerSentEventCallback           m_sse;                                    ///< Optional event consumer.
-        ServerSentEventParser             m_sse_parser;                             ///< Parser reset before every transfer.
-        std::shared_ptr<std::atomic_bool> m_cancellation;                           ///< Shared cancellation flag.
-        std::string                       m_response_string;                        ///< Current buffered response body.
-        std::string                       m_header_string;                          ///< Current raw response headers.
-        std::size_t                       m_reserve_size{};                         ///< Requested body buffer reservation.
-        WriteCallback                     m_download_write;                         ///< Consumer used only for a prepared download.
-        std::ofstream*                    m_download_file{};                        ///< Borrowed file for a prepared download.
-        bool                              m_downloading{};                          ///< Selects the current body destination.
-        std::exception_ptr                m_callback_error;                         ///< First exception caught inside a curl callback.
+        friend Interceptor;
+        friend MultiPerform;
+        std::vector<std::shared_ptr<Interceptor>> m_interceptors;                           ///< Interceptors in registration order.
+        std::size_t                               m_next_interceptor{};                     ///< Next interceptor in the current nested request.
+        std::size_t                               m_request_depth{};                        ///< Number of active interceptor/request frames.
+        std::string                               m_method{ "GET" };                        ///< Last prepared method, retained by Proceed.
+        MultiPerform*                             m_multi_owner{};                          ///< Batch that currently owns this session, if any.
+        bool                                      m_multi_preparing{};                      ///< Permit the owning batch to prepare its handle.
+        bool                                      m_in_transfer{};                          ///< Reject recursive transfers from curl callbacks.
+        std::shared_ptr<CurlHolder>               m_curl{ std::make_shared<CurlHolder>() }; ///< Owned transfer resources.
+        Url                                       m_url;                                    ///< Base URL before adding parameters.
+        Parameters                                m_parameters;                             ///< Persistent URL parameters.
+        Header                                    m_header;                                 ///< Persistent request headers.
+        Proxies                                   m_proxies;                                ///< Persistent proxy selection.
+        ProxyAuthentication                       m_proxy_auth;                             ///< Persistent encoded proxy credentials.
+        AcceptEncoding                            m_accept_encoding;                        ///< Compression preference.
+        Content                                   m_content;                                ///< Owned or borrowed request content.
+        ReadCallback                              m_read;                                   ///< Optional upload producer.
+        HeaderCallback                            m_header_callback;                        ///< Optional header observer.
+        WriteCallback                             m_write;                                  ///< Optional response consumer.
+        ProgressCallback                          m_progress;                               ///< Optional progress observer.
+        DebugCallback                             m_debug;                                  ///< Optional diagnostics observer.
+        ServerSentEventCallback                   m_sse;                                    ///< Optional event consumer.
+        ServerSentEventParser                     m_sse_parser;                             ///< Parser reset before every transfer.
+        std::shared_ptr<std::atomic_bool>         m_cancellation;                           ///< Shared cancellation flag.
+        std::string                               m_response_string;                        ///< Current buffered response body.
+        std::string                               m_header_string;                          ///< Current raw response headers.
+        std::size_t                               m_reserve_size{};                         ///< Requested body buffer reservation.
+        WriteCallback                             m_download_write;                         ///< Consumer used only for a prepared download.
+        std::ofstream*                            m_download_file{};                        ///< Borrowed file for a prepared download.
+        bool                                      m_downloading{};                          ///< Selects the current body destination.
+        std::exception_ptr                        m_callback_error;                         ///< First exception caught inside a curl callback.
 
     public:
         /** @brief Initialize cpr-compatible redirects, cookies, compression, and keepalive defaults. */
@@ -175,6 +237,26 @@ export namespace mcr {
 
         /** @brief Move proxy mappings. @param proxies Protocol and no_proxy mappings. */
         auto SetProxies(Proxies&& proxies) -> void { m_proxies = std::move(proxies); }
+
+        /** @brief Copy protocol-specific proxy credentials. @param auth Credentials to own. */
+        auto SetProxyAuth(ProxyAuthentication const& auth) -> void { m_proxy_auth = auth; }
+
+        /** @brief Move protocol-specific proxy credentials. @param auth Credentials to own. */
+        auto SetProxyAuth(ProxyAuthentication&& auth) -> void { m_proxy_auth = std::move(auth); }
+
+        /** @brief Configure certificate and hostname verification together. @param verify Verification preference. */
+        auto SetVerifySsl(VerifySsl const& verify) -> void {
+            setOption(CURLOPT_SSL_VERIFYPEER, verify.verify ? 1L : 0L);
+            setOption(CURLOPT_SSL_VERIFYHOST, verify.verify ? 2L : 0L);
+        }
+
+        /**
+         * @brief Replace the TLS configuration, copying all in-memory certificate data into curl.
+         * @param options Complete configuration; empty sources clear previous credentials or trust overrides.
+         * @throws std::runtime_error If a requested feature is not supported by the linked TLS backend.
+         * @note Defaults for unavailable optional features are tolerated. A failed call may apply earlier options.
+         */
+        auto SetSslOptions(SslOptions const& options) -> void;
 
         /** @brief Copy multipart descriptors. @param multipart Parts; buffer bytes remain borrowed. */
         auto SetMultipart(Multipart const& multipart) -> void { m_content = multipart; }
@@ -327,6 +409,9 @@ export namespace mcr {
 
         /** @brief Set a cancellation flag, independently of progress callback ordering. @param param Shared flag; null disables cancellation. */
         auto SetCancellationParam(std::shared_ptr<std::atomic_bool> param) -> void { m_cancellation = std::move(param); }
+
+        /** @brief Append an interceptor while idle. @param interceptor Nonnull interceptor. @throws std::logic_error If a request is active. */
+        auto AddInterceptor(std::shared_ptr<Interceptor> const& interceptor) -> void;
 
         /** @brief Reserve response capacity before each request. @param size Zero restores ordinary dynamic allocation. */
         auto ResponseStringReserve(std::size_t size) -> void { m_reserve_size = size; }
@@ -624,6 +709,18 @@ export namespace mcr {
         /** @brief Move a Proxies option into this session. @param value Option to transfer. */
         auto SetOption(Proxies&& value) -> void { SetProxies(std::move(value)); }
 
+        /** @brief Copy proxy authentication. @param value Protocol credentials. */
+        auto SetOption(ProxyAuthentication const& value) -> void { SetProxyAuth(value); }
+
+        /** @brief Move proxy authentication. @param value Protocol credentials. */
+        auto SetOption(ProxyAuthentication&& value) -> void { SetProxyAuth(std::move(value)); }
+
+        /** @brief Apply combined TLS verification. @param value Verification preference. */
+        auto SetOption(VerifySsl const& value) -> void { SetVerifySsl(value); }
+
+        /** @brief Replace TLS configuration. @param value Owned TLS options. */
+        auto SetOption(SslOptions const& value) -> void { SetSslOptions(value); }
+
         /** @brief Forward a Multipart option to its setter. @param value Option to apply. */
         auto SetOption(Multipart const& value) -> void { SetMultipart(value); }
 
@@ -762,6 +859,16 @@ export namespace mcr {
             auto protocol{ m_url.Str().substr(0, m_url.Str().find(':')) };
             std::ranges::transform(protocol, protocol.begin(), [](unsigned char ch) { return static_cast<char>(std::tolower(ch)); });
             setOption(CURLOPT_PROXY, m_proxies.Has(protocol) ? m_proxies[protocol].c_str() : nullptr);
+            if (m_proxies.Has(protocol) && m_proxy_auth.Has(protocol)) {
+                // CURLOPT_PROXYUSERNAME/PASSWORD expect raw bytes, unlike credentials inside a proxy URL.
+                auto const username{ util::url_decode(m_proxy_auth.GetUsernameUnderlying(protocol)) };
+                auto const password{ util::url_decode(m_proxy_auth.GetPasswordUnderlying(protocol)) };
+                setOption(CURLOPT_PROXYUSERNAME, username.c_str());
+                setOption(CURLOPT_PROXYPASSWORD, password.c_str());
+            } else {
+                setOption(CURLOPT_PROXYUSERNAME, static_cast<char const*>(nullptr));
+                setOption(CURLOPT_PROXYPASSWORD, static_cast<char const*>(nullptr));
+            }
             char const* no_proxy{ nullptr };
             if (m_proxies.Has("no_proxy")) {
                 no_proxy = m_proxies["no_proxy"].c_str();
@@ -818,6 +925,10 @@ export namespace mcr {
 
         /** @brief Reset method state and prepare a complete transfer. @param method HTTP method. @param download Whether to bypass stored content and body consumers. */
         auto prepare(std::string_view method, bool download = false) -> void {
+            if (m_in_transfer || (m_multi_owner && !m_multi_preparing)) {
+                throw std::logic_error{ "mcr::Session: handle is in use by a transfer or MultiPerform." };
+            }
+            m_method = method;
             clearCurlContent();
             setOption(CURLOPT_UPLOAD, 0L);
             setOption(CURLOPT_NOBODY, 0L);
@@ -879,7 +990,9 @@ export namespace mcr {
         }
 
         /** @brief Execute the prepared easy handle and snapshot its result. @return Completed response. */
-        auto perform() -> Response { return Complete(curl_easy_perform(m_curl->handle)); }
+        auto perform() -> Response;
+        /** @brief Reprepare the current method and continue downstream interceptors. @return Downstream response. */
+        auto proceed() -> Response;
 
         /** @brief Receive body bytes without allowing C++ exceptions through curl. */
         static auto writeCallback(char* data, std::size_t size, std::size_t count, void* context) noexcept -> std::size_t {
@@ -974,6 +1087,138 @@ export namespace mcr {
             }
             return 0;
         }
+    };
+
+    /**
+     * @brief Execute sessions concurrently on one curl multi handle and return registration-order responses.
+     * @note Sessions belong to one batch until removed or the batch is destroyed. Access a batch from one
+     * caller at a time. Batch interceptors run instead of individual Session interceptors, as in cpr.
+     * Membership changes should use AddSession/RemoveSession; edits through GetSessions are validated
+     * before the next batch operation. A moved-from batch can be reused.
+     */
+    class MultiPerform {
+    public:
+        /** @brief Per-session HTTP method, or UNDEFINED until a batch method is selected. */
+        enum class HttpMethod : std::uint8_t {
+            UNDEFINED,
+            GET_REQUEST,
+            POST_REQUEST,
+            PUT_REQUEST,
+            DELETE_REQUEST,
+            PATCH_REQUEST,
+            HEAD_REQUEST,
+            OPTIONS_REQUEST,
+            DOWNLOAD_REQUEST
+        };
+        using Sessions = std::vector<std::pair<std::shared_ptr<Session>, HttpMethod>>; ///< Ordered registrations.
+
+    private:
+        friend InterceptorMulti;
+        using DownloadTarget = std::variant<WriteCallback, std::reference_wrapper<std::ofstream>>;
+        Sessions                                       m_sessions;           ///< Sessions and their current methods.
+        std::vector<std::weak_ptr<Session>>            m_claimed;            ///< Claims used to release ownership after mutable list edits.
+        std::unique_ptr<CurlMultiHolder>               m_multi;              ///< Owned multi handle, allocated lazily after moving out.
+        std::unordered_map<Session*, DownloadTarget>   m_downloads;          ///< Destinations for the current batch request.
+        std::vector<std::shared_ptr<InterceptorMulti>> m_interceptors;       ///< Batch interceptor chain.
+        std::size_t                                    m_next_interceptor{}; ///< Next interceptor for nested retries.
+        std::size_t                                    m_request_depth{};    ///< Active request frames.
+        bool                                           m_transferring{};     ///< True only while easy handles are attached to the multi handle.
+
+    public:
+        /** @brief Create an empty batch. */
+        MultiPerform();
+        MultiPerform(MultiPerform const&)                    = delete;
+        auto operator=(MultiPerform const&) -> MultiPerform& = delete;
+        /** @brief Move an idle batch and transfer session claims. @param other Idle source batch. @pre Neither batch is executing. */
+        MultiPerform(MultiPerform&& other) noexcept;
+        /** @brief Replace an idle batch and transfer session claims. @param other Idle source batch. @return This batch. @pre Neither batch is executing. */
+        auto operator=(MultiPerform&& other) noexcept -> MultiPerform&;
+        /** @brief Release all session claims. @pre No batch request is executing. */
+        ~MultiPerform();
+        /** @brief Register a session in this batch. @param session Nonnull, unowned session. @param method Initial method. @throws std::invalid_argument If null, duplicated, or incompatible with the batch. */
+        auto               AddSession(std::shared_ptr<Session> const& session, HttpMethod method = HttpMethod::UNDEFINED) -> void;
+        /** @brief Remove an existing registration and release its claim. @param session Registered session. @throws std::invalid_argument If absent. */
+        auto               RemoveSession(std::shared_ptr<Session> const& session) -> void;
+        /** @brief Access registrations while no network transfer is active. @return Ordered mutable registrations, including methods. */
+        [[nodiscard]] auto GetSessions() -> Sessions&;
+
+        /** @brief Inspect registrations. @return Ordered registrations. */
+        [[nodiscard]] auto GetSessions() const noexcept -> Sessions const& { return m_sessions; }
+
+        /** @brief Append a batch interceptor while idle. @param interceptor Nonnull interceptor. */
+        auto AddInterceptor(std::shared_ptr<InterceptorMulti> const& interceptor) -> void;
+        /** @brief Execute each session's selected HTTP method. @return Responses in registration order, including transport failures. */
+        auto Perform() -> std::vector<Response>;
+        /** @brief Execute GET for all registered sessions. @return Responses in registration order. */
+        auto Get() -> std::vector<Response>;
+        /** @brief Execute DELETE for all registered sessions. @return Responses in registration order. */
+        auto Delete() -> std::vector<Response>;
+        /** @brief Execute PUT for all registered sessions. @return Responses in registration order. */
+        auto Put() -> std::vector<Response>;
+        /** @brief Execute HEAD for all registered sessions. @return Responses in registration order. */
+        auto Head() -> std::vector<Response>;
+        /** @brief Execute OPTIONS for all registered sessions. @return Responses in registration order. */
+        auto Options() -> std::vector<Response>;
+        /** @brief Execute PATCH for all registered sessions. @return Responses in registration order. */
+        auto Patch() -> std::vector<Response>;
+        /** @brief Execute POST for all registered sessions. @return Responses in registration order. */
+        auto Post() -> std::vector<Response>;
+
+        /** @brief Download once per registered session. @tparam Args Destination types. @param args Callbacks or borrowed streams in session order. @return Download responses. */
+        template <typename... Args>
+        auto Download(Args&&... args) -> std::vector<Response> {
+            checkDownloadCount(sizeof...(args));
+            setHttpMethod(HttpMethod::DOWNLOAD_REQUEST);
+            return PerformDownload(std::forward<Args>(args)...);
+        }
+
+        /** @brief Download sessions already marked DOWNLOAD_REQUEST. @tparam Args Destination types. @param args One destination per session. @return Download responses. */
+        template <typename... Args>
+        auto PerformDownload(Args&&... args) -> std::vector<Response> {
+            checkDownloadCount(sizeof...(args));
+            validateDownloads();
+            m_downloads.clear();
+            try {
+                std::size_t index{};
+                (setDownloadTarget(index++, std::forward<Args>(args)), ...);
+                return Perform();
+            } catch (...) {
+                m_downloads.clear();
+                throw;
+            }
+        }
+
+    private:
+        /** @brief Reject mutation or recursion during an attached curl transfer. */
+        auto checkIdleTransfer() const -> void;
+        /** @brief Validate mutable registrations and refresh exclusive session claims. */
+        auto synchronizeSessions() -> void;
+        /** @brief Release claims without dereferencing sessions removed through mutable access. */
+        auto releaseSessions() noexcept -> void;
+        /** @brief Bind existing claims to this batch after a move or synchronization. */
+        auto rebindSessions() noexcept -> void;
+        /** @brief Validate one destination per session. @param count Number supplied by the caller. */
+        auto checkDownloadCount(std::size_t count) -> void;
+        /** @brief Require each registration to select DOWNLOAD_REQUEST. */
+        auto validateDownloads() const -> void;
+        /** @brief Copy a download consumer. @param index Registration index. @param write Download callback. */
+        auto setDownloadTarget(std::size_t index, WriteCallback const& write) -> void;
+        /** @brief Borrow a download stream. @param index Registration index. @param file Output stream. */
+        auto setDownloadTarget(std::size_t index, std::ofstream& file) -> void;
+
+        /** @brief Unwrap a borrowed stream. @param index Registration index. @param file Output stream reference. */
+        auto setDownloadTarget(std::size_t index, std::reference_wrapper<std::ofstream> file) -> void { setDownloadTarget(index, file.get()); }
+
+        /** @brief Select one method for all registrations. @param method Requested HTTP method. */
+        auto setHttpMethod(HttpMethod method) -> void;
+        /** @brief Validate the whole batch, then prepare each easy handle. */
+        auto prepareSessions() -> void;
+        /** @brief Enter the remaining interceptor chain or perform transfers. @return Ordered responses. */
+        auto makeRequest() -> std::vector<Response>;
+        /** @brief Attach, drive and detach prepared handles. @return Ordered transfer snapshots. */
+        auto runPrepared() -> std::vector<Response>;
+        /** @brief Reprepare and continue a batch from an interceptor. @return Downstream responses. */
+        auto proceed() -> std::vector<Response>;
     };
 
 } // namespace mcr

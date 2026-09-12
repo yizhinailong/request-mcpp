@@ -17,6 +17,8 @@
 
 import std;
 import mcr.session;
+import mcr.interceptor;
+import mcr.multiperform;
 import mcr.util;
 
 static_assert(!std::is_copy_constructible_v<mcr::Session> && !std::is_move_constructible_v<mcr::Session>);
@@ -83,6 +85,7 @@ namespace {
         Socket                    m_listener{ socket(AF_INET, SOCK_STREAM, IPPROTO_TCP) };
         std::string               m_url;
         std::atomic_int           m_connections{};
+        std::atomic_int           m_barrier_arrivals{};
         std::mutex                m_failure_mutex;
         std::exception_ptr        m_failure;
         std::vector<std::jthread> m_clients;
@@ -199,7 +202,7 @@ namespace {
             return true;
         }
 
-        static auto serve(NativeSocket socket, std::stop_token stop) -> void {
+        auto serve(NativeSocket socket, std::stop_token stop) -> void {
             std::string pending;
             while (!stop.stop_requested()) {
                 std::string request_line;
@@ -257,7 +260,21 @@ namespace {
                     pending.erase(0, static_cast<std::size_t>(length));
                 }
                 std::string status{ "200 OK" }, output{ "Hello session!" }, extra;
-                if (target.starts_with("/echo")) {
+                if (target == "/barrier") {
+                    ++m_barrier_arrivals;
+                    auto const deadline{ std::chrono::steady_clock::now() + 2s };
+                    while (m_barrier_arrivals.load() < 2 && std::chrono::steady_clock::now() < deadline && !stop.stop_requested()) {
+                        std::this_thread::sleep_for(1ms);
+                    }
+                    if (m_barrier_arrivals.load() < 2) {
+                        status = "503 Requests Were Not Concurrent";
+                    }
+                } else if (target.ends_with("/proxy-auth")) {
+                    if (headers["Proxy-Authorization"] != "Basic dSRlcjpwQHNz") {
+                        status = "407 Proxy Authentication Required";
+                        extra  = "Proxy-Authenticate: Basic realm=\"local-test\"\r\n";
+                    }
+                } else if (target.starts_with("/echo")) {
                     output = body;
                 } else if (target == "/redirect" || target == "/loop") {
                     status = "302 Found";
@@ -279,7 +296,7 @@ namespace {
                     status = "206 Partial Content";
                     output = "2345";
                 }
-                for (std::string const name : { "Cookie", "User-Agent", "Authorization", "X-Custom", "X-Empty", "Accept-Encoding", "Content-Type", "Transfer-Encoding", "Range", "Expect" }) {
+                for (std::string const name : { "Cookie", "User-Agent", "Authorization", "Proxy-Authorization", "X-Custom", "X-Empty", "Accept-Encoding", "Content-Type", "Transfer-Encoding", "Range", "Expect" }) {
                     extra += "X-Request-" + name + ": " + headers[name] + "\r\n";
                 }
                 extra += std::format("X-Method: {}\r\nX-Target: {}\r\n", method, target);
@@ -670,6 +687,255 @@ namespace {
     }
 } // namespace
 
+namespace {
+    /** @brief Expose continuation helpers to small test interceptor functions. */
+    class FunctionalInterceptor : public mcr::Interceptor {
+    public:
+        using Interceptor::Proceed;
+        std::function<mcr::Response(mcr::Session&)> action;
+
+        explicit FunctionalInterceptor(decltype(action) value) : action{ std::move(value) } {}
+
+        auto Intercept(mcr::Session& session) -> mcr::Response override { return action(session); }
+    };
+
+    class FunctionalMultiInterceptor : public mcr::InterceptorMulti {
+    public:
+        using InterceptorMulti::PrepareDownloadSession;
+        using InterceptorMulti::Proceed;
+        std::function<std::vector<mcr::Response>(mcr::MultiPerform&)> action;
+
+        explicit FunctionalMultiInterceptor(decltype(action) value) : action{ std::move(value) } {}
+
+        auto Intercept(mcr::MultiPerform& multi) -> std::vector<mcr::Response> override { return action(multi); }
+    };
+
+    template <typename Fn>
+    auto rejects(Fn&& action) -> bool {
+        try {
+            action();
+        } catch (std::logic_error const&) {
+            return true;
+        }
+        return false;
+    }
+
+    auto make_session(HttpServer const& server, std::string_view path = "/hello") -> std::shared_ptr<mcr::Session> {
+        auto result{ std::make_shared<mcr::Session>() };
+        configure(*result, server, path);
+        return result;
+    }
+
+    auto check_proxy_auth(HttpServer const& server) -> bool {
+        mcr::EncodedAuthentication encoded{ "u$er", "p@ss" };
+        bool                       passed{ check(encoded.GetUsername() == "u%24er" && encoded.GetPassword() == "p%40ss", "credential accessors must retain cpr's percent-encoded storage") };
+        mcr::ProxyAuthentication   auth{
+            { "http", encoded }
+        };
+        passed &= check(auth.Has("http") && !auth.Has("HTTP") && auth.GetUsername("absent").empty() && auth.Has("absent"), "proxy lookup must retain exact keys and insertion semantics");
+        passed &= check(rejects([&] { (void)std::as_const(auth).GetPasswordUnderlying("missing"); }), "const secure credential lookup must reject absent protocols");
+        mcr::Session session;
+        configure(session, server);
+        session.SetUrl(mcr::Url{ "http://proxy-target.test.invalid/proxy-auth" });
+        session.SetProxies({
+            {     "http", server.Url("").Str() },
+            { "no_proxy",                   "" }
+        });
+        session.SetOption(auth);
+        auto response{ session.Get() };
+        passed &= check(response.status_code == 200 && response.header["X-Request-Proxy-Authorization"] == "Basic dSRlcjpwQHNz", "special characters must be decoded before curl encodes HTTP proxy authentication");
+        session.SetProxyAuth({});
+        response  = session.Get();
+        passed   &= check(response.status_code == 407 && response.header["X-Request-Proxy-Authorization"].empty(), "replacing proxy credentials must remove the previous authorization");
+        session.SetProxyAuth(mcr::ProxyAuthentication{
+            { "http", mcr::EncodedAuthentication{ "u$er", "p@ss" } }
+        });
+        passed &= check(session.Get().status_code == 200, "proxy authentication must recover after credentials are restored");
+        session.SetUrl(server.Url());
+        session.SetProxies({
+            { "http", "" }
+        });
+        passed &= check(session.Get().header["X-Request-Proxy-Authorization"].empty(), "direct origin requests must never receive proxy credentials");
+        return passed;
+    }
+
+    auto check_interceptors(HttpServer const& server) -> bool {
+        using I = FunctionalInterceptor;
+        mcr::Session session;
+        configure(session, server, "/echo");
+        std::vector<int> order;
+        session.AddInterceptor(std::make_shared<I>([&](mcr::Session& current) {
+            order.push_back(1);
+            current.SetBody(mcr::Body{ "from interceptor" });
+            (void)I::Proceed(current);
+            auto response{ I::Proceed(current) };
+            order.push_back(3);
+            response.status_code = 299;
+            return response;
+        }));
+        session.AddInterceptor(std::make_shared<I>([&](mcr::Session& current) { order.push_back(2); return I::Proceed(current); }));
+        auto response{ session.Post() };
+        bool passed{ check(response.status_code == 299 && response.text == "from interceptor" && order == std::vector<int>{ 1, 2, 2, 3 }, "retries must execute only downstream interceptors and see option changes") };
+        order.clear();
+        passed &= check(session.Post().status_code == 299 && order == std::vector<int>{ 1, 2, 2, 3 }, "a new request must restart the full chain");
+        passed &= check(rejects([&] { session.AddInterceptor(nullptr); }), "null interceptors must be rejected");
+
+        mcr::Session synthetic;
+        synthetic.SetUrl(mcr::Url{ "http://[" });
+        synthetic.AddInterceptor(std::make_shared<I>([](auto&) { mcr::Response result; result.status_code = 204; return result; }));
+        passed &= check(synthetic.Get().status_code == 204, "a synthetic response must short circuit before curl performs the request");
+
+        mcr::Session throwing;
+        configure(throwing, server);
+        int attempts{};
+        throwing.AddInterceptor(std::make_shared<I>([&](mcr::Session& current) -> mcr::Response {
+            if (++attempts == 1) {
+                throw std::runtime_error{ "interceptor failure" };
+            }
+            passed &= check(rejects([&] { current.AddInterceptor(nullptr); }), "active interceptor chains must reject modifications");
+            return I::Proceed(current);
+        }));
+        try {
+            (void)throwing.Get();
+            passed &= check(false, "interceptor exceptions must propagate");
+        } catch (std::runtime_error const&) {}
+        passed &= check(throwing.Get().text == "Hello session!" && attempts == 2, "interceptor cursor must recover after an exception");
+
+        mcr::Session changed;
+        configure(changed, server, "/echo");
+        changed.AddInterceptor(std::make_shared<I>([](mcr::Session& current) {
+            current.SetBody(mcr::Body{ "switched" });
+            return I::Proceed(current, I::ProceedHttpMethod::POST_REQUEST);
+        }));
+        response  = changed.Head();
+        passed   &= check(response.text == "switched" && response.header["X-Method"] == "POST", "interceptors must be able to replace the original method");
+
+        mcr::Session download;
+        configure(download, server);
+        download.AddInterceptor(std::make_shared<I>([](mcr::Session& current) { (void)I::Proceed(current); return I::Proceed(current); }));
+        std::string bytes;
+        response  = download.Download(mcr::WriteCallback{ [&](auto data, auto) { bytes += data; return true; } });
+        passed   &= check(!response.error && response.text.empty() && bytes == "Hello session!Hello session!", "download retries must retain their callback destination");
+        TempFile temporary;
+        {
+            std::ofstream file{ temporary.path, std::ios::binary };
+            response = download.Download(file);
+        }
+        passed &= check(!response.error && std::filesystem::file_size(temporary.path) == 28, "download retries must retain their file destination");
+        auto asynchronous{ make_session(server) };
+        asynchronous->AddInterceptor(std::make_shared<I>([](mcr::Session& current) { auto result{ I::Proceed(current) }; result.status_code = 201; return result; }));
+        passed &= check(asynchronous->GetAsync().Get().status_code == 201, "async methods must run the same interceptor chain");
+        return passed;
+    }
+
+    auto check_multi(HttpServer const& server) -> bool {
+        using M = mcr::MultiPerform;
+        using H = M::HttpMethod;
+        auto first{ make_session(server, "/barrier") };
+        auto second{ make_session(server, "/barrier") };
+        M    multi;
+        multi.AddSession(first);
+        multi.AddSession(second);
+        bool passed{ check(first.use_count() == 2 && second.use_count() == 2, "batches must own registered sessions") };
+        passed &= check(rejects([&] { (void)multi.Perform(); }) && rejects([&] { multi.AddSession(first); }) && rejects([&] { multi.AddSession(nullptr); }), "undefined methods and invalid registrations must fail before transfer");
+        passed &= check(rejects([&] { (void)first->Get(); }), "registered sessions must reject easy-perform outside their batch");
+        M other;
+        passed &= check(rejects([&] { other.AddSession(first); }) && rejects([&] { other.RemoveSession(first); }), "ownership must survive failed registration and removal in another batch");
+        auto responses{ multi.Get() };
+        passed &= check(responses.size() == 2 && responses[0].status_code == 200 && responses[1].status_code == 200, "both requests must reach the fixture barrier concurrently");
+        first->SetUrl(server.Url("/slow"));
+        second->SetUrl(server.Url("/echo"));
+        second->SetBody(mcr::Body{ "second response" });
+        multi.GetSessions()[0].second  = H::GET_REQUEST;
+        multi.GetSessions()[1].second  = H::POST_REQUEST;
+        responses                      = multi.Perform();
+        passed                        &= check(responses[0].text == "Hello session!" && responses[1].text == "second response" && responses[1].header["X-Method"] == "POST", "mixed-method batch results must retain registration order despite completion order");
+        second->SetUrl(mcr::Url{ "http://[" });
+        responses  = multi.Perform();
+        passed    &= check(responses.size() == 2 && !responses[0].error && responses[1].error.code == mcr::ErrorCode::URL_MALFORMAT, "failed transfers must still occupy their registered response position");
+        first->SetUrl(server.Url());
+        second->SetUrl(server.Url());
+        first->SetWriteCallback(mcr::WriteCallback{ [](auto, auto) -> bool { throw std::runtime_error{ "batch callback" }; } });
+        try {
+            (void)multi.Get();
+            passed &= check(false, "batch callback exceptions must propagate");
+        } catch (std::runtime_error const& error) {
+            passed &= check(error.what() == "batch callback"sv, "batch callback exceptions must retain their identity");
+        }
+        first->SetWriteCallback({});
+        passed &= check(multi.Get().size() == 2, "all handles must detach after a callback exception so the batch can be reused");
+        multi.RemoveSession(second);
+        passed &= check(!second->Get().error && second.use_count() == 1, "removal must immediately release the session and permit easy requests");
+        M moved{ std::move(multi) };
+        passed &= check(moved.Get().size() == 1 && rejects([&] { (void)first->Get(); }), "moving a batch must transfer its session claims");
+        multi.AddSession(second);
+        passed &= check(multi.Get().size() == 1, "moved-from batches must be reusable");
+        moved   = std::move(multi);
+        passed &= check(!first->Get().error && moved.Get().size() == 1, "move assignment must release old destination claims and retain source claims");
+        moved.GetSessions().push_back(moved.GetSessions().front());
+        passed &= check(rejects([&] { (void)moved.Get(); }), "mutable registration edits must be checked for duplicate handles");
+        moved.GetSessions().pop_back();
+        moved.RemoveSession(second);
+        passed &= check(moved.Get().empty() && moved.Download().empty(), "empty batches and downloads must succeed without indexing nonexistent sessions");
+        return passed;
+    }
+
+    auto check_multi_interceptors_and_downloads(HttpServer const& server) -> bool {
+        using M = mcr::MultiPerform;
+        using I = FunctionalMultiInterceptor;
+        auto first{ make_session(server) };
+        auto second{ make_session(server) };
+        M    multi;
+        multi.AddSession(first, M::HttpMethod::DOWNLOAD_REQUEST);
+        multi.AddSession(second, M::HttpMethod::DOWNLOAD_REQUEST);
+        int calls{};
+        multi.AddInterceptor(std::make_shared<I>([&](M& current) { ++calls; (void)I::Proceed(current); return I::Proceed(current); }));
+        std::vector<int> order;
+        multi.AddInterceptor(std::make_shared<I>([&](M& current) { order.push_back(2); auto results{ I::Proceed(current) }; results[0].status_code = 299; return results; }));
+        std::string        bytes;
+        mcr::WriteCallback writer{ [&](auto data, auto) { bytes += data; return true; } };
+        TempFile           temporary;
+        bool               passed{ check(rejects([&] { (void)multi.Download(writer); }), "download destinations must match the registration count") };
+        {
+            std::ofstream file{ temporary.path, std::ios::binary };
+            auto          responses{ multi.PerformDownload(writer, std::ref(file)) };
+            passed &= check(responses.size() == 2 && responses[0].status_code == 299 && responses[0].text.empty() && calls == 1 && order == std::vector<int>{ 2, 2 }, "batch retry chains must preserve ordered download responses");
+        }
+        passed &= check(bytes == "Hello session!Hello session!" && std::filesystem::file_size(temporary.path) == 28, "batch retries must preserve callback and borrowed stream destinations");
+        passed &= check(rejects([&] { (void)multi.Perform(); }), "completed download batches must not retain borrowed destination pointers");
+        auto results{ multi.Get() };
+        passed &= check(results[0].text == "Hello session!" && results[1].text == "Hello session!", "ordinary requests must work after downloads and restart batch interceptors");
+        first->AddInterceptor(std::make_shared<FunctionalInterceptor>([](auto&) { mcr::Response response; response.status_code = 400; return response; }));
+        passed &= check(multi.Get()[0].status_code == 299, "batch requests must use batch interceptors instead of individual session interceptors");
+        M    throwing;
+        auto third{ make_session(server) };
+        throwing.AddSession(third);
+        int attempts{};
+        throwing.AddInterceptor(std::make_shared<I>([&](M& current) -> std::vector<mcr::Response> {
+            if (++attempts == 1) {
+                throw std::runtime_error{ "multi interceptor" };
+            }
+            return I::Proceed(current);
+        }));
+        try {
+            (void)throwing.Get();
+            passed &= check(false, "batch interceptor exceptions must propagate");
+        } catch (std::runtime_error const&) {}
+        passed &= check(throwing.Get()[0].status_code == 200 && attempts == 2, "batch interceptor cursors must recover after exceptions");
+        M    converted;
+        auto fourth{ make_session(server) };
+        converted.AddSession(fourth);
+        converted.AddInterceptor(std::make_shared<I>([&](M& current) {
+            current.GetSessions()[0].second = M::HttpMethod::DOWNLOAD_REQUEST;
+            I::PrepareDownloadSession(current, 0, writer);
+            return I::Proceed(current);
+        }));
+        bytes.clear();
+        passed &= check(converted.Get()[0].text.empty() && bytes == "Hello session!", "batch interceptors must be able to select download methods and destinations");
+        return passed;
+    }
+} // namespace
+
 auto main() -> int {
     if (curl_global_init(CURL_GLOBAL_DEFAULT) != CURLE_OK) {
         return 1;
@@ -685,6 +951,10 @@ auto main() -> int {
         passed &= check_multipart_files(server);
         passed &= check_pool_and_resolve(server);
         passed &= check_downloads_and_async(server);
+        passed &= check_proxy_auth(server);
+        passed &= check_interceptors(server);
+        passed &= check_multi(server);
+        passed &= check_multi_interceptors_and_downloads(server);
         mcr::Async::Cleanup();
         server.Check();
     } catch (std::exception const& error) {

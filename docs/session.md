@@ -1,7 +1,7 @@
-# Session 初始实现
+# Session、TLS、拦截器和批量请求
 
-参考 `cpr/include/cpr/session.h`、`cpr/session.cpp`、`cpr/response.cpp` 和
-`test/session_tests.cpp`，将请求流程接入现有 C++23 模块。
+参考本地 cpr 的 `include/cpr/session.h`、`ssl_options.h`、`proxyauth.h`、
+`interceptor.h`、`multiperform.h` 及对应实现和测试，将请求流程接入 C++23 模块。
 
 ```cpp
 import std;
@@ -32,10 +32,93 @@ auto main() -> int {
   DNS 映射、代理地址、连接池、读写/进度/调试/SSE 回调。
 - `Response` 的正文、最终响应头、原始响应头、Cookie、错误、URL、计时、
   字节数、连接地址和证书信息。
+- `ProxyAuthentication`、`VerifySsl` / `SslOptions`、单请求及批量拦截器、
+  `MultiPerform` 并发请求和下载。
 
-尚未移植 `ProxyAuthentication`、`VerifySsl` / `SslOptions`、`Interceptor` 和
-`MultiPerform` 的集成接口。HTTPS 使用 libcurl 默认的证书及主机名校验；
-高级 curl 配置可通过 `GetCurlHolder()` 访问。
+TLS 和代理认证：
+
+```cpp
+mcr::Session session;
+session.SetUrl(mcr::Url{ "https://localhost:8443/hello" });
+session.SetSslOptions(mcr::Ssl(
+    mcr::ssl::CaInfo{ "test-root.pem" },
+    mcr::ssl::TLSv1_2{},
+    mcr::ssl::MaxTLSv1_3{}
+));
+session.SetProxies(mcr::Proxies{ { "https", "http://127.0.0.1:8080" } });
+session.SetProxyAuth(mcr::ProxyAuthentication{
+    { "https", mcr::EncodedAuthentication{ "proxy-user", "proxy-password" } }
+});
+auto response = session.Get();
+```
+
+- 默认启用证书链和主机名校验。`SetVerifySsl` 同时切换两项；
+  `ssl::VerifyPeer` / `ssl::VerifyHost` 可分别配置。
+- 支持证书和私钥文件/内存数据、密码、CA 文件/目录/内存数据、公钥固定、CRL、
+  OCSP 状态校验、TLS 版本上下限、ALPN、密码套件、会话缓存及吊销检查选项。
+- `SetSslOptions` 替换整套配置，空字段清除旧凭据、CA blob 和公钥固定。
+  `SslOptions::SetOption` 在文件和内存来源之间采用最后指定的选项。
+  `CaBuffer` 与 `CaInfoBlob` 均通过 `CURLOPT_CAINFO_BLOB` 复制数据；
+  证书和私钥 blob 也使用 curl 的复制标志，配置对象无需活到请求结束。
+- 各 TLS 后端支持的格式和功能不同。不支持的可选功能保持默认值时被容忍，
+  显式请求时由 curl 返回错误或由 setter 抛出异常。
+  setter 失败可能已应用前面的选项；修正后应重新设置完整配置。
+- Schannel 的 P12 文件可通过 `SslOptions::cert_file`、`cert_type = "P12"`
+  和 `key_pass` 指定；内存 P12 使用 `cert_blob` 并清空 `cert_file`。
+  本机 curl 8.21 / Schannel 对测试生成的 P12 返回 `SEC_E_UNKNOWN_CREDENTIALS`，
+  因此本次未验证双向 TLS 成功握手。库保留该传输错误；
+  curl 上游也记录了相关的 [Schannel 客户端证书限制](https://github.com/curl/curl/issues/17626)。
+- 代理认证按目标 URL 的协议选择，替换映射或不再使用对应代理时清除旧凭据。
+  `EncodedAuthentication` 的访问器返回百分号编码后的值；交给 curl 的独立
+  用户名/密码选项前解码，确保 `$`、`@` 等字符按原始值认证。
+
+拦截器在注册顺序上进入，并可修改选项、返回合成响应或多次调用 `Proceed` 重试。
+重试只进入当前拦截器之后的链；新请求及异常后的请求从链首开始。
+下载重试保留当前下载目标，但不会自动回卷上传源或下载流。
+
+```cpp
+class RequestHeader final : public mcr::Interceptor {
+public:
+    auto Intercept(mcr::Session& session) -> mcr::Response override {
+        session.UpdateHeader(mcr::Header{ { "X-Client", "mcr" } });
+        return Proceed(session);
+    }
+};
+
+// session 为上面的 Session；异步请求也经过同一条拦截链。
+session.AddInterceptor(std::make_shared<RequestHeader>());
+```
+
+并发批量请求：
+
+```cpp
+auto first = std::make_shared<mcr::Session>();
+auto second = std::make_shared<mcr::Session>();
+first->SetUrl(mcr::Url{ "http://127.0.0.1:8080/first" });
+second->SetUrl(mcr::Url{ "http://127.0.0.1:8080/second" });
+mcr::MultiPerform multi;
+multi.AddSession(first);
+multi.AddSession(second);
+auto responses = multi.Get(); // 并发传输；结果仍依次对应 first、second。
+multi.RemoveSession(first);  // 释放归属后，可以再次直接调用 first->Get()。
+```
+
+- `Get` 等方法为全批次选择同一 HTTP 方法；`AddSession(session, HttpMethod::...)`
+  配合 `Perform()` 可为各 Session 指定不同方法。未指定方法时 `Perform()` 抛出异常。
+- `Download` 接收与 Session 数量相同、顺序对应的 `WriteCallback` 或
+  `std::ofstream&`（也支持 `std::ref`）。`PerformDownload` 要求方法已设为
+  `DOWNLOAD_REQUEST`。空批次允许零个参数；下载与普通请求不能在同一批次混合执行。
+  注册时 `UNDEFINED` 不参与混合检查，执行前检查最终方法组合。
+- Session 从注册到移除或批次销毁期间归该批次使用，不能重复注册、跨批次注册或
+  直接启动 Session 请求；可以在传输前修改配置。推荐用 `AddSession` / `RemoveSession`
+  修改成员，通过 `GetSessions()` 修改的列表会在下一次批次操作前校验并同步归属。
+- `InterceptorMulti::Intercept` 拦截整个批次，`Proceed` 重新准备并执行下游链。
+  可以修改 `GetSessions()` 中的方法，再用 `PrepareDownloadSession` 指定下载目标。
+  批量请求沿用 cpr 的行为，不执行各 Session 的单请求拦截器。
+- 网络错误保留在对应位置的 `Response::error` 中；无效注册、curl multi 错误或
+  用户回调异常会抛出。所有退出路径均解除 easy handle 的挂载，之后批次仍可复用。
+  下载目标在本次调用结束时清除，再次下载必须重新提供目标。
+- 仅允许移动未执行请求的批次；移动后更新 Session 归属，移出后的对象可重新使用。
 
 生命周期与错误约定：
 
@@ -54,6 +137,13 @@ auto main() -> int {
 
 有意区别于 cpr：
 
+- 类型使用 `mcr` 命名空间。为避免模块循环，Session、MultiPerform 及两种拦截器
+  同属 `mcr.session`；`mcr.interceptor`、`mcr.multiperform` 提供转导出入口。
+  总模块 `mcr` 也导出 `mcr.ssl_options` 和 `mcr.proxy_auth`。
+- 公共方法统一为 `Intercept` / `Proceed` 和 `ProxyAuthentication::Has`。
+  TLS 替换、blob 复制、代理凭据解码、批次归属检查和异常恢复采用上述行为。
+- 当前 curl 8.21 依赖不再支持的 SSLv2、SSLv3、NPN 不提供选项。
+  保留 `SslFastStart` 类型；在 curl 8.15 及之后显式启用它会抛出异常。
 - 参数追加到已有 query，且位于 fragment 之前。
 - 每次准备请求都清除上一请求的方法和 curl 内容配置，避免复用时残留；
   保留 Multipart 的 GET 仍使用 GET。HEAD 与 Download 忽略存储的 Content，
@@ -72,4 +162,13 @@ auto main() -> int {
 本地验证：`mcpp build`、`mcpp test`。
 `tests/test_session.cpp` 内置跨 Windows / POSIX 的回环 HTTP 服务，使用系统分配的端口，
 不依赖 Python、外部网络或固定端口。覆盖连接复用、方法切换、上传下载、请求选项、
-重定向、错误恢复、取消、回调异常、SSE、连接池和异步生命周期。
+重定向、错误恢复、取消、回调异常、SSE、连接池、异步生命周期、代理认证、拦截器
+重试、批次归属和下载。并发测试通过必须同时到达两个请求才能应答的服务端屏障验证。
+
+`tests/test_ssl_options.cpp` 检查类型组合、配置替换及本地 HTTPS。
+Windows 上需要 PATH 中的 PowerShell 7.5 或更高版本（.NET 9+），通过
+`tests/fixtures/https_server.ps1` / `.cs` 在运行时生成临时 CA、服务端和客户端证书，
+不会向系统证书库安装信任。覆盖默认拒绝不可信证书、CA 文件/内存、主机名校验、
+公钥固定、TLS 1.2、证书快照、P12 错误密码及凭据清除。
+仅在出现上述精确 Schannel 错误时打印 `SKIP`，保留文件与复制后 blob 的错误一致性检查；
+其余环境要求双向 TLS 成功。非 Windows 当前只运行类型与 setter 检查并显式跳过 HTTPS。
