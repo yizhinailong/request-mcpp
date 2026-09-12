@@ -72,11 +72,13 @@ namespace {
 
     struct Receiver {
         int value{ 10 };
+
         auto Add(int amount) -> int { return value += amount; }
     };
 
     struct MoveOnlyCallable {
         std::unique_ptr<int> value{ std::make_unique<int>(20) };
+
         auto operator()(std::unique_ptr<int> argument) && -> std::unique_ptr<int> {
             *value += *argument;
             return std::move(value);
@@ -154,7 +156,7 @@ namespace {
         }) };
         bool const did_start{ began.wait_for(3s) == std::future_status::ready };
         auto const cancellation{ running.Cancel() };
-        auto running_result{ running.Share() };
+        auto       running_result{ running.Share() };
         release->set_value();
         require(did_start && cancellation == mcr::CancellationResult::success && running_result.get() == 23, "cancelling an active wrapper must not interrupt its callable");
     }
@@ -181,8 +183,8 @@ namespace {
             queued_ran->store(true);
             return 8;
         }) };
-        auto queued_result{ queued.Share() };
-        bool cancelled_before_release{ false };
+        auto         queued_result{ queued.Share() };
+        bool         cancelled_before_release{ false };
         // No singleton access overlaps cleanup. The observer only uses retained future states.
         std::jthread observer{ [&] {
             cancelled_before_release = queued_result.wait_for(3s) == std::future_status::ready && running.WaitFor(0ms) == std::future_status::timeout;
