@@ -10,6 +10,7 @@ export import mcr.callback;
 export import mcr.cert_info;
 export import mcr.cookies;
 export import mcr.curlholder;
+export import mcr.curlmultiholder;
 export import mcr.error;
 export import mcr.interface;
 export import mcr.limit_rate;
