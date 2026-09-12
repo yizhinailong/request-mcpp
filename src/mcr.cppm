@@ -18,6 +18,7 @@ export import mcr.curl_container;
 export import mcr.curlholder;
 export import mcr.curlmultiholder;
 export import mcr.error;
+export import mcr.file;
 export import mcr.http_version;
 export import mcr.interface;
 export import mcr.limit_rate;
