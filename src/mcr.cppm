@@ -9,6 +9,7 @@ export import mcr.async;
 export import mcr.async_wrapper;
 export import mcr.auth;
 export import mcr.bearer;
+export import mcr.buffer;
 export import mcr.callback;
 export import mcr.cert_info;
 export import mcr.connect_timeout;
