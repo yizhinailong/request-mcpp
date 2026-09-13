@@ -9,7 +9,6 @@
 | `mcr.singleton` | `mcr::utils::Singleton<T>` |
 | `mcr.threadpool` | `mcr::utils::ThreadPool` 和 `DEFAULT_THREAD_POOL_*` 常量 |
 | `mcr.async_wrapper` | `mcr::utils::AsyncWrapper<T>`、`mcr::utils::CancellationResult` |
-| `mcr.filesystem` | `mcr::utils::fs`，即 `std::filesystem` 的别名 |
 | `mcr.util` | `mcr::utils::parse_header`、URL 编解码和 curl 回调适配函数 |
 
 ```cpp
@@ -21,13 +20,15 @@ auto result = mcr::utils::AsyncWrapper{ pool.Submit([] { return 42; }) };
 std::println("{}", result.Get());
 
 mcr::utils::SecureString token{ "example-token" };
-mcr::utils::fs::path destination{ "response.bin" };
+std::filesystem::path destination{ "response.bin" };
 auto encoded = mcr::utils::url_encode("hello world");
 ```
 
 迁移调用时，将原 `mcr::util` 下的名称改为 `mcr::utils`，将原 `mcr` 下的
 `ThreadPool`、`Singleton`、`AsyncWrapper`、`CancellationResult`、
-`DEFAULT_THREAD_POOL_*` 和 `fs` 移至 `mcr::utils`。旧命名空间不提供兼容别名。
+`DEFAULT_THREAD_POOL_*` 移至 `mcr::utils`。旧命名空间不提供兼容别名。
+
+文件系统相关代码通过 `import std;` 直接使用 `std::filesystem`。
 
 库级异步入口继续使用 `mcr::async`、`mcr::Async` 和 `mcr::GlobalThreadPool`。
 `mcr::AsyncResponse` 是 `mcr::utils::AsyncWrapper<mcr::Response>` 的别名。

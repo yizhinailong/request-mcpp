@@ -1,14 +1,12 @@
 /**
  * @file test_version.cpp
- * @brief Check generated metadata and the filesystem alias through the public entry module.
+ * @brief Check generated metadata through the public entry module.
  */
 #include <curl/curlver.h>
 import std;
 import mcr;
 import mcr.version;
-import mcr.filesystem;
 
-static_assert(std::same_as<mcr::utils::fs::path, std::filesystem::path>);
 static_assert(mcr::VERSION_NUM == (mcr::VERSION_MAJOR << 16 | mcr::VERSION_MINOR << 8 | mcr::VERSION_PATCH));
 static_assert(mcr::CURL_VERSION_NUM == LIBCURL_VERSION_NUM);
 static_assert(!mcr::VERSION.empty());

@@ -10,7 +10,7 @@ Source files are grouped by responsibility. Public module names are independent 
 
 - `src/mcr.cppm`: library entry module re-exporting the public interfaces.
 - `src/options/`: request transfer configuration in namespace `mcr::options`, including verbosity, timeouts, redirects, protocol selection, authentication, proxies, and TLS options. Each option keeps its existing module name, such as `mcr.verbose` or `mcr.timeout`.
-- `src/utils/`: reusable utilities in namespace `mcr::utils` for secure strings, singleton lifecycle, thread pools, future wrappers, and the filesystem alias `mcr::utils::fs`, alongside HTTP parsing and curl callback helpers. Utility modules retain their existing module names, such as `mcr.threadpool` and `mcr.util`.
+- `src/utils/`: reusable utilities in namespace `mcr::utils` for secure strings, singleton lifecycle, thread pools, and future wrappers, alongside HTTP parsing and curl callback helpers. Utility modules retain their existing module names, such as `mcr.threadpool` and `mcr.util`.
 - `src/curl/`: curl easy/multi handle ownership and SSL context support in namespace `mcr::curl`, including module interfaces and their implementations. These modules retain their existing module names, such as `mcr.curlholder` and `mcr.ssl_ctx`.
 - `src/`: sessions, responses, request data, callbacks, and supporting runtime modules.
 - `tests/test_*.cpp`: standalone tests, with shared local HTTP fixtures under `tests/fixtures/`.
@@ -39,6 +39,8 @@ clang-format -i src/main.cpp tests/test_smoke.cpp
 ```
 
 Preserve C++23 module style, including `import std;`. Use lowercase filenames with underscores, such as `argument_parser.cpp`, and keep implementation in `src/`. No separate lint configuration is checked in.
+
+Use `std::filesystem` directly through `import std;`, without a filesystem namespace alias or wrapper module.
 
 Use Doxygen documentation comments: `/** ... */` with `@brief`, `@param`, `@tparam`, `@return`, and `@throws` where applicable, and `///<` for member descriptions.
 

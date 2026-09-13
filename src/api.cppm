@@ -4,7 +4,6 @@
  */
 export module mcr.api;
 export import mcr.session;
-export import mcr.filesystem;
 import std;
 
 namespace mcr::detail {
@@ -635,8 +634,8 @@ export namespace mcr {
      * @note Failed transfers may leave a partial file.
      */
     template <typename... Ts>
-    auto DownloadAsync(utils::fs::path local_path, Ts... options) -> AsyncResponse {
-        return mcr::async([](utils::fs::path path, auto... values) {
+    auto DownloadAsync(std::filesystem::path local_path, Ts... options) -> AsyncResponse {
+        return mcr::async([](std::filesystem::path path, auto... values) {
             std::ofstream file{ path, std::ios::binary | std::ios::trunc };
             auto          response{ Download(file, std::move(values)...) };
             file.close();

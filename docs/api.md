@@ -1,8 +1,8 @@
 # 自由函数与兼容入口
 
-对照本地 cpr 的 `api.h`、`ssl_ctx.h` / `ssl_ctx.cpp`、`filesystem.h` 和
+对照本地 cpr 的 `api.h`、`ssl_ctx.h` / `ssl_ctx.cpp` 和
 `cmake/cprver.h.in` 补齐入口。`import mcr;` 导出所有这些接口；也可以分别导入
-`mcr.api`、`mcr.filesystem`、`mcr.version` 和 `mcr.ssl_ctx`。
+`mcr.api`、`mcr.version` 和 `mcr.ssl_ctx`。
 HTTP 入口保留 cpr 的 `Get`、`Post` 等名称。
 
 | 操作 | 返回值 | 执行方式 |
@@ -13,7 +13,7 @@ HTTP 入口保留 cpr 的 `Get`、`Post` 等名称。
 | `MultiGet` / `MultiPost` / `MultiPut` / `MultiHead` / `MultiDelete` / `MultiOptions` / `MultiPatch` | `std::vector<Response>` | 由 MultiPerform 并发执行，结果保持参数顺序 |
 | 各批量方法的 `Multi*Async` | `std::vector<mcr::utils::AsyncWrapper<Response, true>>` | 独立提交，可分别取消 |
 | `Download(std::ofstream&, ...)` / `Download(WriteCallback const&, ...)` | `Response` | 同步下载，正文交给指定消费者 |
-| `DownloadAsync(mcr::utils::fs::path, ...)` | `AsyncResponse` | 在线程池中打开、下载并关闭目标文件 |
+| `DownloadAsync(std::filesystem::path, ...)` | `AsyncResponse` | 在线程池中打开、下载并关闭目标文件 |
 
 请求选项沿用 Session 的 `SetOption`。传输配置类型位于 `mcr::options`，详见[选项命名空间](options.md)：
 
@@ -80,7 +80,7 @@ auto result = tasks[0].Get();
 
 ```cpp
 auto task = mcr::DownloadAsync(
-    mcr::utils::fs::path{ "response.bin" },
+    std::filesystem::path{ "response.bin" },
     mcr::Url{ "http://127.0.0.1:8080/binary" }
 );
 auto metadata = task.Get();
@@ -100,13 +100,13 @@ curl 的全局初始化、清理和全局线程池生命周期沿用 [Session �
 
 | cpr 入口 | mcr 对应项 |
 | --- | --- |
-| `cpr::fs` | `mcr::utils::fs = std::filesystem` |
+| `cpr::fs` | 直接使用 `std::filesystem` |
 | `CPR_VERSION` | `mcr::VERSION`，`std::string_view` |
 | `CPR_VERSION_MAJOR` / `MINOR` / `PATCH` | `mcr::VERSION_MAJOR` / `VERSION_MINOR` / `VERSION_PATCH` |
 | `CPR_VERSION_NUM` | `mcr::VERSION_NUM`，`0xAABBCC` |
 | `CPR_LIBCURL_VERSION_NUM` | `mcr::CURL_VERSION_NUM`，构建时 curl 头文件版本 |
 
-C++23 始终使用标准 filesystem。模块不导出预处理宏，版本信息改为可用于
+C++23 通过 `import std;` 直接使用 `std::filesystem`。模块不导出预处理宏，版本信息改为可用于
 `static_assert` / `if constexpr` 的 `inline constexpr` 常量。
 `build.mcpp` 从 `mcpp.toml` 的 `[package].version` 生成 `mcr.version`，输出位于
 mcpp 的生成目录；修改版本会重新生成，无需维护第二份版本号。
@@ -143,7 +143,7 @@ curl_easy_setopt(handle, CURLOPT_SSL_CTX_DATA, ca_pem.data());
 - `mcpp build`、`mcpp test`。
 - `tests/test_api.cpp` 复用 `tests/fixtures/http_server.hpp` 的回环服务器，验证所有方法、
   Header 合并、异步所有权、结果类型、异常、真实并发、排队/传输中取消及二进制下载。
-- `tests/test_version.cpp` 通过总入口检查 fs 别名，并将生成常量与 manifest 对照。
+- `tests/test_version.cpp` 通过总入口检查生成常量，并与 manifest 对照。
 - `tests/test_ssl_ctx.cpp` 在 OpenSSL 构建下生成短期自签 CA，检查坏证书、bundle、重复加载
   和实际 trust store 验证；Schannel 构建验证明确的不支持返回值。
   本机还使用现有 vcpkg OpenSSL 3.6.3 单独编译并通过该 OpenSSL 分支测试，

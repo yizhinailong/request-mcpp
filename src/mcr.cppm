@@ -23,7 +23,6 @@ export import mcr.curlholder;
 export import mcr.curlmultiholder;
 export import mcr.error;
 export import mcr.file;
-export import mcr.filesystem;
 export import mcr.http_version;
 export import mcr.interface;
 export import mcr.interceptor;

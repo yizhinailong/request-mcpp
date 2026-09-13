@@ -228,21 +228,21 @@ namespace {
     }
 
     struct TempDirectory {
-        mcr::utils::fs::path path{ mcr::utils::fs::temp_directory_path() / std::format("mcr-api-{}", std::chrono::steady_clock::now().time_since_epoch().count()) };
+        std::filesystem::path path{ std::filesystem::temp_directory_path() / std::format("mcr-api-{}", std::chrono::steady_clock::now().time_since_epoch().count()) };
 
         TempDirectory() {
-            if (!mcr::utils::fs::create_directory(path)) {
+            if (!std::filesystem::create_directory(path)) {
                 throw std::runtime_error{ "Could not create an exclusive test directory." };
             }
         }
 
         ~TempDirectory() {
             std::error_code error;
-            mcr::utils::fs::remove_all(path, error);
+            std::filesystem::remove_all(path, error);
         }
     };
 
-    auto read_file(mcr::utils::fs::path const& path) -> std::string {
+    auto read_file(std::filesystem::path const& path) -> std::string {
         std::ifstream file{ path, std::ios::binary };
         return { std::istreambuf_iterator<char>{ file }, {} };
     }
