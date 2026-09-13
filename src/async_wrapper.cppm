@@ -8,7 +8,9 @@ import std;
 
 export namespace mcr {
 
-    /** @brief Cancellation outcomes retaining cpr's names and numeric values. */
+    /**
+     * @brief Cancellation outcomes retaining cpr's names and numeric values.
+     */
     enum class [[nodiscard]] CancellationResult : std::uint8_t {
         failure           = 0, ///< Reserved for compatibility; the flag-based wrapper does not return it.
         success           = 1, ///< This call changed the cancellation flag from false to true.
@@ -35,7 +37,9 @@ export namespace mcr {
         std::future<RetType> m_future; ///< Exclusively owned future handle.
 
     public:
-        /** @brief Construct an invalid wrapper with no shared future state. */
+        /**
+         * @brief Construct an invalid wrapper with no shared future state.
+         */
         AsyncWrapper() = default;
 
         /**
@@ -61,7 +65,10 @@ export namespace mcr {
             return m_future.get();
         }
 
-        /** @brief Check for a shared future state. @return Whether Get or a wait operation may be called. */
+        /**
+         * @brief Check for a shared future state.
+         * @return Whether Get or a wait operation may be called.
+         */
         [[nodiscard]] auto Valid() const noexcept -> bool {
             return m_future.valid();
         }
@@ -113,7 +120,10 @@ export namespace mcr {
         }
 
     private:
-        /** @brief Reject operations on an invalid future. @param message Diagnostic for the operation. */
+        /**
+         * @brief Reject operations on an invalid future.
+         * @param message Diagnostic for the operation.
+         */
         auto checkValid(char const* message) const -> void {
             if (!m_future.valid()) {
                 throw std::logic_error{ message };
@@ -170,7 +180,9 @@ export namespace mcr {
             return *this;
         }
 
-        /** @brief Signal cancellation before releasing the future, including after Get or Share. */
+        /**
+         * @brief Signal cancellation before releasing the future, including after Get or Share.
+         */
         ~AsyncWrapper() {
             requestCancellation();
         }
@@ -186,7 +198,10 @@ export namespace mcr {
             return Base::Get();
         }
 
-        /** @brief Check whether result access is available. @return True for an uncancelled, valid future. */
+        /**
+         * @brief Check whether result access is available.
+         * @return True for an uncancelled, valid future.
+         */
         [[nodiscard]] auto Valid() const noexcept -> bool {
             return !IsCancelled() && Base::Valid();
         }
@@ -241,20 +256,28 @@ export namespace mcr {
             return m_cancellation_state->exchange(true) ? CancellationResult::invalid_operation : CancellationResult::success;
         }
 
-        /** @brief Inspect the shared flag. @return Whether cancellation was requested; false after moving out. */
+        /**
+         * @brief Inspect the shared flag.
+         * @return Whether cancellation was requested; false after moving out.
+         */
         [[nodiscard]] auto IsCancelled() const noexcept -> bool {
             return m_cancellation_state && m_cancellation_state->load();
         }
 
     private:
-        /** @brief Request cancellation even if the future was consumed, shared, or originally invalid. */
+        /**
+         * @brief Request cancellation even if the future was consumed, shared, or originally invalid.
+         */
         auto requestCancellation() noexcept -> void {
             if (m_cancellation_state) {
                 m_cancellation_state->store(true);
             }
         }
 
-        /** @brief Reject result access after cancellation. @param message Diagnostic for the operation. */
+        /**
+         * @brief Reject result access after cancellation.
+         * @param message Diagnostic for the operation.
+         */
         auto checkCancelled(char const* message) const -> void {
             if (IsCancelled()) {
                 throw std::logic_error{ message };
@@ -262,11 +285,17 @@ export namespace mcr {
         }
     };
 
-    /** @brief Deduce a wrapper without cancellation from its future. @tparam RetType Future result type. */
+    /**
+     * @brief Deduce a wrapper without cancellation from its future.
+     * @tparam RetType Future result type.
+     */
     template <typename RetType>
     AsyncWrapper(std::future<RetType>&&) -> AsyncWrapper<RetType, false>;
 
-    /** @brief Deduce a cancellable wrapper from its future and flag. @tparam RetType Future result type. */
+    /**
+     * @brief Deduce a cancellable wrapper from its future and flag.
+     * @tparam RetType Future result type.
+     */
     template <typename RetType>
     AsyncWrapper(std::future<RetType>&&, std::shared_ptr<std::atomic_bool>&&) -> AsyncWrapper<RetType, true>;
 

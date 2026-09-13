@@ -12,7 +12,9 @@ namespace {
     bool        g_release_observed{ false };
     bool        g_release_zeroed{ false };
 
-    /** @brief Inspect only the watched allocation while it still exists, before free. */
+    /**
+     * @brief Inspect only the watched allocation while it still exists, before free.
+     */
     void observe_release(void* storage) noexcept {
         if (storage == g_watched_storage && g_watched_storage != nullptr) {
             auto const* bytes = static_cast<unsigned char const*>(storage);
@@ -45,7 +47,9 @@ namespace {
 
 } // namespace
 
-/** @brief Pair replacement allocation and release functions to inspect memory without use-after-free. */
+/**
+ * @brief Pair replacement allocation and release functions to inspect memory without use-after-free.
+ */
 void* operator new(std::size_t bytes) {
     while (true) {
         if (auto* storage = std::malloc(bytes == 0 ? 1 : bytes)) {

@@ -24,10 +24,14 @@ export namespace mcr {
         inline static std::once_flag s_get_flag;            ///< Allows one successful construction per T.
         inline static std::once_flag s_exit_flag;           ///< Allows one successful destruction per T.
 
-        /** @brief Allow only T to construct its singleton base. */
+        /**
+         * @brief Allow only T to construct its singleton base.
+         */
         Singleton()  = default;
 
-        /** @brief Destroy the base as part of T; deletion through the base is forbidden. */
+        /**
+         * @brief Destroy the base as part of T; deletion through the base is forbidden.
+         */
         ~Singleton() = default;
 
     public:

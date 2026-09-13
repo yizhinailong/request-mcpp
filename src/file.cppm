@@ -44,19 +44,33 @@ export namespace mcr {
         std::vector<File> m_files; ///< Owned file descriptors in insertion order.
 
     public:
-        /** @brief Construct an empty file collection. */
+        /**
+         * @brief Construct an empty file collection.
+         */
         Files() = default;
 
-        /** @brief Implicitly construct a one-file collection. @param file Descriptor to copy. */
+        /**
+         * @brief Implicitly construct a one-file collection.
+         * @param file Descriptor to copy.
+         */
         Files(File const& file) : m_files{ file } {}
 
-        /** @brief Copy all file descriptors into independent storage. @param other Collection to copy. */
+        /**
+         * @brief Copy all file descriptors into independent storage.
+         * @param other Collection to copy.
+         */
         Files(Files const& other)     = default;
 
-        /** @brief Transfer the owned collection. @param other Collection to move from. */
+        /**
+         * @brief Transfer the owned collection.
+         * @param other Collection to move from.
+         */
         Files(Files&& other) noexcept = default;
 
-        /** @brief Copy an ordered list of descriptors. @param files File descriptors to retain. */
+        /**
+         * @brief Copy an ordered list of descriptors.
+         * @param files File descriptors to retain.
+         */
         Files(std::initializer_list<File> const& files) : m_files{ files } {}
 
         /**
@@ -65,7 +79,9 @@ export namespace mcr {
          */
         Files(std::initializer_list<std::string> const& filepaths) : m_files{ filepaths.begin(), filepaths.end() } {}
 
-        /** @brief Release the owned descriptor storage. */
+        /**
+         * @brief Release the owned descriptor storage.
+         */
         ~Files() noexcept = default;
 
         /**
@@ -95,31 +111,58 @@ export namespace mcr {
         using iterator       = std::vector<File>::iterator;       ///< Mutable descriptor iterator.
         using const_iterator = std::vector<File>::const_iterator; ///< Read-only descriptor iterator.
 
-        /** @brief Begin mutable iteration. @return An iterator to the first descriptor. */
+        /**
+         * @brief Begin mutable iteration.
+         * @return An iterator to the first descriptor.
+         */
         auto begin() noexcept -> iterator { return m_files.begin(); }
 
-        /** @brief End mutable iteration. @return An iterator past the last descriptor. */
+        /**
+         * @brief End mutable iteration.
+         * @return An iterator past the last descriptor.
+         */
         auto end() noexcept -> iterator { return m_files.end(); }
 
-        /** @brief Begin read-only iteration. @return An iterator to the first descriptor. */
+        /**
+         * @brief Begin read-only iteration.
+         * @return An iterator to the first descriptor.
+         */
         [[nodiscard]] auto begin() const noexcept -> const_iterator { return m_files.begin(); }
 
-        /** @brief End read-only iteration. @return An iterator past the last descriptor. */
+        /**
+         * @brief End read-only iteration.
+         * @return An iterator past the last descriptor.
+         */
         [[nodiscard]] auto end() const noexcept -> const_iterator { return m_files.end(); }
 
-        /** @brief Begin read-only iteration. @return An iterator to the first descriptor. */
+        /**
+         * @brief Begin read-only iteration.
+         * @return An iterator to the first descriptor.
+         */
         [[nodiscard]] auto cbegin() const noexcept -> const_iterator { return m_files.cbegin(); }
 
-        /** @brief End read-only iteration. @return An iterator past the last descriptor. */
+        /**
+         * @brief End read-only iteration.
+         * @return An iterator past the last descriptor.
+         */
         [[nodiscard]] auto cend() const noexcept -> const_iterator { return m_files.cend(); }
 
-        /** @brief Append a copy, retaining cpr's single-descriptor interface. @param file Descriptor to copy. */
+        /**
+         * @brief Append a copy, retaining cpr's single-descriptor interface.
+         * @param file Descriptor to copy.
+         */
         auto emplace_back(File const& file) -> void { m_files.emplace_back(file); }
 
-        /** @brief Append a copy of a descriptor. @param file Descriptor to copy without modification. */
+        /**
+         * @brief Append a copy of a descriptor.
+         * @param file Descriptor to copy without modification.
+         */
         auto push_back(File const& file) -> void { m_files.push_back(file); }
 
-        /** @brief Remove the last descriptor. @pre The collection must not be empty. */
+        /**
+         * @brief Remove the last descriptor.
+         * @pre The collection must not be empty.
+         */
         auto pop_back() -> void { m_files.pop_back(); }
     };
 

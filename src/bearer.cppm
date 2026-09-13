@@ -30,19 +30,35 @@ export namespace mcr {
          */
         Bearer(std::string_view token) : m_token_string{ token } {}
 
-        /** @brief Copy token bytes into independent secure-string storage. @param other Source token. */
+        /**
+         * @brief Copy token bytes into independent secure-string storage.
+         * @param other Source token.
+         */
         Bearer(Bearer const& other)                        = default;
 
-        /** @brief Move the token using secure-string move semantics. @param other Source token. */
+        /**
+         * @brief Move the token using secure-string move semantics.
+         * @param other Source token.
+         */
         Bearer(Bearer&& other) noexcept                    = default;
 
-        /** @brief Destroy the token, including derived state when deleted through a base pointer. */
+        /**
+         * @brief Destroy the token, including derived state when deleted through a base pointer.
+         */
         virtual ~Bearer() noexcept                         = default;
 
-        /** @brief Move token storage. @param other Source token. @return This object after assignment. */
+        /**
+         * @brief Move token storage.
+         * @param other Source token.
+         * @return This object after assignment.
+         */
         auto operator=(Bearer&& other) noexcept -> Bearer& = default;
 
-        /** @brief Copy token bytes. @param other Source token. @return This object after assignment. */
+        /**
+         * @brief Copy token bytes.
+         * @param other Source token.
+         * @return This object after assignment.
+         */
         auto operator=(Bearer const& other) -> Bearer&     = default;
 
         /**

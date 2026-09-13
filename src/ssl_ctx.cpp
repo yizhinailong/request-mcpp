@@ -1,4 +1,7 @@
-/** @file ssl_ctx.cpp @brief Parse PEM certificates with RAII before updating an OpenSSL trust store. */
+/**
+ * @file ssl_ctx.cpp
+ * @brief Parse PEM certificates with RAII before updating an OpenSSL trust store.
+ */
 module;
 #include <curl/curl.h>
 #ifdef MCR_SSL_CTX_OPENSSL

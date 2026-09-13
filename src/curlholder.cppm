@@ -63,7 +63,9 @@ export namespace mcr {
             bindErrorBuffer();
         }
 
-        /** @brief Release owned lists, MIME data, and the easy handle exactly once. */
+        /**
+         * @brief Release owned lists, MIME data, and the easy handle exactly once.
+         */
         ~CurlHolder() {
             releaseResources();
         }
@@ -139,7 +141,9 @@ export namespace mcr {
             return s_mutex;
         }
 
-        /** @brief Bind an active handle to this holder's error storage after construction or moving. */
+        /**
+         * @brief Bind an active handle to this holder's error storage after construction or moving.
+         */
         auto bindErrorBuffer() noexcept -> void {
             if (handle) {
                 // This supported option only stores a pointer and does not allocate.
@@ -147,7 +151,9 @@ export namespace mcr {
             }
         }
 
-        /** @brief Release each owned resource and clear its pointer, following cpr's cleanup order. */
+        /**
+         * @brief Release each owned resource and clear its pointer, following cpr's cleanup order.
+         */
         auto releaseResources() noexcept -> void {
             curl_slist_free_all(std::exchange(chunk, nullptr));
             curl_slist_free_all(std::exchange(resolve_curl_list, nullptr));

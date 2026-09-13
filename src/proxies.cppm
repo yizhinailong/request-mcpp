@@ -18,7 +18,9 @@ export namespace mcr {
         std::map<std::string, std::string, std::less<>> m_hosts; ///< Owned mappings with transparent, case-sensitive lookup.
 
     public:
-        /** @brief Construct an option with no proxy mappings. */
+        /**
+         * @brief Construct an option with no proxy mappings.
+         */
         Proxies() = default;
 
         /**

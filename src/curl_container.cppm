@@ -10,7 +10,9 @@ import std;
 
 export namespace mcr {
 
-    /** @brief Own a query parameter whose empty value is serialized without an equals sign. */
+    /**
+     * @brief Own a query parameter whose empty value is serialized without an equals sign.
+     */
     struct Parameter {
         /**
          * @brief Take ownership of a parameter's key and value.
@@ -24,7 +26,9 @@ export namespace mcr {
         std::string value; ///< Publicly mutable, owned value bytes.
     };
 
-    /** @brief Own a form pair whose key and value are always separated by an equals sign. */
+    /**
+     * @brief Own a form pair whose key and value are always separated by an equals sign.
+     */
     struct Pair {
         /**
          * @brief Take ownership of a form pair's key and value.
@@ -50,7 +54,9 @@ export namespace mcr {
     public:
         bool encode{ true }; ///< Encode parameter keys/values or pair values when a holder is supplied.
 
-        /** @brief Construct an empty container with encoding enabled. */
+        /**
+         * @brief Construct an empty container with encoding enabled.
+         */
         CurlContainer() = default;
 
         /**

@@ -1,8 +1,16 @@
-/** @file build.mcpp @brief Generate the public version module from package metadata. */
+/**
+ * @file build.mcpp
+ * @brief Generate the public version module from package metadata.
+ */
 import std;
 import mcpp;
 
-/** @brief Read this package's quoted version field. @param path Manifest path. @return Version text. @throws std::runtime_error If missing or malformed. */
+/**
+ * @brief Read this package's quoted version field.
+ * @param path Manifest path.
+ * @return Version text.
+ * @throws std::runtime_error If missing or malformed.
+ */
 auto read_version(std::filesystem::path const& path) -> std::string {
     std::ifstream input{ path };
     if (!input) {
@@ -23,7 +31,10 @@ auto read_version(std::filesystem::path const& path) -> std::string {
     throw std::runtime_error{ "Expected a quoted major.minor.patch [package].version in mcpp.toml." };
 }
 
-/** @brief Emit a generated module in mcpp's output directory. @return Zero on success. */
+/**
+ * @brief Emit a generated module in mcpp's output directory.
+ * @return Zero on success.
+ */
 auto main() -> int {
     try {
         auto const manifest{ std::filesystem::path{ mcpp::manifest_dir() } / "mcpp.toml" };
@@ -43,7 +54,10 @@ auto main() -> int {
             }
         }
         auto const        output{ std::filesystem::path{ mcpp::out_dir() } / "mcr_version.cppm" };
-        auto const        source{ std::format(R"module(/** @file mcr_version.cppm @brief Generated from mcpp.toml; do not edit. */
+        auto const        source{ std::format(R"module(/**
+ * @file mcr_version.cppm
+ * @brief Generated from mcpp.toml; do not edit.
+ */
 module;
 #include <curl/curlver.h>
 export module mcr.version;

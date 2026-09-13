@@ -42,7 +42,9 @@ export namespace mcr {
          */
         CurlMultiHolder(CurlMultiHolder&& other) noexcept : handle{ std::exchange(other.handle, nullptr) } {}
 
-        /** @brief Release the owned multi handle; attached easy handles must already be removed. */
+        /**
+         * @brief Release the owned multi handle; attached easy handles must already be removed.
+         */
         ~CurlMultiHolder() {
             releaseHandle();
         }
@@ -62,7 +64,9 @@ export namespace mcr {
         }
 
     private:
-        /** @brief Release an owned multi handle and clear its pointer. */
+        /**
+         * @brief Release an owned multi handle and clear its pointer.
+         */
         auto releaseHandle() noexcept -> void {
             if (handle) {
                 (void)curl_multi_cleanup(std::exchange(handle, nullptr));

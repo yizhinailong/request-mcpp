@@ -37,7 +37,9 @@ namespace {
     constexpr NativeSocket INVALID_NATIVE_SOCKET{ -1 };
 #endif
 
-    /** @brief Close a fixture socket on every exit path. */
+    /**
+     * @brief Close a fixture socket on every exit path.
+     */
     struct Socket {
         NativeSocket handle;
 
@@ -59,7 +61,9 @@ namespace {
         }
     };
 
-    /** @brief Serve sequential HTTP/1.1 requests over persistent loopback connections. */
+    /**
+     * @brief Serve sequential HTTP/1.1 requests over persistent loopback connections.
+     */
     class HttpServer {
     private:
         Socket             m_listener{ socket(AF_INET, SOCK_STREAM, IPPROTO_TCP) };
@@ -102,7 +106,9 @@ namespace {
 
         auto Connections() const -> int { return m_connections.load(); }
 
-        /** @brief Join the server and surface worker failures after all pools have been released. */
+        /**
+         * @brief Join the server and surface worker failures after all pools have been released.
+         */
         auto Stop() -> void {
             m_worker.request_stop();
             m_worker.join();

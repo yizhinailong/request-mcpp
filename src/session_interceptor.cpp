@@ -1,11 +1,16 @@
-/** @file session_interceptor.cpp @brief Exception-safe interceptor chaining and request retries. */
+/**
+ * @file session_interceptor.cpp
+ * @brief Exception-safe interceptor chaining and request retries.
+ */
 module;
 #include <curl/curl.h>
 module mcr.session;
 import std;
 
 namespace {
-    /** @brief Restore request state on normal and exceptional exits. */
+    /**
+     * @brief Restore request state on normal and exceptional exits.
+     */
     template <typename Fn>
     struct ScopeExit {
         Fn cleanup;

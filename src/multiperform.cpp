@@ -1,4 +1,7 @@
-/** @file multiperform.cpp @brief Concurrent curl transfers with ordered results and scoped handle attachment. */
+/**
+ * @file multiperform.cpp
+ * @brief Concurrent curl transfers with ordered results and scoped handle attachment.
+ */
 module;
 #include <curl/curl.h>
 module mcr.session;

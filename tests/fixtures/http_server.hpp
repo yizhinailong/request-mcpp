@@ -1,4 +1,7 @@
-/** @file http_server.hpp @brief Shared loopback HTTP fixture for Session and free API tests. */
+/**
+ * @file http_server.hpp
+ * @brief Shared loopback HTTP fixture for Session and free API tests.
+ */
 #pragma once
 #ifdef _WIN32
     #include <winsock2.h>
@@ -30,7 +33,9 @@ namespace mcr::test {
     constexpr NativeSocket INVALID_NATIVE_SOCKET{ -1 };
 #endif
 
-    /** @brief Close a socket on all test exit paths. */
+    /**
+     * @brief Close a socket on all test exit paths.
+     */
     struct Socket {
         NativeSocket handle;
 
@@ -52,7 +57,9 @@ namespace mcr::test {
         }
     };
 
-    /** @brief Bound all socket waits so fixture teardown cannot hang. */
+    /**
+     * @brief Bound all socket waits so fixture teardown cannot hang.
+     */
     inline auto readable(NativeSocket socket) -> bool {
         fd_set set;
         FD_ZERO(&set);
@@ -69,7 +76,9 @@ namespace mcr::test {
         return result > 0;
     }
 
-    /** @brief Serve persistent connections and both fixed-length and chunked uploads. */
+    /**
+     * @brief Serve persistent connections and both fixed-length and chunked uploads.
+     */
     class HttpServer {
     private:
         Socket                    m_listener{ socket(AF_INET, SOCK_STREAM, IPPROTO_TCP) };

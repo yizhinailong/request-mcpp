@@ -29,7 +29,9 @@ export namespace mcr {
                                            PAUSED,
                                            STOPPING };
 
-        /** @brief A stable worker record; the thread is joined before its completion flag is destroyed. */
+        /**
+         * @brief A stable worker record; the thread is joined before its completion flag is destroyed.
+         */
         struct Worker {
             bool         finished{ false }; ///< Protected by the pool mutex.
             std::jthread thread;            ///< Joins when this worker record is destroyed.
@@ -70,7 +72,9 @@ export namespace mcr {
         ThreadPool& operator=(ThreadPool const&) = delete;
         ThreadPool& operator=(ThreadPool&&)      = delete;
 
-        /** @brief Cancel pending tasks and join workers; call Wait first to finish all queued work. */
+        /**
+         * @brief Cancel pending tasks and join workers; call Wait first to finish all queued work.
+         */
         virtual ~ThreadPool() { Stop(); }
 
         /**
@@ -123,43 +127,64 @@ export namespace mcr {
             m_task_cond.notify_all();
         }
 
-        /** @brief Read the configured minimum. @return The minimum live worker count. */
+        /**
+         * @brief Read the configured minimum.
+         * @return The minimum live worker count.
+         */
         [[nodiscard]] auto GetMinThreadNum() const -> std::size_t {
             std::scoped_lock lock{ m_mutex };
             return m_min_thread_num;
         }
 
-        /** @brief Read the configured maximum. @return The maximum live worker count. */
+        /**
+         * @brief Read the configured maximum.
+         * @return The maximum live worker count.
+         */
         [[nodiscard]] auto GetMaxThreadNum() const -> std::size_t {
             std::scoped_lock lock{ m_mutex };
             return m_max_thread_num;
         }
 
-        /** @brief Read the idle timeout. @return The configured idle duration. */
+        /**
+         * @brief Read the idle timeout.
+         * @return The configured idle duration.
+         */
         [[nodiscard]] auto GetMaxIdleTime() const -> std::chrono::milliseconds {
             std::scoped_lock lock{ m_mutex };
             return m_max_idle_time;
         }
 
-        /** @brief Count live workers. @return Workers that have not finished retiring. */
+        /**
+         * @brief Count live workers.
+         * @return Workers that have not finished retiring.
+         */
         [[nodiscard]] auto GetCurrentThreadNum() const -> std::size_t {
             std::scoped_lock lock{ m_mutex };
             return m_current_thread_num;
         }
 
-        /** @brief Count available workers. @return Live workers without a claimed task. */
+        /**
+         * @brief Count available workers.
+         * @return Live workers without a claimed task.
+         */
         [[nodiscard]] auto GetIdleThreadNum() const -> std::size_t {
             std::scoped_lock lock{ m_mutex };
             return m_current_thread_num - m_active_thread_num;
         }
 
-        /** @brief Inspect the lifecycle state. @return True while running or paused. */
+        /**
+         * @brief Inspect the lifecycle state.
+         * @return True while running or paused.
+         */
         [[nodiscard]] auto IsStarted() const -> bool {
             std::scoped_lock lock{ m_mutex };
             return isStarted();
         }
 
-        /** @brief Inspect the lifecycle state. @return True once all workers have been joined. */
+        /**
+         * @brief Inspect the lifecycle state.
+         * @return True once all workers have been joined.
+         */
         [[nodiscard]] auto IsStopped() const -> bool {
             std::scoped_lock lock{ m_mutex };
             return m_status == Status::STOPPED;
@@ -229,7 +254,10 @@ export namespace mcr {
             return 0;
         }
 
-        /** @brief Resume a paused pool. @return Zero, including when no transition is needed. */
+        /**
+         * @brief Resume a paused pool.
+         * @return Zero, including when no transition is needed.
+         */
         auto Resume() -> int {
             std::scoped_lock lock{ m_mutex };
             if (m_status == Status::PAUSED) {
@@ -303,33 +331,43 @@ export namespace mcr {
         }
 
     private:
-        /** @brief Validate the relationship between worker limits. */
+        /**
+         * @brief Validate the relationship between worker limits.
+         */
         static void validateLimits(std::size_t min_threads, std::size_t max_threads) {
             if (max_threads == 0 || min_threads > max_threads) {
                 throw std::invalid_argument{ "mcr::ThreadPool: require 0 <= min_threads <= max_threads and max_threads > 0" };
             }
         }
 
-        /** @brief Reject idle durations that would cause immediate repeated wakeups. */
+        /**
+         * @brief Reject idle durations that would cause immediate repeated wakeups.
+         */
         static void validateIdleTime(std::chrono::milliseconds ms) {
             if (ms <= std::chrono::milliseconds::zero()) {
                 throw std::invalid_argument{ "mcr::ThreadPool: max idle time must be positive" };
             }
         }
 
-        /** @brief Prevent a worker from waiting for its own completion. */
+        /**
+         * @brief Prevent a worker from waiting for its own completion.
+         */
         void checkExternalWait() const {
             if (s_current_pool == this) {
                 throw std::logic_error{ "mcr::ThreadPool: a worker cannot Wait or Stop its own pool" };
             }
         }
 
-        /** @brief Read the started state while holding m_mutex. */
+        /**
+         * @brief Read the started state while holding m_mutex.
+         */
         auto isStarted() const -> bool {
             return m_status == Status::RUNNING || m_status == Status::PAUSED;
         }
 
-        /** @brief Start workers while holding m_mutex, retaining a valid state on creation failure. */
+        /**
+         * @brief Start workers while holding m_mutex, retaining a valid state on creation failure.
+         */
         void start(std::size_t start_threads) {
             m_status = Status::RUNNING;
             try {
@@ -345,14 +383,18 @@ export namespace mcr {
             }
         }
 
-        /** @brief Add workers for pending work while holding m_mutex and respecting the maximum. */
+        /**
+         * @brief Add workers for pending work while holding m_mutex and respecting the maximum.
+         */
         void growForTasks(std::size_t pending_tasks) {
             while (m_current_thread_num < m_max_thread_num && pending_tasks > m_current_thread_num - m_active_thread_num) {
                 createThread();
             }
         }
 
-        /** @brief Create a stable worker record before launching its thread; caller holds m_mutex. */
+        /**
+         * @brief Create a stable worker record before launching its thread; caller holds m_mutex.
+         */
         void createThread() {
             auto& worker = m_workers.emplace_back();
             try {
@@ -364,7 +406,9 @@ export namespace mcr {
             ++m_current_thread_num;
         }
 
-        /** @brief Move finished records out for joining after the caller releases m_mutex. */
+        /**
+         * @brief Move finished records out for joining after the caller releases m_mutex.
+         */
         void collectFinished(std::list<Worker>& retired) {
             for (auto worker = m_workers.begin(); worker != m_workers.end();) {
                 auto current = worker++;
@@ -374,7 +418,9 @@ export namespace mcr {
             }
         }
 
-        /** @brief Compute a saturated idle deadline without overflowing chrono representations. */
+        /**
+         * @brief Compute a saturated idle deadline without overflowing chrono representations.
+         */
         auto idleDeadline(std::chrono::steady_clock::time_point idle_since) const -> std::chrono::steady_clock::time_point {
             using Clock                 = std::chrono::steady_clock;
             constexpr auto MAX_INTERVAL = std::chrono::duration_cast<std::chrono::milliseconds>(Clock::duration::max());
@@ -388,7 +434,9 @@ export namespace mcr {
             return idle_since + interval;
         }
 
-        /** @brief Execute tasks until shutdown or retirement, synchronizing all queue and count updates. */
+        /**
+         * @brief Execute tasks until shutdown or retirement, synchronizing all queue and count updates.
+         */
         void runWorker(Worker& worker) {
             s_current_pool = this;
             std::unique_lock lock{ m_mutex };

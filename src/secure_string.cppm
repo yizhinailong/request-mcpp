@@ -19,24 +19,40 @@ export namespace mcr::util {
         using value_type           = T;              ///< Element type used by allocator_traits.
         using is_always_equal      = std::true_type; ///< All instances of this allocator are interchangeable.
 
-        /** @brief Construct an allocator without state. */
+        /**
+         * @brief Construct an allocator without state.
+         */
         SecureAllocator() noexcept = default;
 
-        /** @brief Copy an allocator for another element type. @tparam U Source element type. */
+        /**
+         * @brief Copy an allocator for another element type.
+         * @tparam U Source element type.
+         */
         template <typename U>
         SecureAllocator(SecureAllocator<U> const&) noexcept {}
 
-        /** @brief Move an allocator for another element type. @tparam U Source element type. */
+        /**
+         * @brief Move an allocator for another element type.
+         * @tparam U Source element type.
+         */
         template <typename U>
         SecureAllocator(SecureAllocator<U>&&) noexcept {}
 
-        /** @brief Assign another stateless allocator. @tparam U Source element type. @return This allocator. */
+        /**
+         * @brief Assign another stateless allocator.
+         * @tparam U Source element type.
+         * @return This allocator.
+         */
         template <typename U>
         auto operator=(SecureAllocator<U> const&) noexcept -> SecureAllocator& {
             return *this;
         }
 
-        /** @brief Move-assign another stateless allocator. @tparam U Source element type. @return This allocator. */
+        /**
+         * @brief Move-assign another stateless allocator.
+         * @tparam U Source element type.
+         * @return This allocator.
+         */
         template <typename U>
         auto operator=(SecureAllocator<U>&&) noexcept -> SecureAllocator& {
             return *this;

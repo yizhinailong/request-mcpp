@@ -19,7 +19,11 @@ import std;
 
 namespace mcr::util::detail {
 
-    /** @brief Remove trailing HTTP whitespace. @param text Borrowed header text. @return The remaining borrowed text. */
+    /**
+     * @brief Remove trailing HTTP whitespace.
+     * @param text Borrowed header text.
+     * @return The remaining borrowed text.
+     */
     auto trim_header_end(std::string_view text) noexcept -> std::string_view {
         auto const end{ text.find_last_not_of("\t\n\r ") };
         return end == std::string_view::npos ? std::string_view{} : text.substr(0, end + 1);

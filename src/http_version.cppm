@@ -51,7 +51,9 @@ export namespace mcr {
     public:
         HttpVersionCode code{ HttpVersionCode::VERSION_NONE }; ///< Publicly mutable protocol preference.
 
-        /** @brief Let libcurl choose the HTTP protocol version. */
+        /**
+         * @brief Let libcurl choose the HTTP protocol version.
+         */
         HttpVersion() = default;
 
         /**

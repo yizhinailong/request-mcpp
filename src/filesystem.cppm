@@ -1,4 +1,7 @@
-/** @file filesystem.cppm @brief Standard filesystem namespace for the C++23 API. */
+/**
+ * @file filesystem.cppm
+ * @brief Standard filesystem namespace for the C++23 API.
+ */
 export module mcr.filesystem;
 import std;
 

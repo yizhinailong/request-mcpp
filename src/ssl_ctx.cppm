@@ -1,4 +1,7 @@
-/** @file ssl_ctx.cppm @brief OpenSSL-specific CA loading callback for advanced curl use. */
+/**
+ * @file ssl_ctx.cppm
+ * @brief OpenSSL-specific CA loading callback for advanced curl use.
+ */
 module;
 #include <curl/curl.h>
 export module mcr.ssl_ctx;

@@ -22,11 +22,15 @@ export namespace mcr {
         friend Singleton<GlobalThreadPool>;
 
     protected:
-        /** @brief Construct the global pool with ThreadPool's default configuration. */
+        /**
+         * @brief Construct the global pool with ThreadPool's default configuration.
+         */
         GlobalThreadPool() = default;
 
     public:
-        /** @brief Cancel queued work and join active workers through the base pool destructor. */
+        /**
+         * @brief Cancel queued work and join active workers through the base pool destructor.
+         */
         ~GlobalThreadPool() override = default;
     };
 

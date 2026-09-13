@@ -19,13 +19,21 @@ export namespace mcr {
         std::vector<std::string> m_cert_info; ///< Owned certificate entries in insertion order.
 
     public:
-        /** @brief Construct an empty certificate information collection. */
+        /**
+         * @brief Construct an empty certificate information collection.
+         */
         CertInfo()                          = default;
 
-        /** @brief Copy all entries into independent storage. @param other Collection to copy. */
+        /**
+         * @brief Copy all entries into independent storage.
+         * @param other Collection to copy.
+         */
         CertInfo(CertInfo const& other)     = default;
 
-        /** @brief Transfer the entries from another collection. @param other Collection to move from. */
+        /**
+         * @brief Transfer the entries from another collection.
+         * @param other Collection to move from.
+         */
         CertInfo(CertInfo&& other) noexcept = default;
 
         /**
@@ -34,7 +42,9 @@ export namespace mcr {
          */
         CertInfo(std::initializer_list<std::string> const& entries) : m_cert_info{ entries } {}
 
-        /** @brief Release the owned entries. */
+        /**
+         * @brief Release the owned entries.
+         */
         ~CertInfo() noexcept = default;
 
         using iterator       = std::vector<std::string>::iterator;       ///< Mutable entry iterator.
@@ -50,22 +60,40 @@ export namespace mcr {
             return m_cert_info[pos];
         }
 
-        /** @brief Begin mutable iteration. @return An iterator to the first entry. */
+        /**
+         * @brief Begin mutable iteration.
+         * @return An iterator to the first entry.
+         */
         auto begin() noexcept -> iterator { return m_cert_info.begin(); }
 
-        /** @brief End mutable iteration. @return An iterator past the last entry. */
+        /**
+         * @brief End mutable iteration.
+         * @return An iterator past the last entry.
+         */
         auto end() noexcept -> iterator { return m_cert_info.end(); }
 
-        /** @brief Begin read-only iteration. @return An iterator to the first entry. */
+        /**
+         * @brief Begin read-only iteration.
+         * @return An iterator to the first entry.
+         */
         [[nodiscard]] auto begin() const noexcept -> const_iterator { return m_cert_info.begin(); }
 
-        /** @brief End read-only iteration. @return An iterator past the last entry. */
+        /**
+         * @brief End read-only iteration.
+         * @return An iterator past the last entry.
+         */
         [[nodiscard]] auto end() const noexcept -> const_iterator { return m_cert_info.end(); }
 
-        /** @brief Begin read-only iteration. @return An iterator to the first entry. */
+        /**
+         * @brief Begin read-only iteration.
+         * @return An iterator to the first entry.
+         */
         [[nodiscard]] auto cbegin() const noexcept -> const_iterator { return m_cert_info.cbegin(); }
 
-        /** @brief End read-only iteration. @return An iterator past the last entry. */
+        /**
+         * @brief End read-only iteration.
+         * @return An iterator past the last entry.
+         */
         [[nodiscard]] auto cend() const noexcept -> const_iterator { return m_cert_info.cend(); }
 
         /**
@@ -74,10 +102,16 @@ export namespace mcr {
          */
         auto emplace_back(std::string const& entry) -> void { m_cert_info.emplace_back(entry); }
 
-        /** @brief Append a copy of one entry. @param entry Text to copy without modification. */
+        /**
+         * @brief Append a copy of one entry.
+         * @param entry Text to copy without modification.
+         */
         auto push_back(std::string const& entry) -> void { m_cert_info.push_back(entry); }
 
-        /** @brief Remove the last entry. @pre The collection must not be empty. */
+        /**
+         * @brief Remove the last entry.
+         * @pre The collection must not be empty.
+         */
         auto pop_back() -> void { m_cert_info.pop_back(); }
     };
 

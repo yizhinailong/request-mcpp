@@ -1,4 +1,7 @@
-/** @file test_version.cpp @brief Check generated metadata and the filesystem alias through the public entry module. */
+/**
+ * @file test_version.cpp
+ * @brief Check generated metadata and the filesystem alias through the public entry module.
+ */
 #include <curl/curlver.h>
 import std;
 import mcr;

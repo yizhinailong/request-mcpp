@@ -18,7 +18,9 @@ export namespace mcr {
      */
     class Interface : public StringHolder<Interface> {
     public:
-        /** @brief Construct an empty interface selector. */
+        /**
+         * @brief Construct an empty interface selector.
+         */
         Interface() = default;
 
         /**

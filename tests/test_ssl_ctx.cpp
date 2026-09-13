@@ -1,4 +1,7 @@
-/** @file test_ssl_ctx.cpp @brief Check unsupported backends or real OpenSSL certificate-store updates. */
+/**
+ * @file test_ssl_ctx.cpp
+ * @brief Check unsupported backends or real OpenSSL certificate-store updates.
+ */
 #include <curl/curl.h>
 #ifdef MCR_SSL_CTX_OPENSSL
     #include <openssl/bio.h>

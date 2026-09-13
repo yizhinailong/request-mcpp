@@ -1,4 +1,7 @@
-/** @file test_ssl_options.cpp @brief Verify TLS option ownership and local HTTPS verification with generated certificates. */
+/**
+ * @file test_ssl_options.cpp
+ * @brief Verify TLS option ownership and local HTTPS verification with generated certificates.
+ */
 #ifdef _WIN32
     #define WIN32_LEAN_AND_MEAN
     #define NOMINMAX
@@ -57,7 +60,9 @@ namespace {
     }
 
 #ifdef _WIN32
-    /** @brief Own only this test's generated fixture directory. */
+    /**
+     * @brief Own only this test's generated fixture directory.
+     */
     struct TempDirectory {
         std::filesystem::path path{ std::filesystem::temp_directory_path() / std::format("mcr-tls-{}-{}", GetCurrentProcessId(), std::chrono::steady_clock::now().time_since_epoch().count()) };
 
@@ -69,7 +74,9 @@ namespace {
         }
     };
 
-    /** @brief Own a hidden fixture process and its output log. */
+    /**
+     * @brief Own a hidden fixture process and its output log.
+     */
     struct ChildProcess {
         PROCESS_INFORMATION   info{};
         HANDLE                log{ INVALID_HANDLE_VALUE };

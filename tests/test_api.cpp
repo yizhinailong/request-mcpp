@@ -1,4 +1,7 @@
-/** @file test_api.cpp @brief Exercise one-shot API ownership, HTTP methods, batches, cancellation and downloads. */
+/**
+ * @file test_api.cpp
+ * @brief Exercise one-shot API ownership, HTTP methods, batches, cancellation and downloads.
+ */
 #include <curl/curl.h>
 
 #include "fixtures/http_server.hpp"
@@ -103,7 +106,9 @@ namespace {
         return passed;
     }
 
-    /** @brief Verify that rvalue tuples are forwarded without copy-only type erasure. */
+    /**
+     * @brief Verify that rvalue tuples are forwarded without copy-only type erasure.
+     */
     struct MoveOnlyUrl : mcr::Url {
         explicit MoveOnlyUrl(mcr::Url url) : mcr::Url{ std::move(url) } {}
 

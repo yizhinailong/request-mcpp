@@ -56,10 +56,14 @@ export namespace mcr {
     class Session;
     class MultiPerform;
 
-    /** @brief Intercept a synchronous request, including requests executed by an async task. */
+    /**
+     * @brief Intercept a synchronous request, including requests executed by an async task.
+     */
     class Interceptor {
     public:
-        /** @brief Methods supported by Proceed overloads. */
+        /**
+         * @brief Methods supported by Proceed overloads.
+         */
         enum class ProceedHttpMethod : std::uint8_t {
             GET_REQUEST,
             POST_REQUEST,
@@ -72,34 +76,79 @@ export namespace mcr {
             DOWNLOAD_FILE_REQUEST
         };
         virtual ~Interceptor()                               = default;
-        /** @brief Modify, forward, retry, or replace a request. @param session Current session. @return Response to pass to the preceding interceptor. */
+        /**
+         * @brief Modify, forward, retry, or replace a request.
+         * @param session Current session.
+         * @return Response to pass to the preceding interceptor.
+         */
         virtual auto Intercept(Session& session) -> Response = 0;
 
     protected:
-        /** @brief Continue with the current method and download destination. @param session Current session. @return Downstream response. */
+        /**
+         * @brief Continue with the current method and download destination.
+         * @param session Current session.
+         * @return Downstream response.
+         */
         static auto Proceed(Session& session) -> Response;
-        /** @brief Continue using a different HTTP method. @param session Current session. @param method Method to execute. @return Downstream response. */
+        /**
+         * @brief Continue using a different HTTP method.
+         * @param session Current session.
+         * @param method Method to execute.
+         * @return Downstream response.
+         */
         static auto Proceed(Session& session, ProceedHttpMethod method) -> Response;
-        /** @brief Continue with a file download. @param session Current session. @param method Must be DOWNLOAD_FILE_REQUEST. @param file Borrowed stream. @return Downstream response. */
+        /**
+         * @brief Continue with a file download.
+         * @param session Current session.
+         * @param method Must be DOWNLOAD_FILE_REQUEST.
+         * @param file Borrowed stream.
+         * @return Downstream response.
+         */
         static auto Proceed(Session& session, ProceedHttpMethod method, std::ofstream& file) -> Response;
-        /** @brief Continue with a callback download. @param session Current session. @param method Must be DOWNLOAD_CALLBACK_REQUEST. @param write Consumer to copy. @return Downstream response. */
+        /**
+         * @brief Continue with a callback download.
+         * @param session Current session.
+         * @param method Must be DOWNLOAD_CALLBACK_REQUEST.
+         * @param write Consumer to copy.
+         * @return Downstream response.
+         */
         static auto Proceed(Session& session, ProceedHttpMethod method, WriteCallback const& write) -> Response;
     };
 
-    /** @brief Intercept a complete MultiPerform batch. */
+    /**
+     * @brief Intercept a complete MultiPerform batch.
+     */
     class InterceptorMulti {
     public:
         using ProceedHttpMethod                                              = Interceptor::ProceedHttpMethod; ///< Matching cpr method tags.
         virtual ~InterceptorMulti()                                          = default;
-        /** @brief Modify, forward, retry, or replace a batch. @param multi Current batch. @return Responses in session order. */
+        /**
+         * @brief Modify, forward, retry, or replace a batch.
+         * @param multi Current batch.
+         * @return Responses in session order.
+         */
         virtual auto Intercept(MultiPerform& multi) -> std::vector<Response> = 0;
 
     protected:
-        /** @brief Reprepare sessions and continue the remaining chain. @param multi Current batch. @return Downstream responses. */
+        /**
+         * @brief Reprepare sessions and continue the remaining chain.
+         * @param multi Current batch.
+         * @return Downstream responses.
+         */
         static auto Proceed(MultiPerform& multi) -> std::vector<Response>;
-        /** @brief Select a callback download destination. @param multi Current batch. @param index Session index. @param write Consumer to copy. */
+        /**
+         * @brief Select a callback download destination.
+         * @param multi Current batch.
+         * @param index Session index.
+         * @param write Consumer to copy.
+         */
         static auto PrepareDownloadSession(MultiPerform& multi, std::size_t index, WriteCallback const& write) -> void;
-        /** @brief Select a file download destination. @param multi Current batch. @param index Session index. @param file Borrowed stream. */
+        /**
+         * @brief Select a file download destination.
+         * @param multi Current batch.
+         * @param index Session index.
+         * @param file Borrowed stream.
+         */
         static auto PrepareDownloadSession(MultiPerform& multi, std::size_t index, std::ofstream& file) -> void;
     };
 
@@ -148,7 +197,9 @@ export namespace mcr {
         std::exception_ptr                        m_callback_error;                         ///< First exception caught inside a curl callback.
 
     public:
-        /** @brief Initialize cpr-compatible redirects, cookies, compression, and keepalive defaults. */
+        /**
+         * @brief Initialize cpr-compatible redirects, cookies, compression, and keepalive defaults.
+         */
         Session() {
             auto const* version{ curl_version_info(CURLVERSION_NOW) };
             SetUserAgent(UserAgent{ std::string{ "curl/" } + version->version });
@@ -164,44 +215,79 @@ export namespace mcr {
         auto operator=(Session const&) -> Session& = delete;
         auto operator=(Session&&) -> Session&      = delete;
 
-        /** @brief Detach borrowed callback and body pointers before destroying session state. */
+        /**
+         * @brief Detach borrowed callback and body pointers before destroying session state.
+         */
         ~Session() { curl_easy_reset(m_curl->handle); }
 
-        /** @brief Replace the base URL. @param url URL to copy. */
+        /**
+         * @brief Replace the base URL.
+         * @param url URL to copy.
+         */
         auto SetUrl(Url const& url) -> void { m_url = url; }
 
-        /** @brief Copy URL parameters. @param parameters Replacement parameters. */
+        /**
+         * @brief Copy URL parameters.
+         * @param parameters Replacement parameters.
+         */
         auto SetParameters(Parameters const& parameters) -> void { m_parameters = parameters; }
 
-        /** @brief Move URL parameters. @param parameters Replacement parameters. */
+        /**
+         * @brief Move URL parameters.
+         * @param parameters Replacement parameters.
+         */
         auto SetParameters(Parameters&& parameters) -> void { m_parameters = std::move(parameters); }
 
-        /** @brief Replace all request headers. @param header Headers to copy. */
+        /**
+         * @brief Replace all request headers.
+         * @param header Headers to copy.
+         */
         auto SetHeader(Header const& header) -> void { m_header = header; }
 
-        /** @brief Merge headers using case-insensitive replacement. @param header Headers to add or replace. */
+        /**
+         * @brief Merge headers using case-insensitive replacement.
+         * @param header Headers to add or replace.
+         */
         auto UpdateHeader(Header const& header) -> void {
             for (auto const& [name, value] : header) {
                 m_header[name] = value;
             }
         }
 
-        /** @brief Access persistent request headers. @return Mutable header map. */
+        /**
+         * @brief Access persistent request headers.
+         * @return Mutable header map.
+         */
         [[nodiscard]] auto GetHeader() -> Header& { return m_header; }
 
-        /** @brief Inspect persistent request headers. @return Read-only header map. */
+        /**
+         * @brief Inspect persistent request headers.
+         * @return Read-only header map.
+         */
         [[nodiscard]] auto GetHeader() const -> Header const& { return m_header; }
 
-        /** @brief Set the total transfer timeout. @param timeout Duration; zero disables the timeout. */
+        /**
+         * @brief Set the total transfer timeout.
+         * @param timeout Duration; zero disables the timeout.
+         */
         auto SetTimeout(Timeout const& timeout) -> void { setOption(CURLOPT_TIMEOUT_MS, timeout.Milliseconds()); }
 
-        /** @brief Set the connection timeout. @param timeout Connection establishment deadline. */
+        /**
+         * @brief Set the connection timeout.
+         * @param timeout Connection establishment deadline.
+         */
         auto SetConnectTimeout(ConnectTimeout const& timeout) -> void { setOption(CURLOPT_CONNECTTIMEOUT_MS, timeout.Milliseconds()); }
 
-        /** @brief Attach a borrowed connection pool. @param pool Pool that must outlive this session's handle. */
+        /**
+         * @brief Attach a borrowed connection pool.
+         * @param pool Pool that must outlive this session's handle.
+         */
         auto SetConnectionPool(ConnectionPool const& pool) -> void { pool.SetupHandler(m_curl->handle); }
 
-        /** @brief Configure HTTP credentials. @param auth Owned credentials and authentication policy to copy into curl. */
+        /**
+         * @brief Configure HTTP credentials.
+         * @param auth Owned credentials and authentication policy to copy into curl.
+         */
         auto SetAuth(Authentication const& auth) -> void {
             long mode{};
             switch (auth.GetAuthMode()) {
@@ -217,34 +303,61 @@ export namespace mcr {
             setOption(CURLOPT_USERPWD, auth.GetAuthString());
         }
 
-        /** @brief Configure a bearer token. @param token Token copied into curl. */
+        /**
+         * @brief Configure a bearer token.
+         * @param token Token copied into curl.
+         */
         auto SetBearer(Bearer const& token) -> void {
             setOption(CURLOPT_HTTPAUTH, static_cast<long>(CURLAUTH_BEARER));
             setOption(CURLOPT_XOAUTH2_BEARER, token.GetToken());
         }
 
-        /** @brief Replace the User-Agent header. @param ua User-agent text. */
+        /**
+         * @brief Replace the User-Agent header.
+         * @param ua User-agent text.
+         */
         auto SetUserAgent(UserAgent const& ua) -> void { setOption(CURLOPT_USERAGENT, ua.CStr()); }
 
-        /** @brief Copy form content for subsequent requests. @param payload URL-encoded form fields. */
+        /**
+         * @brief Copy form content for subsequent requests.
+         * @param payload URL-encoded form fields.
+         */
         auto SetPayload(Payload const& payload) -> void { m_content = payload; }
 
-        /** @brief Move form content for subsequent requests. @param payload URL-encoded form fields. */
+        /**
+         * @brief Move form content for subsequent requests.
+         * @param payload URL-encoded form fields.
+         */
         auto SetPayload(Payload&& payload) -> void { m_content = std::move(payload); }
 
-        /** @brief Copy proxy mappings. @param proxies Protocol and no_proxy mappings. */
+        /**
+         * @brief Copy proxy mappings.
+         * @param proxies Protocol and no_proxy mappings.
+         */
         auto SetProxies(Proxies const& proxies) -> void { m_proxies = proxies; }
 
-        /** @brief Move proxy mappings. @param proxies Protocol and no_proxy mappings. */
+        /**
+         * @brief Move proxy mappings.
+         * @param proxies Protocol and no_proxy mappings.
+         */
         auto SetProxies(Proxies&& proxies) -> void { m_proxies = std::move(proxies); }
 
-        /** @brief Copy protocol-specific proxy credentials. @param auth Credentials to own. */
+        /**
+         * @brief Copy protocol-specific proxy credentials.
+         * @param auth Credentials to own.
+         */
         auto SetProxyAuth(ProxyAuthentication const& auth) -> void { m_proxy_auth = auth; }
 
-        /** @brief Move protocol-specific proxy credentials. @param auth Credentials to own. */
+        /**
+         * @brief Move protocol-specific proxy credentials.
+         * @param auth Credentials to own.
+         */
         auto SetProxyAuth(ProxyAuthentication&& auth) -> void { m_proxy_auth = std::move(auth); }
 
-        /** @brief Configure certificate and hostname verification together. @param verify Verification preference. */
+        /**
+         * @brief Configure certificate and hostname verification together.
+         * @param verify Verification preference.
+         */
         auto SetVerifySsl(VerifySsl const& verify) -> void {
             setOption(CURLOPT_SSL_VERIFYPEER, verify.verify ? 1L : 0L);
             setOption(CURLOPT_SSL_VERIFYHOST, verify.verify ? 2L : 0L);
@@ -258,13 +371,22 @@ export namespace mcr {
          */
         auto SetSslOptions(SslOptions const& options) -> void;
 
-        /** @brief Copy multipart descriptors. @param multipart Parts; buffer bytes remain borrowed. */
+        /**
+         * @brief Copy multipart descriptors.
+         * @param multipart Parts; buffer bytes remain borrowed.
+         */
         auto SetMultipart(Multipart const& multipart) -> void { m_content = multipart; }
 
-        /** @brief Move multipart descriptors. @param multipart Parts; buffer bytes remain borrowed. */
+        /**
+         * @brief Move multipart descriptors.
+         * @param multipart Parts; buffer bytes remain borrowed.
+         */
         auto SetMultipart(Multipart&& multipart) -> void { m_content = std::move(multipart); }
 
-        /** @brief Configure redirect handling. @param redirect Limits, credential forwarding, and POST preservation. */
+        /**
+         * @brief Configure redirect handling.
+         * @param redirect Limits, credential forwarding, and POST preservation.
+         */
         auto SetRedirect(Redirect const& redirect) -> void {
             setOption(CURLOPT_FOLLOWLOCATION, redirect.follow ? 1L : 0L);
             setOption(CURLOPT_MAXREDIRS, redirect.maximum);
@@ -282,70 +404,121 @@ export namespace mcr {
             setOption(CURLOPT_POSTREDIR, mask);
         }
 
-        /** @brief Clear the cookie engine and set explicit request cookies. @param cookies Cookies to encode. */
+        /**
+         * @brief Clear the cookie engine and set explicit request cookies.
+         * @param cookies Cookies to encode.
+         */
         auto SetCookies(Cookies const& cookies) -> void {
             setOption(CURLOPT_COOKIELIST, "ALL");
             setOption(CURLOPT_COOKIE, cookies.GetEncoded(*m_curl).c_str());
         }
 
-        /** @brief Copy body bytes for subsequent requests. @param body Bytes to own. */
+        /**
+         * @brief Copy body bytes for subsequent requests.
+         * @param body Bytes to own.
+         */
         auto SetBody(Body const& body) -> void { m_content = body; }
 
-        /** @brief Move body bytes for subsequent requests. @param body Bytes to own. */
+        /**
+         * @brief Move body bytes for subsequent requests.
+         * @param body Bytes to own.
+         */
         auto SetBody(Body&& body) -> void { m_content = std::move(body); }
 
-        /** @brief Borrow body bytes for subsequent requests. @param body View whose bytes must outlive transfers. */
+        /**
+         * @brief Borrow body bytes for subsequent requests.
+         * @param body View whose bytes must outlive transfers.
+         */
         auto SetBodyView(BodyView body) -> void { m_content = body; }
 
-        /** @brief Configure low-speed cancellation. @param low_speed Minimum rate and observation duration. */
+        /**
+         * @brief Configure low-speed cancellation.
+         * @param low_speed Minimum rate and observation duration.
+         */
         auto SetLowSpeed(LowSpeed const& low_speed) -> void {
             setOption(CURLOPT_LOW_SPEED_LIMIT, static_cast<long>(low_speed.limit));
             setOption(CURLOPT_LOW_SPEED_TIME, static_cast<long>(low_speed.time.count()));
         }
 
-        /** @brief Configure a Unix socket. @param unix_socket Socket path copied into curl. */
+        /**
+         * @brief Configure a Unix socket.
+         * @param unix_socket Socket path copied into curl.
+         */
         auto SetUnixSocket(UnixSocket const& unix_socket) -> void { setOption(CURLOPT_UNIX_SOCKET_PATH, unix_socket.GetUnixSocketString()); }
 
-        /** @brief Set or clear the upload producer. @param read Callback used when no Content is configured. */
+        /**
+         * @brief Set or clear the upload producer.
+         * @param read Callback used when no Content is configured.
+         */
         auto SetReadCallback(ReadCallback const& read) -> void { m_read = read; }
 
-        /** @brief Set or clear a header observer; response headers are still collected. @param header Observer to copy. */
+        /**
+         * @brief Set or clear a header observer; response headers are still collected.
+         * @param header Observer to copy.
+         */
         auto SetHeaderCallback(HeaderCallback const& header) -> void { m_header_callback = header; }
 
-        /** @brief Set a body consumer and clear SSE consumption. @param write Consumer; an empty callback restores buffering. */
+        /**
+         * @brief Set a body consumer and clear SSE consumption.
+         * @param write Consumer; an empty callback restores buffering.
+         */
         auto SetWriteCallback(WriteCallback const& write) -> void {
             m_write = write;
             m_sse   = {};
         }
 
-        /** @brief Set or clear a progress observer. @param progress Observer; false cancels the transfer. */
+        /**
+         * @brief Set or clear a progress observer.
+         * @param progress Observer; false cancels the transfer.
+         */
         auto SetProgressCallback(ProgressCallback const& progress) -> void { m_progress = progress; }
 
-        /** @brief Set a diagnostic observer and enable verbose output when nonempty. @param debug Observer to copy. */
+        /**
+         * @brief Set a diagnostic observer and enable verbose output when nonempty.
+         * @param debug Observer to copy.
+         */
         auto SetDebugCallback(DebugCallback const& debug) -> void {
             m_debug = debug;
             SetVerbose(Verbose{ bool(m_debug.callback) });
         }
 
-        /** @brief Set an SSE consumer and clear raw body consumption. @param sse Observer reset to a fresh stream each request. */
+        /**
+         * @brief Set an SSE consumer and clear raw body consumption.
+         * @param sse Observer reset to a fresh stream each request.
+         */
         auto SetServerSentEventCallback(ServerSentEventCallback const& sse) -> void {
             m_sse   = sse;
             m_write = {};
         }
 
-        /** @brief Enable or disable curl diagnostics. @param verbose Logging preference. */
+        /**
+         * @brief Enable or disable curl diagnostics.
+         * @param verbose Logging preference.
+         */
         auto SetVerbose(Verbose const& verbose) -> void { setOption(CURLOPT_VERBOSE, verbose.verbose ? 1L : 0L); }
 
-        /** @brief Bind an outgoing interface. @param iface Empty text restores automatic selection. */
+        /**
+         * @brief Bind an outgoing interface.
+         * @param iface Empty text restores automatic selection.
+         */
         auto SetInterface(Interface const& iface) -> void { setOption(CURLOPT_INTERFACE, iface.Str().empty() ? nullptr : iface.CStr()); }
 
-        /** @brief Choose the first local port. @param local_port Port number. */
+        /**
+         * @brief Choose the first local port.
+         * @param local_port Port number.
+         */
         auto SetLocalPort(LocalPort const& local_port) -> void { setOption(CURLOPT_LOCALPORT, static_cast<long>(static_cast<std::uint16_t>(local_port))); }
 
-        /** @brief Choose the local port search range. @param local_port_range Number of ports to try. */
+        /**
+         * @brief Choose the local port search range.
+         * @param local_port_range Number of ports to try.
+         */
         auto SetLocalPortRange(LocalPortRange const& local_port_range) -> void { setOption(CURLOPT_LOCALPORTRANGE, static_cast<long>(static_cast<std::uint16_t>(local_port_range))); }
 
-        /** @brief Set the preferred HTTP version. @param version Protocol preference supported by the linked curl build. */
+        /**
+         * @brief Set the preferred HTTP version.
+         * @param version Protocol preference supported by the linked curl build.
+         */
         auto SetHttpVersion(HttpVersion const& version) -> void {
             long value{};
             switch (version.code) {
@@ -362,13 +535,22 @@ export namespace mcr {
             setOption(CURLOPT_HTTP_VERSION, value);
         }
 
-        /** @brief Request one byte range. @param range Range serialized for curl. */
+        /**
+         * @brief Request one byte range.
+         * @param range Range serialized for curl.
+         */
         auto SetRange(Range const& range) -> void { setOption(CURLOPT_RANGE, range.Str().c_str()); }
 
-        /** @brief Replace hostname resolution overrides. @param resolve One mapping. */
+        /**
+         * @brief Replace hostname resolution overrides.
+         * @param resolve One mapping.
+         */
         auto SetResolve(Resolve const& resolve) -> void { SetResolves({ resolve }); }
 
-        /** @brief Replace all hostname resolution overrides. @param resolves Mappings; empty clears the list. */
+        /**
+         * @brief Replace all hostname resolution overrides.
+         * @param resolves Mappings; empty clears the list.
+         */
         auto SetResolves(std::vector<Resolve> const& resolves) -> void {
             CurlList list{ nullptr, &curl_slist_free_all };
             for (auto const& resolve : resolves) {
@@ -380,40 +562,70 @@ export namespace mcr {
             curl_slist_free_all(std::exchange(m_curl->resolve_curl_list, list.release()));
         }
 
-        /** @brief Request multiple byte ranges. @param multi_range Ranges serialized for curl. */
+        /**
+         * @brief Request multiple byte ranges.
+         * @param multi_range Ranges serialized for curl.
+         */
         auto SetMultiRange(MultiRange const& multi_range) -> void { setOption(CURLOPT_RANGE, multi_range.Str().c_str()); }
 
-        /** @brief Set response buffer reservation. @param reserve_size Minimum capacity requested before each transfer. */
+        /**
+         * @brief Set response buffer reservation.
+         * @param reserve_size Minimum capacity requested before each transfer.
+         */
         auto SetReserveSize(ReserveSize const& reserve_size) -> void { ResponseStringReserve(reserve_size.size); }
 
-        /** @brief Copy compression preferences. @param accept_encoding Encodings to advertise and decode. */
+        /**
+         * @brief Copy compression preferences.
+         * @param accept_encoding Encodings to advertise and decode.
+         */
         auto SetAcceptEncoding(AcceptEncoding const& accept_encoding) -> void { m_accept_encoding = accept_encoding; }
 
-        /** @brief Move compression preferences. @param accept_encoding Encodings to advertise and decode. */
+        /**
+         * @brief Move compression preferences.
+         * @param accept_encoding Encodings to advertise and decode.
+         */
         auto SetAcceptEncoding(AcceptEncoding&& accept_encoding) -> void { m_accept_encoding = std::move(accept_encoding); }
 
-        /** @brief Limit upload and download rates. @param limit_rate Bytes per second; zero means unlimited. */
+        /**
+         * @brief Limit upload and download rates.
+         * @param limit_rate Bytes per second; zero means unlimited.
+         */
         auto SetLimitRate(LimitRate const& limit_rate) -> void {
             setOption(CURLOPT_MAX_RECV_SPEED_LARGE, static_cast<curl_off_t>(limit_rate.downrate));
             setOption(CURLOPT_MAX_SEND_SPEED_LARGE, static_cast<curl_off_t>(limit_rate.uprate));
         }
 
-        /** @brief Inspect persistent request content. @return Read-only content variant. */
+        /**
+         * @brief Inspect persistent request content.
+         * @return Read-only content variant.
+         */
         [[nodiscard]] auto GetContent() const -> Content const& { return m_content; }
 
-        /** @brief Remove stored content and detach body/MIME pointers; read callbacks remain configured. */
+        /**
+         * @brief Remove stored content and detach body/MIME pointers; read callbacks remain configured.
+         */
         auto RemoveContent() -> void {
             clearCurlContent();
             m_content = std::monostate{};
         }
 
-        /** @brief Set a cancellation flag, independently of progress callback ordering. @param param Shared flag; null disables cancellation. */
+        /**
+         * @brief Set a cancellation flag, independently of progress callback ordering.
+         * @param param Shared flag; null disables cancellation.
+         */
         auto SetCancellationParam(std::shared_ptr<std::atomic_bool> param) -> void { m_cancellation = std::move(param); }
 
-        /** @brief Append an interceptor while idle. @param interceptor Nonnull interceptor. @throws std::logic_error If a request is active. */
+        /**
+         * @brief Append an interceptor while idle.
+         * @param interceptor Nonnull interceptor.
+         * @throws std::logic_error If a request is active.
+         */
         auto AddInterceptor(std::shared_ptr<Interceptor> const& interceptor) -> void;
 
-        /** @brief Reserve response capacity before each request. @param size Zero restores ordinary dynamic allocation. */
+        /**
+         * @brief Reserve response capacity before each request.
+         * @param size Zero restores ordinary dynamic allocation.
+         */
         auto ResponseStringReserve(std::size_t size) -> void { m_reserve_size = size; }
 
         /**
@@ -429,10 +641,16 @@ export namespace mcr {
             return length;
         }
 
-        /** @brief Access the easy handle for advanced configuration or prepared transfers. @return Shared holder; options are reset when the session dies. */
+        /**
+         * @brief Access the easy handle for advanced configuration or prepared transfers.
+         * @return Shared holder; options are reset when the session dies.
+         */
         [[nodiscard]] auto GetCurlHolder() -> std::shared_ptr<CurlHolder> { return m_curl; }
 
-        /** @brief Combine encoded parameters with the URL's existing query, before any fragment. @return Full request URL. */
+        /**
+         * @brief Combine encoded parameters with the URL's existing query, before any fragment.
+         * @return Full request URL.
+         */
         [[nodiscard]] auto GetFullRequestUrl() -> std::string {
             auto       result{ m_url.Str() };
             auto const parameters{ m_parameters.GetContent(*m_curl) };
@@ -452,7 +670,11 @@ export namespace mcr {
             return result;
         }
 
-        /** @brief Obtain shared ownership for asynchronous work. @return Shared session. @throws std::runtime_error If not managed by shared_ptr. */
+        /**
+         * @brief Obtain shared ownership for asynchronous work.
+         * @return Shared session.
+         * @throws std::runtime_error If not managed by shared_ptr.
+         */
         [[nodiscard]] auto GetSharedPtrFromThis() -> std::shared_ptr<Session> {
             auto shared{ weak_from_this().lock() };
             if (!shared) {
@@ -461,36 +683,58 @@ export namespace mcr {
             return shared;
         }
 
-        /** @brief Prepare a GET download into a temporary consumer. @param write Consumer copied for this download only. */
+        /**
+         * @brief Prepare a GET download into a temporary consumer.
+         * @param write Consumer copied for this download only.
+         */
         auto PrepareDownload(WriteCallback const& write) -> void {
             prepare("GET", true);
             m_download_write = write;
         }
 
-        /** @brief Prepare a GET download into a borrowed binary stream. @param file Stream that must outlive completion. */
+        /**
+         * @brief Prepare a GET download into a borrowed binary stream.
+         * @param file Stream that must outlive completion.
+         */
         auto PrepareDownload(std::ofstream& file) -> void {
             prepare("GET", true);
             m_download_file = &file;
         }
 
-        /** @brief Download into a callback without retaining it for later requests. @param write Download consumer. @return Transfer metadata with an empty body. */
+        /**
+         * @brief Download into a callback without retaining it for later requests.
+         * @param write Download consumer.
+         * @return Transfer metadata with an empty body.
+         */
         auto Download(WriteCallback const& write) -> Response {
             PrepareDownload(write);
             return perform();
         }
 
-        /** @brief Download into a borrowed binary output stream. @param file Output stream; the caller checks later flush/close errors. @return Transfer metadata with an empty body. */
+        /**
+         * @brief Download into a borrowed binary output stream.
+         * @param file Output stream; the caller checks later flush/close errors.
+         * @return Transfer metadata with an empty body.
+         */
         auto Download(std::ofstream& file) -> Response {
             PrepareDownload(file);
             return perform();
         }
 
-        /** @brief Download asynchronously into a callback. @param write Copied consumer. @return Future retaining this session. */
+        /**
+         * @brief Download asynchronously into a callback.
+         * @param write Copied consumer.
+         * @return Future retaining this session.
+         */
         auto DownloadAsync(WriteCallback const& write) -> AsyncResponse {
             return async([self = GetSharedPtrFromThis(), write] { return self->Download(write); });
         }
 
-        /** @brief Download asynchronously into a stream. @param file Stream that must outlive completion. @return Future retaining this session. */
+        /**
+         * @brief Download asynchronously into a stream.
+         * @param file Stream that must outlive completion.
+         * @return Future retaining this session.
+         */
         auto DownloadAsync(std::ofstream& file) -> AsyncResponse {
             return async([self = GetSharedPtrFromThis(), &file] { return self->Download(file); });
         }
@@ -524,303 +768,548 @@ export namespace mcr {
             };
         }
 
-        /** @brief Complete a prepared download. @param curl_error Curl transfer result. @return Download metadata. */
+        /**
+         * @brief Complete a prepared download.
+         * @param curl_error Curl transfer result.
+         * @return Download metadata.
+         */
         auto CompleteDownload(CURLcode curl_error) -> Response { return Complete(curl_error); }
 
-        /** @brief Prepare DELETE without starting network I/O. */
+        /**
+         * @brief Prepare DELETE without starting network I/O.
+         */
         auto PrepareDelete() -> void { prepare("DELETE"); }
 
-        /** @brief Execute DELETE with the stored options. @return Completed response. */
+        /**
+         * @brief Execute DELETE with the stored options.
+         * @return Completed response.
+         */
         auto Delete() -> Response {
             PrepareDelete();
             return perform();
         }
 
-        /** @brief Execute DELETE asynchronously. @return Future retaining shared ownership of this session. */
+        /**
+         * @brief Execute DELETE asynchronously.
+         * @return Future retaining shared ownership of this session.
+         */
         auto DeleteAsync() -> AsyncResponse {
             return async([self = GetSharedPtrFromThis()] { return self->Delete(); });
         }
 
-        /** @brief Pass a DELETE response to an asynchronous continuation. @tparam Then Continuation type. @param then Consumer of the response. @return Future containing the consumer's result. */
+        /**
+         * @brief Pass a DELETE response to an asynchronous continuation.
+         * @tparam Then Continuation type.
+         * @param then Consumer of the response.
+         * @return Future containing the consumer's result.
+         */
         template <typename Then>
         auto DeleteCallback(Then then) {
             return async([self = GetSharedPtrFromThis(), then = std::move(then)]() mutable { return std::invoke(std::move(then), self->Delete()); });
         }
 
-        /** @brief Prepare GET without starting network I/O. */
+        /**
+         * @brief Prepare GET without starting network I/O.
+         */
         auto PrepareGet() -> void { prepare("GET"); }
 
-        /** @brief Execute GET with the stored options. @return Completed response. */
+        /**
+         * @brief Execute GET with the stored options.
+         * @return Completed response.
+         */
         auto Get() -> Response {
             PrepareGet();
             return perform();
         }
 
-        /** @brief Execute GET asynchronously. @return Future retaining shared ownership of this session. */
+        /**
+         * @brief Execute GET asynchronously.
+         * @return Future retaining shared ownership of this session.
+         */
         auto GetAsync() -> AsyncResponse {
             return async([self = GetSharedPtrFromThis()] { return self->Get(); });
         }
 
-        /** @brief Pass a GET response to an asynchronous continuation. @tparam Then Continuation type. @param then Consumer of the response. @return Future containing the consumer's result. */
+        /**
+         * @brief Pass a GET response to an asynchronous continuation.
+         * @tparam Then Continuation type.
+         * @param then Consumer of the response.
+         * @return Future containing the consumer's result.
+         */
         template <typename Then>
         auto GetCallback(Then then) {
             return async([self = GetSharedPtrFromThis(), then = std::move(then)]() mutable { return std::invoke(std::move(then), self->Get()); });
         }
 
-        /** @brief Prepare HEAD without starting network I/O. */
+        /**
+         * @brief Prepare HEAD without starting network I/O.
+         */
         auto PrepareHead() -> void { prepare("HEAD"); }
 
-        /** @brief Execute HEAD with the stored options. @return Completed response. */
+        /**
+         * @brief Execute HEAD with the stored options.
+         * @return Completed response.
+         */
         auto Head() -> Response {
             PrepareHead();
             return perform();
         }
 
-        /** @brief Execute HEAD asynchronously. @return Future retaining shared ownership of this session. */
+        /**
+         * @brief Execute HEAD asynchronously.
+         * @return Future retaining shared ownership of this session.
+         */
         auto HeadAsync() -> AsyncResponse {
             return async([self = GetSharedPtrFromThis()] { return self->Head(); });
         }
 
-        /** @brief Pass a HEAD response to an asynchronous continuation. @tparam Then Continuation type. @param then Consumer of the response. @return Future containing the consumer's result. */
+        /**
+         * @brief Pass a HEAD response to an asynchronous continuation.
+         * @tparam Then Continuation type.
+         * @param then Consumer of the response.
+         * @return Future containing the consumer's result.
+         */
         template <typename Then>
         auto HeadCallback(Then then) {
             return async([self = GetSharedPtrFromThis(), then = std::move(then)]() mutable { return std::invoke(std::move(then), self->Head()); });
         }
 
-        /** @brief Prepare OPTIONS without starting network I/O. */
+        /**
+         * @brief Prepare OPTIONS without starting network I/O.
+         */
         auto PrepareOptions() -> void { prepare("OPTIONS"); }
 
-        /** @brief Execute OPTIONS with the stored options. @return Completed response. */
+        /**
+         * @brief Execute OPTIONS with the stored options.
+         * @return Completed response.
+         */
         auto Options() -> Response {
             PrepareOptions();
             return perform();
         }
 
-        /** @brief Execute OPTIONS asynchronously. @return Future retaining shared ownership of this session. */
+        /**
+         * @brief Execute OPTIONS asynchronously.
+         * @return Future retaining shared ownership of this session.
+         */
         auto OptionsAsync() -> AsyncResponse {
             return async([self = GetSharedPtrFromThis()] { return self->Options(); });
         }
 
-        /** @brief Pass a OPTIONS response to an asynchronous continuation. @tparam Then Continuation type. @param then Consumer of the response. @return Future containing the consumer's result. */
+        /**
+         * @brief Pass a OPTIONS response to an asynchronous continuation.
+         * @tparam Then Continuation type.
+         * @param then Consumer of the response.
+         * @return Future containing the consumer's result.
+         */
         template <typename Then>
         auto OptionsCallback(Then then) {
             return async([self = GetSharedPtrFromThis(), then = std::move(then)]() mutable { return std::invoke(std::move(then), self->Options()); });
         }
 
-        /** @brief Prepare PATCH without starting network I/O. */
+        /**
+         * @brief Prepare PATCH without starting network I/O.
+         */
         auto PreparePatch() -> void { prepare("PATCH"); }
 
-        /** @brief Execute PATCH with the stored options. @return Completed response. */
+        /**
+         * @brief Execute PATCH with the stored options.
+         * @return Completed response.
+         */
         auto Patch() -> Response {
             PreparePatch();
             return perform();
         }
 
-        /** @brief Execute PATCH asynchronously. @return Future retaining shared ownership of this session. */
+        /**
+         * @brief Execute PATCH asynchronously.
+         * @return Future retaining shared ownership of this session.
+         */
         auto PatchAsync() -> AsyncResponse {
             return async([self = GetSharedPtrFromThis()] { return self->Patch(); });
         }
 
-        /** @brief Pass a PATCH response to an asynchronous continuation. @tparam Then Continuation type. @param then Consumer of the response. @return Future containing the consumer's result. */
+        /**
+         * @brief Pass a PATCH response to an asynchronous continuation.
+         * @tparam Then Continuation type.
+         * @param then Consumer of the response.
+         * @return Future containing the consumer's result.
+         */
         template <typename Then>
         auto PatchCallback(Then then) {
             return async([self = GetSharedPtrFromThis(), then = std::move(then)]() mutable { return std::invoke(std::move(then), self->Patch()); });
         }
 
-        /** @brief Prepare POST without starting network I/O. */
+        /**
+         * @brief Prepare POST without starting network I/O.
+         */
         auto PreparePost() -> void { prepare("POST"); }
 
-        /** @brief Execute POST with the stored options. @return Completed response. */
+        /**
+         * @brief Execute POST with the stored options.
+         * @return Completed response.
+         */
         auto Post() -> Response {
             PreparePost();
             return perform();
         }
 
-        /** @brief Execute POST asynchronously. @return Future retaining shared ownership of this session. */
+        /**
+         * @brief Execute POST asynchronously.
+         * @return Future retaining shared ownership of this session.
+         */
         auto PostAsync() -> AsyncResponse {
             return async([self = GetSharedPtrFromThis()] { return self->Post(); });
         }
 
-        /** @brief Pass a POST response to an asynchronous continuation. @tparam Then Continuation type. @param then Consumer of the response. @return Future containing the consumer's result. */
+        /**
+         * @brief Pass a POST response to an asynchronous continuation.
+         * @tparam Then Continuation type.
+         * @param then Consumer of the response.
+         * @return Future containing the consumer's result.
+         */
         template <typename Then>
         auto PostCallback(Then then) {
             return async([self = GetSharedPtrFromThis(), then = std::move(then)]() mutable { return std::invoke(std::move(then), self->Post()); });
         }
 
-        /** @brief Prepare PUT without starting network I/O. */
+        /**
+         * @brief Prepare PUT without starting network I/O.
+         */
         auto PreparePut() -> void { prepare("PUT"); }
 
-        /** @brief Execute PUT with the stored options. @return Completed response. */
+        /**
+         * @brief Execute PUT with the stored options.
+         * @return Completed response.
+         */
         auto Put() -> Response {
             PreparePut();
             return perform();
         }
 
-        /** @brief Execute PUT asynchronously. @return Future retaining shared ownership of this session. */
+        /**
+         * @brief Execute PUT asynchronously.
+         * @return Future retaining shared ownership of this session.
+         */
         auto PutAsync() -> AsyncResponse {
             return async([self = GetSharedPtrFromThis()] { return self->Put(); });
         }
 
-        /** @brief Pass a PUT response to an asynchronous continuation. @tparam Then Continuation type. @param then Consumer of the response. @return Future containing the consumer's result. */
+        /**
+         * @brief Pass a PUT response to an asynchronous continuation.
+         * @tparam Then Continuation type.
+         * @param then Consumer of the response.
+         * @return Future containing the consumer's result.
+         */
         template <typename Then>
         auto PutCallback(Then then) {
             return async([self = GetSharedPtrFromThis(), then = std::move(then)]() mutable { return std::invoke(std::move(then), self->Put()); });
         }
 
-        /** @brief Forward a Url option to its setter. @param value Option to apply. */
+        /**
+         * @brief Forward a Url option to its setter.
+         * @param value Option to apply.
+         */
         auto SetOption(Url const& value) -> void { SetUrl(value); }
 
-        /** @brief Forward a Parameters option to its setter. @param value Option to apply. */
+        /**
+         * @brief Forward a Parameters option to its setter.
+         * @param value Option to apply.
+         */
         auto SetOption(Parameters const& value) -> void { SetParameters(value); }
 
-        /** @brief Move a Parameters option into this session. @param value Option to transfer. */
+        /**
+         * @brief Move a Parameters option into this session.
+         * @param value Option to transfer.
+         */
         auto SetOption(Parameters&& value) -> void { SetParameters(std::move(value)); }
 
-        /** @brief Forward a Header option to its setter. @param value Option to apply. */
+        /**
+         * @brief Forward a Header option to its setter.
+         * @param value Option to apply.
+         */
         auto SetOption(Header const& value) -> void { SetHeader(value); }
 
-        /** @brief Forward a Timeout option to its setter. @param value Option to apply. */
+        /**
+         * @brief Forward a Timeout option to its setter.
+         * @param value Option to apply.
+         */
         auto SetOption(Timeout const& value) -> void { SetTimeout(value); }
 
-        /** @brief Forward a ConnectTimeout option to its setter. @param value Option to apply. */
+        /**
+         * @brief Forward a ConnectTimeout option to its setter.
+         * @param value Option to apply.
+         */
         auto SetOption(ConnectTimeout const& value) -> void { SetConnectTimeout(value); }
 
-        /** @brief Forward a ConnectionPool option to its setter. @param value Option to apply. */
+        /**
+         * @brief Forward a ConnectionPool option to its setter.
+         * @param value Option to apply.
+         */
         auto SetOption(ConnectionPool const& value) -> void { SetConnectionPool(value); }
 
-        /** @brief Forward a Authentication option to its setter. @param value Option to apply. */
+        /**
+         * @brief Forward a Authentication option to its setter.
+         * @param value Option to apply.
+         */
         auto SetOption(Authentication const& value) -> void { SetAuth(value); }
 
-        /** @brief Forward a Bearer option to its setter. @param value Option to apply. */
+        /**
+         * @brief Forward a Bearer option to its setter.
+         * @param value Option to apply.
+         */
         auto SetOption(Bearer const& value) -> void { SetBearer(value); }
 
-        /** @brief Forward a UserAgent option to its setter. @param value Option to apply. */
+        /**
+         * @brief Forward a UserAgent option to its setter.
+         * @param value Option to apply.
+         */
         auto SetOption(UserAgent const& value) -> void { SetUserAgent(value); }
 
-        /** @brief Forward a Payload option to its setter. @param value Option to apply. */
+        /**
+         * @brief Forward a Payload option to its setter.
+         * @param value Option to apply.
+         */
         auto SetOption(Payload const& value) -> void { SetPayload(value); }
 
-        /** @brief Move a Payload option into this session. @param value Option to transfer. */
+        /**
+         * @brief Move a Payload option into this session.
+         * @param value Option to transfer.
+         */
         auto SetOption(Payload&& value) -> void { SetPayload(std::move(value)); }
 
-        /** @brief Forward a Proxies option to its setter. @param value Option to apply. */
+        /**
+         * @brief Forward a Proxies option to its setter.
+         * @param value Option to apply.
+         */
         auto SetOption(Proxies const& value) -> void { SetProxies(value); }
 
-        /** @brief Move a Proxies option into this session. @param value Option to transfer. */
+        /**
+         * @brief Move a Proxies option into this session.
+         * @param value Option to transfer.
+         */
         auto SetOption(Proxies&& value) -> void { SetProxies(std::move(value)); }
 
-        /** @brief Copy proxy authentication. @param value Protocol credentials. */
+        /**
+         * @brief Copy proxy authentication.
+         * @param value Protocol credentials.
+         */
         auto SetOption(ProxyAuthentication const& value) -> void { SetProxyAuth(value); }
 
-        /** @brief Move proxy authentication. @param value Protocol credentials. */
+        /**
+         * @brief Move proxy authentication.
+         * @param value Protocol credentials.
+         */
         auto SetOption(ProxyAuthentication&& value) -> void { SetProxyAuth(std::move(value)); }
 
-        /** @brief Apply combined TLS verification. @param value Verification preference. */
+        /**
+         * @brief Apply combined TLS verification.
+         * @param value Verification preference.
+         */
         auto SetOption(VerifySsl const& value) -> void { SetVerifySsl(value); }
 
-        /** @brief Replace TLS configuration. @param value Owned TLS options. */
+        /**
+         * @brief Replace TLS configuration.
+         * @param value Owned TLS options.
+         */
         auto SetOption(SslOptions const& value) -> void { SetSslOptions(value); }
 
-        /** @brief Forward a Multipart option to its setter. @param value Option to apply. */
+        /**
+         * @brief Forward a Multipart option to its setter.
+         * @param value Option to apply.
+         */
         auto SetOption(Multipart const& value) -> void { SetMultipart(value); }
 
-        /** @brief Move a Multipart option into this session. @param value Option to transfer. */
+        /**
+         * @brief Move a Multipart option into this session.
+         * @param value Option to transfer.
+         */
         auto SetOption(Multipart&& value) -> void { SetMultipart(std::move(value)); }
 
-        /** @brief Forward a Redirect option to its setter. @param value Option to apply. */
+        /**
+         * @brief Forward a Redirect option to its setter.
+         * @param value Option to apply.
+         */
         auto SetOption(Redirect const& value) -> void { SetRedirect(value); }
 
-        /** @brief Forward a Cookies option to its setter. @param value Option to apply. */
+        /**
+         * @brief Forward a Cookies option to its setter.
+         * @param value Option to apply.
+         */
         auto SetOption(Cookies const& value) -> void { SetCookies(value); }
 
-        /** @brief Forward a Body option to its setter. @param value Option to apply. */
+        /**
+         * @brief Forward a Body option to its setter.
+         * @param value Option to apply.
+         */
         auto SetOption(Body const& value) -> void { SetBody(value); }
 
-        /** @brief Move a Body option into this session. @param value Option to transfer. */
+        /**
+         * @brief Move a Body option into this session.
+         * @param value Option to transfer.
+         */
         auto SetOption(Body&& value) -> void { SetBody(std::move(value)); }
 
-        /** @brief Forward a BodyView option to its setter. @param value Option to apply. */
+        /**
+         * @brief Forward a BodyView option to its setter.
+         * @param value Option to apply.
+         */
         auto SetOption(BodyView value) -> void { SetBodyView(value); }
 
-        /** @brief Forward a ReadCallback option to its setter. @param value Option to apply. */
+        /**
+         * @brief Forward a ReadCallback option to its setter.
+         * @param value Option to apply.
+         */
         auto SetOption(ReadCallback const& value) -> void { SetReadCallback(value); }
 
-        /** @brief Forward a HeaderCallback option to its setter. @param value Option to apply. */
+        /**
+         * @brief Forward a HeaderCallback option to its setter.
+         * @param value Option to apply.
+         */
         auto SetOption(HeaderCallback const& value) -> void { SetHeaderCallback(value); }
 
-        /** @brief Forward a WriteCallback option to its setter. @param value Option to apply. */
+        /**
+         * @brief Forward a WriteCallback option to its setter.
+         * @param value Option to apply.
+         */
         auto SetOption(WriteCallback const& value) -> void { SetWriteCallback(value); }
 
-        /** @brief Forward a ProgressCallback option to its setter. @param value Option to apply. */
+        /**
+         * @brief Forward a ProgressCallback option to its setter.
+         * @param value Option to apply.
+         */
         auto SetOption(ProgressCallback const& value) -> void { SetProgressCallback(value); }
 
-        /** @brief Forward a DebugCallback option to its setter. @param value Option to apply. */
+        /**
+         * @brief Forward a DebugCallback option to its setter.
+         * @param value Option to apply.
+         */
         auto SetOption(DebugCallback const& value) -> void { SetDebugCallback(value); }
 
-        /** @brief Forward a ServerSentEventCallback option to its setter. @param value Option to apply. */
+        /**
+         * @brief Forward a ServerSentEventCallback option to its setter.
+         * @param value Option to apply.
+         */
         auto SetOption(ServerSentEventCallback const& value) -> void { SetServerSentEventCallback(value); }
 
-        /** @brief Forward a LowSpeed option to its setter. @param value Option to apply. */
+        /**
+         * @brief Forward a LowSpeed option to its setter.
+         * @param value Option to apply.
+         */
         auto SetOption(LowSpeed const& value) -> void { SetLowSpeed(value); }
 
-        /** @brief Forward a Verbose option to its setter. @param value Option to apply. */
+        /**
+         * @brief Forward a Verbose option to its setter.
+         * @param value Option to apply.
+         */
         auto SetOption(Verbose const& value) -> void { SetVerbose(value); }
 
-        /** @brief Forward a UnixSocket option to its setter. @param value Option to apply. */
+        /**
+         * @brief Forward a UnixSocket option to its setter.
+         * @param value Option to apply.
+         */
         auto SetOption(UnixSocket const& value) -> void { SetUnixSocket(value); }
 
-        /** @brief Forward a Interface option to its setter. @param value Option to apply. */
+        /**
+         * @brief Forward a Interface option to its setter.
+         * @param value Option to apply.
+         */
         auto SetOption(Interface const& value) -> void { SetInterface(value); }
 
-        /** @brief Forward a LocalPort option to its setter. @param value Option to apply. */
+        /**
+         * @brief Forward a LocalPort option to its setter.
+         * @param value Option to apply.
+         */
         auto SetOption(LocalPort const& value) -> void { SetLocalPort(value); }
 
-        /** @brief Forward a LocalPortRange option to its setter. @param value Option to apply. */
+        /**
+         * @brief Forward a LocalPortRange option to its setter.
+         * @param value Option to apply.
+         */
         auto SetOption(LocalPortRange const& value) -> void { SetLocalPortRange(value); }
 
-        /** @brief Forward a HttpVersion option to its setter. @param value Option to apply. */
+        /**
+         * @brief Forward a HttpVersion option to its setter.
+         * @param value Option to apply.
+         */
         auto SetOption(HttpVersion const& value) -> void { SetHttpVersion(value); }
 
-        /** @brief Forward a Range option to its setter. @param value Option to apply. */
+        /**
+         * @brief Forward a Range option to its setter.
+         * @param value Option to apply.
+         */
         auto SetOption(Range const& value) -> void { SetRange(value); }
 
-        /** @brief Forward a MultiRange option to its setter. @param value Option to apply. */
+        /**
+         * @brief Forward a MultiRange option to its setter.
+         * @param value Option to apply.
+         */
         auto SetOption(MultiRange const& value) -> void { SetMultiRange(value); }
 
-        /** @brief Forward a ReserveSize option to its setter. @param value Option to apply. */
+        /**
+         * @brief Forward a ReserveSize option to its setter.
+         * @param value Option to apply.
+         */
         auto SetOption(ReserveSize const& value) -> void { SetReserveSize(value); }
 
-        /** @brief Forward a AcceptEncoding option to its setter. @param value Option to apply. */
+        /**
+         * @brief Forward a AcceptEncoding option to its setter.
+         * @param value Option to apply.
+         */
         auto SetOption(AcceptEncoding const& value) -> void { SetAcceptEncoding(value); }
 
-        /** @brief Move a AcceptEncoding option into this session. @param value Option to transfer. */
+        /**
+         * @brief Move a AcceptEncoding option into this session.
+         * @param value Option to transfer.
+         */
         auto SetOption(AcceptEncoding&& value) -> void { SetAcceptEncoding(std::move(value)); }
 
-        /** @brief Forward a LimitRate option to its setter. @param value Option to apply. */
+        /**
+         * @brief Forward a LimitRate option to its setter.
+         * @param value Option to apply.
+         */
         auto SetOption(LimitRate const& value) -> void { SetLimitRate(value); }
 
-        /** @brief Forward a Resolve option to its setter. @param value Option to apply. */
+        /**
+         * @brief Forward a Resolve option to its setter.
+         * @param value Option to apply.
+         */
         auto SetOption(Resolve const& value) -> void { SetResolve(value); }
 
-        /** @brief Forward a std::vector<Resolve> option to its setter. @param value Option to apply. */
+        /**
+         * @brief Forward a std::vector<Resolve> option to its setter.
+         * @param value Option to apply.
+         */
         auto SetOption(std::vector<Resolve> const& value) -> void { SetResolves(value); }
 
     private:
         using CurlList = std::unique_ptr<curl_slist, decltype(&curl_slist_free_all)>;
         using CurlMime = std::unique_ptr<curl_mime, decltype(&curl_mime_free)>;
 
-        /** @brief Translate curl setup failures into exceptions. @param code Setup result. */
+        /**
+         * @brief Translate curl setup failures into exceptions.
+         * @param code Setup result.
+         */
         static auto checkCurl(CURLcode code) -> void {
             if (code != CURLE_OK) {
                 throw std::runtime_error{ std::string{ "mcr::Session: " } + curl_easy_strerror(code) };
             }
         }
 
-        /** @brief Apply an option with its exact curl argument type. @tparam T Argument type. @param option Curl option. @param value Option value. */
+        /**
+         * @brief Apply an option with its exact curl argument type.
+         * @tparam T Argument type.
+         * @param option Curl option.
+         * @param value Option value.
+         */
         template <typename T>
         auto setOption(CURLoption option, T value) -> void { checkCurl(curl_easy_setopt(m_curl->handle, option, value)); }
 
-        /** @brief Append without losing ownership on allocation failure. @param list Owned list. @param value Entry text. */
+        /**
+         * @brief Append without losing ownership on allocation failure.
+         * @param list Owned list.
+         * @param value Entry text.
+         */
         static auto appendList(CurlList& list, std::string const& value) -> void {
             auto* next{ curl_slist_append(list.get(), value.c_str()) };
             if (!next) {
@@ -830,7 +1319,9 @@ export namespace mcr {
             list.reset(next);
         }
 
-        /** @brief Detach the previous content before freeing MIME data or replacing borrowed bytes. */
+        /**
+         * @brief Detach the previous content before freeing MIME data or replacing borrowed bytes.
+         */
         auto clearCurlContent() -> void {
             setOption(CURLOPT_MIMEPOST, static_cast<curl_mime*>(nullptr));
             setOption(CURLOPT_POSTFIELDS, static_cast<char const*>(nullptr));
@@ -838,7 +1329,10 @@ export namespace mcr {
             curl_mime_free(std::exchange(m_curl->multipart, nullptr));
         }
 
-        /** @brief Rebuild headers, preserving explicit Expect and Transfer-Encoding options. @param chunked Whether an unknown-sized upload needs chunking. */
+        /**
+         * @brief Rebuild headers, preserving explicit Expect and Transfer-Encoding options.
+         * @param chunked Whether an unknown-sized upload needs chunking.
+         */
         auto prepareHeader(bool chunked) -> void {
             CurlList list{ nullptr, &curl_slist_free_all };
             for (auto const& [name, value] : m_header) {
@@ -854,7 +1348,9 @@ export namespace mcr {
             curl_slist_free_all(std::exchange(m_curl->chunk, list.release()));
         }
 
-        /** @brief Select proxy options afresh so prior protocols and no_proxy settings cannot leak. */
+        /**
+         * @brief Select proxy options afresh so prior protocols and no_proxy settings cannot leak.
+         */
         auto prepareProxy() -> void {
             auto protocol{ m_url.Str().substr(0, m_url.Str().find(':')) };
             std::ranges::transform(protocol, protocol.begin(), [](unsigned char ch) { return static_cast<char>(std::tolower(ch)); });
@@ -878,7 +1374,10 @@ export namespace mcr {
             setOption(CURLOPT_NOPROXY, no_proxy);
         }
 
-        /** @brief Copy MIME fields into an owned curl MIME tree. @param multipart Persistent descriptors. */
+        /**
+         * @brief Copy MIME fields into an owned curl MIME tree.
+         * @param multipart Persistent descriptors.
+         */
         auto prepareMultipart(Multipart const& multipart) -> void {
             CurlMime mime{ curl_mime_init(m_curl->handle), &curl_mime_free };
             if (!mime) {
@@ -917,13 +1416,21 @@ export namespace mcr {
             m_curl->multipart = mime.release();
         }
 
-        /** @brief Configure a binary body with an explicit byte length. @param body Body bytes. @param copy Whether curl must own a copy. */
+        /**
+         * @brief Configure a binary body with an explicit byte length.
+         * @param body Body bytes.
+         * @param copy Whether curl must own a copy.
+         */
         auto prepareBytes(std::string_view body, bool copy) -> void {
             setOption(CURLOPT_POSTFIELDSIZE_LARGE, static_cast<curl_off_t>(body.size()));
             setOption(copy ? CURLOPT_COPYPOSTFIELDS : CURLOPT_POSTFIELDS, body.empty() ? "" : body.data());
         }
 
-        /** @brief Reset method state and prepare a complete transfer. @param method HTTP method. @param download Whether to bypass stored content and body consumers. */
+        /**
+         * @brief Reset method state and prepare a complete transfer.
+         * @param method HTTP method.
+         * @param download Whether to bypass stored content and body consumers.
+         */
         auto prepare(std::string_view method, bool download = false) -> void {
             if (m_in_transfer || (m_multi_owner && !m_multi_preparing)) {
                 throw std::logic_error{ "mcr::Session: handle is in use by a transfer or MultiPerform." };
@@ -989,12 +1496,20 @@ export namespace mcr {
             setOption(CURLOPT_DEBUGDATA, static_cast<void*>(this));
         }
 
-        /** @brief Execute the prepared easy handle and snapshot its result. @return Completed response. */
+        /**
+         * @brief Execute the prepared easy handle and snapshot its result.
+         * @return Completed response.
+         */
         auto perform() -> Response;
-        /** @brief Reprepare the current method and continue downstream interceptors. @return Downstream response. */
+        /**
+         * @brief Reprepare the current method and continue downstream interceptors.
+         * @return Downstream response.
+         */
         auto proceed() -> Response;
 
-        /** @brief Receive body bytes without allowing C++ exceptions through curl. */
+        /**
+         * @brief Receive body bytes without allowing C++ exceptions through curl.
+         */
         static auto writeCallback(char* data, std::size_t size, std::size_t count, void* context) noexcept -> std::size_t {
             auto& self{ *static_cast<Session*>(context) };
             if (self.m_callback_error) {
@@ -1023,7 +1538,9 @@ export namespace mcr {
             }
         }
 
-        /** @brief Collect headers and notify the observer while containing exceptions. */
+        /**
+         * @brief Collect headers and notify the observer while containing exceptions.
+         */
         static auto headerCallback(char* data, std::size_t size, std::size_t count, void* context) noexcept -> std::size_t {
             auto& self{ *static_cast<Session*>(context) };
             if (self.m_callback_error) {
@@ -1040,7 +1557,9 @@ export namespace mcr {
             }
         }
 
-        /** @brief Fill upload bytes while validating the producer's reported size. */
+        /**
+         * @brief Fill upload bytes while validating the producer's reported size.
+         */
         static auto readCallback(char* data, std::size_t size, std::size_t count, void* context) noexcept -> std::size_t {
             auto& self{ *static_cast<Session*>(context) };
             if (self.m_callback_error) {
@@ -1061,7 +1580,9 @@ export namespace mcr {
             }
         }
 
-        /** @brief Combine explicit cancellation and progress observer decisions. */
+        /**
+         * @brief Combine explicit cancellation and progress observer decisions.
+         */
         static auto progressCallback(void* context, curl_off_t total_down, curl_off_t now_down, curl_off_t total_up, curl_off_t now_up) noexcept -> int {
             auto& self{ *static_cast<Session*>(context) };
             if (self.m_callback_error || (self.m_cancellation && self.m_cancellation->load())) {
@@ -1075,7 +1596,9 @@ export namespace mcr {
             }
         }
 
-        /** @brief Deliver curl diagnostics while containing observer exceptions. */
+        /**
+         * @brief Deliver curl diagnostics while containing observer exceptions.
+         */
         static auto debugCallback(CURL*, curl_infotype type, char* data, std::size_t size, void* context) noexcept -> int {
             auto& self{ *static_cast<Session*>(context) };
             if (!self.m_callback_error) {
@@ -1098,7 +1621,9 @@ export namespace mcr {
      */
     class MultiPerform {
     public:
-        /** @brief Per-session HTTP method, or UNDEFINED until a batch method is selected. */
+        /**
+         * @brief Per-session HTTP method, or UNDEFINED until a batch method is selected.
+         */
         enum class HttpMethod : std::uint8_t {
             UNDEFINED,
             GET_REQUEST,
@@ -1125,46 +1650,107 @@ export namespace mcr {
         bool                                           m_transferring{};     ///< True only while easy handles are attached to the multi handle.
 
     public:
-        /** @brief Create an empty batch. */
+        /**
+         * @brief Create an empty batch.
+         */
         MultiPerform();
         MultiPerform(MultiPerform const&)                    = delete;
         auto operator=(MultiPerform const&) -> MultiPerform& = delete;
-        /** @brief Move an idle batch and transfer session claims. @param other Idle source batch. @pre Neither batch is executing. */
+        /**
+         * @brief Move an idle batch and transfer session claims.
+         * @param other Idle source batch.
+         * @pre Neither batch is executing.
+         */
         MultiPerform(MultiPerform&& other) noexcept;
-        /** @brief Replace an idle batch and transfer session claims. @param other Idle source batch. @return This batch. @pre Neither batch is executing. */
+        /**
+         * @brief Replace an idle batch and transfer session claims.
+         * @param other Idle source batch.
+         * @return This batch.
+         * @pre Neither batch is executing.
+         */
         auto operator=(MultiPerform&& other) noexcept -> MultiPerform&;
-        /** @brief Release all session claims. @pre No batch request is executing. */
+        /**
+         * @brief Release all session claims.
+         * @pre No batch request is executing.
+         */
         ~MultiPerform();
-        /** @brief Register a session in this batch. @param session Nonnull, unowned session. @param method Initial method. @throws std::invalid_argument If null, duplicated, or incompatible with the batch. */
+        /**
+         * @brief Register a session in this batch.
+         * @param session Nonnull, unowned session.
+         * @param method Initial method.
+         * @throws std::invalid_argument If null, duplicated, or incompatible with the batch.
+         */
         auto               AddSession(std::shared_ptr<Session> const& session, HttpMethod method = HttpMethod::UNDEFINED) -> void;
-        /** @brief Remove an existing registration and release its claim. @param session Registered session. @throws std::invalid_argument If absent. */
+        /**
+         * @brief Remove an existing registration and release its claim.
+         * @param session Registered session.
+         * @throws std::invalid_argument If absent.
+         */
         auto               RemoveSession(std::shared_ptr<Session> const& session) -> void;
-        /** @brief Access registrations while no network transfer is active. @return Ordered mutable registrations, including methods. */
+        /**
+         * @brief Access registrations while no network transfer is active.
+         * @return Ordered mutable registrations, including methods.
+         */
         [[nodiscard]] auto GetSessions() -> Sessions&;
 
-        /** @brief Inspect registrations. @return Ordered registrations. */
+        /**
+         * @brief Inspect registrations.
+         * @return Ordered registrations.
+         */
         [[nodiscard]] auto GetSessions() const noexcept -> Sessions const& { return m_sessions; }
 
-        /** @brief Append a batch interceptor while idle. @param interceptor Nonnull interceptor. */
+        /**
+         * @brief Append a batch interceptor while idle.
+         * @param interceptor Nonnull interceptor.
+         */
         auto AddInterceptor(std::shared_ptr<InterceptorMulti> const& interceptor) -> void;
-        /** @brief Execute each session's selected HTTP method. @return Responses in registration order, including transport failures. */
+        /**
+         * @brief Execute each session's selected HTTP method.
+         * @return Responses in registration order, including transport failures.
+         */
         auto Perform() -> std::vector<Response>;
-        /** @brief Execute GET for all registered sessions. @return Responses in registration order. */
+        /**
+         * @brief Execute GET for all registered sessions.
+         * @return Responses in registration order.
+         */
         auto Get() -> std::vector<Response>;
-        /** @brief Execute DELETE for all registered sessions. @return Responses in registration order. */
+        /**
+         * @brief Execute DELETE for all registered sessions.
+         * @return Responses in registration order.
+         */
         auto Delete() -> std::vector<Response>;
-        /** @brief Execute PUT for all registered sessions. @return Responses in registration order. */
+        /**
+         * @brief Execute PUT for all registered sessions.
+         * @return Responses in registration order.
+         */
         auto Put() -> std::vector<Response>;
-        /** @brief Execute HEAD for all registered sessions. @return Responses in registration order. */
+        /**
+         * @brief Execute HEAD for all registered sessions.
+         * @return Responses in registration order.
+         */
         auto Head() -> std::vector<Response>;
-        /** @brief Execute OPTIONS for all registered sessions. @return Responses in registration order. */
+        /**
+         * @brief Execute OPTIONS for all registered sessions.
+         * @return Responses in registration order.
+         */
         auto Options() -> std::vector<Response>;
-        /** @brief Execute PATCH for all registered sessions. @return Responses in registration order. */
+        /**
+         * @brief Execute PATCH for all registered sessions.
+         * @return Responses in registration order.
+         */
         auto Patch() -> std::vector<Response>;
-        /** @brief Execute POST for all registered sessions. @return Responses in registration order. */
+        /**
+         * @brief Execute POST for all registered sessions.
+         * @return Responses in registration order.
+         */
         auto Post() -> std::vector<Response>;
 
-        /** @brief Download once per registered session. @tparam Args Destination types. @param args Callbacks or borrowed streams in session order. @return Download responses. */
+        /**
+         * @brief Download once per registered session.
+         * @tparam Args Destination types.
+         * @param args Callbacks or borrowed streams in session order.
+         * @return Download responses.
+         */
         template <typename... Args>
         auto Download(Args&&... args) -> std::vector<Response> {
             checkDownloadCount(sizeof...(args));
@@ -1172,7 +1758,12 @@ export namespace mcr {
             return PerformDownload(std::forward<Args>(args)...);
         }
 
-        /** @brief Download sessions already marked DOWNLOAD_REQUEST. @tparam Args Destination types. @param args One destination per session. @return Download responses. */
+        /**
+         * @brief Download sessions already marked DOWNLOAD_REQUEST.
+         * @tparam Args Destination types.
+         * @param args One destination per session.
+         * @return Download responses.
+         */
         template <typename... Args>
         auto PerformDownload(Args&&... args) -> std::vector<Response> {
             checkDownloadCount(sizeof...(args));
@@ -1189,35 +1780,74 @@ export namespace mcr {
         }
 
     private:
-        /** @brief Reject mutation or recursion during an attached curl transfer. */
+        /**
+         * @brief Reject mutation or recursion during an attached curl transfer.
+         */
         auto checkIdleTransfer() const -> void;
-        /** @brief Validate mutable registrations and refresh exclusive session claims. */
+        /**
+         * @brief Validate mutable registrations and refresh exclusive session claims.
+         */
         auto synchronizeSessions() -> void;
-        /** @brief Release claims without dereferencing sessions removed through mutable access. */
+        /**
+         * @brief Release claims without dereferencing sessions removed through mutable access.
+         */
         auto releaseSessions() noexcept -> void;
-        /** @brief Bind existing claims to this batch after a move or synchronization. */
+        /**
+         * @brief Bind existing claims to this batch after a move or synchronization.
+         */
         auto rebindSessions() noexcept -> void;
-        /** @brief Validate one destination per session. @param count Number supplied by the caller. */
+        /**
+         * @brief Validate one destination per session.
+         * @param count Number supplied by the caller.
+         */
         auto checkDownloadCount(std::size_t count) -> void;
-        /** @brief Require each registration to select DOWNLOAD_REQUEST. */
+        /**
+         * @brief Require each registration to select DOWNLOAD_REQUEST.
+         */
         auto validateDownloads() const -> void;
-        /** @brief Copy a download consumer. @param index Registration index. @param write Download callback. */
+        /**
+         * @brief Copy a download consumer.
+         * @param index Registration index.
+         * @param write Download callback.
+         */
         auto setDownloadTarget(std::size_t index, WriteCallback const& write) -> void;
-        /** @brief Borrow a download stream. @param index Registration index. @param file Output stream. */
+        /**
+         * @brief Borrow a download stream.
+         * @param index Registration index.
+         * @param file Output stream.
+         */
         auto setDownloadTarget(std::size_t index, std::ofstream& file) -> void;
 
-        /** @brief Unwrap a borrowed stream. @param index Registration index. @param file Output stream reference. */
+        /**
+         * @brief Unwrap a borrowed stream.
+         * @param index Registration index.
+         * @param file Output stream reference.
+         */
         auto setDownloadTarget(std::size_t index, std::reference_wrapper<std::ofstream> file) -> void { setDownloadTarget(index, file.get()); }
 
-        /** @brief Select one method for all registrations. @param method Requested HTTP method. */
+        /**
+         * @brief Select one method for all registrations.
+         * @param method Requested HTTP method.
+         */
         auto setHttpMethod(HttpMethod method) -> void;
-        /** @brief Validate the whole batch, then prepare each easy handle. */
+        /**
+         * @brief Validate the whole batch, then prepare each easy handle.
+         */
         auto prepareSessions() -> void;
-        /** @brief Enter the remaining interceptor chain or perform transfers. @return Ordered responses. */
+        /**
+         * @brief Enter the remaining interceptor chain or perform transfers.
+         * @return Ordered responses.
+         */
         auto makeRequest() -> std::vector<Response>;
-        /** @brief Attach, drive and detach prepared handles. @return Ordered transfer snapshots. */
+        /**
+         * @brief Attach, drive and detach prepared handles.
+         * @return Ordered transfer snapshots.
+         */
         auto runPrepared() -> std::vector<Response>;
-        /** @brief Reprepare and continue a batch from an interceptor. @return Downstream responses. */
+        /**
+         * @brief Reprepare and continue a batch from an interceptor.
+         * @return Downstream responses.
+         */
         auto proceed() -> std::vector<Response>;
     };
 

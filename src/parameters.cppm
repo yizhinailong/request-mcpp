@@ -17,7 +17,9 @@ export namespace mcr {
      */
     class Parameters : public CurlContainer<Parameter> {
     public:
-        /** @brief Construct an empty parameter collection with encoding enabled. */
+        /**
+         * @brief Construct an empty parameter collection with encoding enabled.
+         */
         Parameters() = default;
 
         /**

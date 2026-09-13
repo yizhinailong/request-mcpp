@@ -70,17 +70,23 @@ export namespace mcr {
         }
 
     private:
-        /** @brief Lock the mutex for the data type requested by libcurl. */
+        /**
+         * @brief Lock the mutex for the data type requested by libcurl.
+         */
         static auto lock(CURL*, curl_lock_data data, curl_lock_access, void* userptr) noexcept -> void {
             (*static_cast<Mutexes*>(userptr))[static_cast<std::size_t>(data)].lock();
         }
 
-        /** @brief Unlock the mutex for the data type requested by libcurl. */
+        /**
+         * @brief Unlock the mutex for the data type requested by libcurl.
+         */
         static auto unlock(CURL*, curl_lock_data data, void* userptr) noexcept -> void {
             (*static_cast<Mutexes*>(userptr))[static_cast<std::size_t>(data)].unlock();
         }
 
-        /** @brief Disable callbacks and release a share handle while its mutex storage is alive. */
+        /**
+         * @brief Disable callbacks and release a share handle while its mutex storage is alive.
+         */
         static auto cleanupShare(CURLSH* share) noexcept -> void {
             if (share) {
                 (void)curl_share_setopt(share, CURLSHOPT_LOCKFUNC, static_cast<curl_lock_function>(nullptr));

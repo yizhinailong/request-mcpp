@@ -27,7 +27,9 @@ namespace {
         return condition;
     }
 
-    /** @brief Own one temporary file in a newly created directory and remove only those paths. */
+    /**
+     * @brief Own one temporary file in a newly created directory and remove only those paths.
+     */
     struct TemporaryFile {
         std::filesystem::path directory{ std::filesystem::temp_directory_path() / std::format("mcr_body_{}", std::chrono::steady_clock::now().time_since_epoch().count()) };
         std::filesystem::path path{ directory / "body input.bin" };

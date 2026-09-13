@@ -17,7 +17,9 @@ export namespace mcr {
         std::string                data;               ///< Data fields joined with newlines, preserving empty fields.
         std::optional<std::size_t> retry;              ///< Valid retry interval in milliseconds supplied in this event.
 
-        /** @brief Construct an empty message with no ID or retry interval. */
+        /**
+         * @brief Construct an empty message with no ID or retry interval.
+         */
         ServerSentEvent() = default;
     };
 
@@ -40,7 +42,9 @@ export namespace mcr {
         ServerSentEvent m_current_event;      ///< Fields accumulated since the last blank line.
 
     public:
-        /** @brief Construct a parser ready for a new stream. */
+        /**
+         * @brief Construct a parser ready for a new stream.
+         */
         ServerSentEventParser() = default;
 
         /**
@@ -182,7 +186,9 @@ export namespace mcr {
         ServerSentEventParser m_parser; ///< Parser retaining incomplete events between raw chunks.
 
     public:
-        /** @brief Construct a callback that accepts and discards events. */
+        /**
+         * @brief Construct a callback that accepts and discards events.
+         */
         ServerSentEventCallback() = default;
 
         /**

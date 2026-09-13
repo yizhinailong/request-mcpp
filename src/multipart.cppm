@@ -81,13 +81,22 @@ export namespace mcr {
      */
     class Multipart {
     public:
-        /** @brief Copy a list of descriptors in order. @param parts_param Parts to copy, including an empty list. */
+        /**
+         * @brief Copy a list of descriptors in order.
+         * @param parts_param Parts to copy, including an empty list.
+         */
         Multipart(std::initializer_list<Part> const& parts_param) : parts{ parts_param } {}
 
-        /** @brief Copy a vector of descriptors. @param parts_param Parts whose strings and files are copied. */
+        /**
+         * @brief Copy a vector of descriptors.
+         * @param parts_param Parts whose strings and files are copied.
+         */
         explicit Multipart(std::vector<Part> const& parts_param) : parts{ parts_param } {}
 
-        /** @brief Transfer a vector of descriptors without copying. @param parts_param Vector whose storage is moved. */
+        /**
+         * @brief Transfer a vector of descriptors without copying.
+         * @param parts_param Vector whose storage is moved.
+         */
         explicit Multipart(std::vector<Part>&& parts_param) noexcept : parts{ std::move(parts_param) } {}
 
         std::vector<Part> parts; ///< Publicly mutable descriptors in insertion order.

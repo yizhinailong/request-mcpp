@@ -1,4 +1,7 @@
-/** @file session_ssl.cpp @brief Apply owned TLS options without borrowing their storage. */
+/**
+ * @file session_ssl.cpp
+ * @brief Apply owned TLS options without borrowing their storage.
+ */
 module;
 #include <curl/curl.h>
 module mcr.session;

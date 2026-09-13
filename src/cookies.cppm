@@ -28,7 +28,9 @@ export namespace mcr {
         std::chrono::system_clock::time_point m_expires{};                   ///< Expiration time, defaulting to the Unix epoch.
 
     public:
-        /** @brief Construct a cookie with empty text fields and default metadata. */
+        /**
+         * @brief Construct a cookie with empty text fields and default metadata.
+         */
         Cookie() = default;
 
         /**
@@ -51,27 +53,42 @@ export namespace mcr {
             std::chrono::system_clock::time_point expires            = std::chrono::system_clock::from_time_t(0)
         ) : m_name{ std::move(name) }, m_value{ std::move(value) }, m_domain{ std::move(domain) }, m_include_subdomains{ include_subdomains }, m_path{ std::move(path) }, m_https_only{ https_only }, m_expires{ expires } {}
 
-        /** @brief Get the stored domain. @return A reference to the owned domain text. */
+        /**
+         * @brief Get the stored domain.
+         * @return A reference to the owned domain text.
+         */
         [[nodiscard]] auto GetDomain() const noexcept -> std::string const& {
             return m_domain;
         }
 
-        /** @brief Check subdomain scope. @return Whether the cookie applies to subdomains. */
+        /**
+         * @brief Check subdomain scope.
+         * @return Whether the cookie applies to subdomains.
+         */
         [[nodiscard]] auto IsIncludingSubdomains() const noexcept -> bool {
             return m_include_subdomains;
         }
 
-        /** @brief Get the stored path. @return A reference to the owned path text. */
+        /**
+         * @brief Get the stored path.
+         * @return A reference to the owned path text.
+         */
         [[nodiscard]] auto GetPath() const noexcept -> std::string const& {
             return m_path;
         }
 
-        /** @brief Check transport restrictions. @return Whether the cookie requires HTTPS. */
+        /**
+         * @brief Check transport restrictions.
+         * @return Whether the cookie requires HTTPS.
+         */
         [[nodiscard]] auto IsHttpsOnly() const noexcept -> bool {
             return m_https_only;
         }
 
-        /** @brief Get the expiration time. @return The stored time point without precision loss. */
+        /**
+         * @brief Get the expiration time.
+         * @return The stored time point without precision loss.
+         */
         [[nodiscard]] auto GetExpires() const noexcept -> std::chrono::system_clock::time_point {
             return m_expires;
         }
@@ -86,12 +103,18 @@ export namespace mcr {
             return std::format("{:%a, %d %b %Y %T} GMT", std::chrono::floor<std::chrono::seconds>(m_expires));
         }
 
-        /** @brief Get the cookie name. @return A reference to the owned name text. */
+        /**
+         * @brief Get the cookie name.
+         * @return A reference to the owned name text.
+         */
         [[nodiscard]] auto GetName() const noexcept -> std::string const& {
             return m_name;
         }
 
-        /** @brief Get the cookie value. @return A reference to the owned value text. */
+        /**
+         * @brief Get the cookie value.
+         * @return A reference to the owned value text.
+         */
         [[nodiscard]] auto GetValue() const noexcept -> std::string const& {
             return m_value;
         }
@@ -187,34 +210,64 @@ export namespace mcr {
             return result;
         }
 
-        /** @brief Begin mutable iteration. @return An iterator to the first cookie. */
+        /**
+         * @brief Begin mutable iteration.
+         * @return An iterator to the first cookie.
+         */
         auto begin() noexcept -> iterator { return m_cookies.begin(); }
 
-        /** @brief End mutable iteration. @return An iterator past the last cookie. */
+        /**
+         * @brief End mutable iteration.
+         * @return An iterator past the last cookie.
+         */
         auto end() noexcept -> iterator { return m_cookies.end(); }
 
-        /** @brief Begin read-only iteration. @return An iterator to the first cookie. */
+        /**
+         * @brief Begin read-only iteration.
+         * @return An iterator to the first cookie.
+         */
         [[nodiscard]] auto begin() const noexcept -> const_iterator { return m_cookies.begin(); }
 
-        /** @brief End read-only iteration. @return An iterator past the last cookie. */
+        /**
+         * @brief End read-only iteration.
+         * @return An iterator past the last cookie.
+         */
         [[nodiscard]] auto end() const noexcept -> const_iterator { return m_cookies.end(); }
 
-        /** @brief Begin read-only iteration. @return An iterator to the first cookie. */
+        /**
+         * @brief Begin read-only iteration.
+         * @return An iterator to the first cookie.
+         */
         [[nodiscard]] auto cbegin() const noexcept -> const_iterator { return m_cookies.cbegin(); }
 
-        /** @brief End read-only iteration. @return An iterator past the last cookie. */
+        /**
+         * @brief End read-only iteration.
+         * @return An iterator past the last cookie.
+         */
         [[nodiscard]] auto cend() const noexcept -> const_iterator { return m_cookies.cend(); }
 
-        /** @brief Append a copy, retaining cpr's single-cookie overload. @param cookie Cookie to copy. */
+        /**
+         * @brief Append a copy, retaining cpr's single-cookie overload.
+         * @param cookie Cookie to copy.
+         */
         auto emplace_back(Cookie const& cookie) -> void { m_cookies.emplace_back(cookie); }
 
-        /** @brief Check whether the collection is empty. @return True when no cookies are stored. */
+        /**
+         * @brief Check whether the collection is empty.
+         * @return True when no cookies are stored.
+         */
         [[nodiscard]] auto empty() const noexcept -> bool { return m_cookies.empty(); }
 
-        /** @brief Append a copy at the end. @param cookie Cookie to copy. */
+        /**
+         * @brief Append a copy at the end.
+         * @param cookie Cookie to copy.
+         */
         auto push_back(Cookie const& cookie) -> void { m_cookies.push_back(cookie); }
 
-        /** @brief Remove the last cookie. @pre The collection must not be empty. */
+        /**
+         * @brief Remove the last cookie.
+         * @pre The collection must not be empty.
+         */
         auto pop_back() -> void { m_cookies.pop_back(); }
     };
 

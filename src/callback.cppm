@@ -16,7 +16,9 @@ export namespace mcr {
      */
     class ReadCallback {
     public:
-        /** @brief Construct an empty callback with a declared upload size of zero. */
+        /**
+         * @brief Construct an empty callback with a declared upload size of zero.
+         */
         ReadCallback() = default;
 
         /**
@@ -62,7 +64,9 @@ export namespace mcr {
      */
     class HeaderCallback {
     public:
-        /** @brief Construct a callback that accepts headers without processing them. */
+        /**
+         * @brief Construct a callback that accepts headers without processing them.
+         */
         HeaderCallback() = default;
 
         /**
@@ -95,7 +99,9 @@ export namespace mcr {
      */
     class WriteCallback {
     public:
-        /** @brief Construct a callback that accepts body chunks without processing them. */
+        /**
+         * @brief Construct a callback that accepts body chunks without processing them.
+         */
         WriteCallback() = default;
 
         /**
@@ -128,7 +134,9 @@ export namespace mcr {
      */
     class ProgressCallback {
     public:
-        /** @brief Construct a callback that permits the transfer to continue. */
+        /**
+         * @brief Construct a callback that permits the transfer to continue.
+         */
         ProgressCallback() = default;
 
         /**
@@ -165,7 +173,9 @@ export namespace mcr {
      */
     class DebugCallback {
     public:
-        /** @brief Diagnostic categories matching curl_infotype values. */
+        /**
+         * @brief Diagnostic categories matching curl_infotype values.
+         */
         enum class InfoType : std::uint8_t {
             TEXT         = 0, ///< Informational diagnostic text.
             HEADER_IN    = 1, ///< Incoming protocol headers.
@@ -176,7 +186,9 @@ export namespace mcr {
             SSL_DATA_OUT = 6, ///< Outgoing TLS data.
         };
 
-        /** @brief Construct a callback that ignores diagnostics. */
+        /**
+         * @brief Construct a callback that ignores diagnostics.
+         */
         DebugCallback() = default;
 
         /**
@@ -215,7 +227,9 @@ export namespace mcr {
         std::optional<std::reference_wrapper<ProgressCallback>> m_user_cb;            ///< Borrowed observer, observed rather than copied.
 
     public:
-        /** @brief Construct a callback with no cancellation flag or progress observer. */
+        /**
+         * @brief Construct a callback with no cancellation flag or progress observer.
+         */
         CancellationCallback() = default;
 
         /**

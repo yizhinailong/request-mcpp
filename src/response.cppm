@@ -45,7 +45,9 @@ export namespace mcr {
         std::string   primary_ip;         ///< Address of the connected peer.
         std::uint16_t primary_port{};     ///< Port of the connected peer.
 
-        /** @brief Construct an empty response with a successful transport error code. */
+        /**
+         * @brief Construct an empty response with a successful transport error code.
+         */
         Response() = default;
 
         /**
@@ -93,7 +95,10 @@ export namespace mcr {
             }
         }
 
-        /** @brief Return certificate details captured for this response. @return An independent copy, empty for plain HTTP. */
+        /**
+         * @brief Return certificate details captured for this response.
+         * @return An independent copy, empty for plain HTTP.
+         */
         [[nodiscard]] auto GetCertInfos() const -> std::vector<CertInfo> { return m_cert_infos; }
     };
 

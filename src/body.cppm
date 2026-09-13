@@ -19,16 +19,27 @@ export namespace mcr {
      */
     class Body : public StringHolder<Body> {
     public:
-        /** @brief Construct an empty request body. */
+        /**
+         * @brief Construct an empty request body.
+         */
         Body() = default;
 
-        /** @brief Take ownership of a body string. @param body Bytes to store. */
+        /**
+         * @brief Take ownership of a body string.
+         * @param body Bytes to store.
+         */
         Body(std::string body) : StringHolder<Body>(std::move(body)) {}
 
-        /** @brief Copy a body view, including embedded null bytes. @param body View to copy. */
+        /**
+         * @brief Copy a body view, including embedded null bytes.
+         * @param body View to copy.
+         */
         Body(std::string_view body) : StringHolder<Body>(body) {}
 
-        /** @brief Copy a null-terminated body string. @param body Nonnull pointer to a valid C string. */
+        /**
+         * @brief Copy a null-terminated body string.
+         * @param body Nonnull pointer to a valid C string.
+         */
         Body(char const* body) : StringHolder<Body>(body) {}
 
         /**
@@ -38,7 +49,10 @@ export namespace mcr {
          */
         Body(char const* str, std::size_t len) : StringHolder<Body>(str, len) {}
 
-        /** @brief Join body fragments without separators. @param args Fragments to copy in order. */
+        /**
+         * @brief Join body fragments without separators.
+         * @param args Fragments to copy in order.
+         */
         Body(std::initializer_list<std::string> args) : StringHolder<Body>(args) {}
 
         /**
@@ -73,19 +87,35 @@ export namespace mcr {
             m_str.append(chunk.data(), static_cast<std::size_t>(stream.gcount()));
         }
 
-        /** @brief Copy body bytes into independent storage. @param other Body to copy. */
+        /**
+         * @brief Copy body bytes into independent storage.
+         * @param other Body to copy.
+         */
         Body(Body const& other)                        = default;
 
-        /** @brief Move owned body storage. @param other Body to move from. */
+        /**
+         * @brief Move owned body storage.
+         * @param other Body to move from.
+         */
         Body(Body&& other) noexcept                    = default;
 
-        /** @brief Release owned body storage, including derived state when used polymorphically. */
+        /**
+         * @brief Release owned body storage, including derived state when used polymorphically.
+         */
         ~Body() override                               = default;
 
-        /** @brief Copy body bytes. @param other Source body. @return This body after assignment. */
+        /**
+         * @brief Copy body bytes.
+         * @param other Source body.
+         * @return This body after assignment.
+         */
         auto operator=(Body const& other) -> Body&     = default;
 
-        /** @brief Move body storage. @param other Source body. @return This body after assignment. */
+        /**
+         * @brief Move body storage.
+         * @param other Source body.
+         * @return This body after assignment.
+         */
         auto operator=(Body&& other) noexcept -> Body& = default;
     };
 

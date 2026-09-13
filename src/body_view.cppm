@@ -20,10 +20,15 @@ export namespace mcr {
         std::string_view m_body{}; ///< Borrowed byte address and length, with no owned storage.
 
     public:
-        /** @brief Construct an empty view with a null data pointer. */
+        /**
+         * @brief Construct an empty view with a null data pointer.
+         */
         constexpr BodyView() noexcept = default;
 
-        /** @brief Borrow a string view without scanning or copying its bytes. @param body View to retain. */
+        /**
+         * @brief Borrow a string view without scanning or copying its bytes.
+         * @param body View to retain.
+         */
         constexpr BodyView(std::string_view body) noexcept : m_body{ body } {}
 
         /**
@@ -46,19 +51,35 @@ export namespace mcr {
          */
         constexpr BodyView(Buffer const& buffer) noexcept : m_body{ buffer.data, buffer.datalen } {}
 
-        /** @brief Copy the borrowed address and length. @param other View to copy. */
+        /**
+         * @brief Copy the borrowed address and length.
+         * @param other View to copy.
+         */
         constexpr BodyView(BodyView const& other) noexcept                    = default;
 
-        /** @brief Copy the borrowed address and length without transferring ownership. @param other Source view. */
+        /**
+         * @brief Copy the borrowed address and length without transferring ownership.
+         * @param other Source view.
+         */
         constexpr BodyView(BodyView&& other) noexcept                         = default;
 
-        /** @brief Destroy the descriptor without releasing the source bytes. */
+        /**
+         * @brief Destroy the descriptor without releasing the source bytes.
+         */
         ~BodyView()                                                           = default;
 
-        /** @brief Rebind to another view's bytes. @param other Source view. @return This view after assignment. */
+        /**
+         * @brief Rebind to another view's bytes.
+         * @param other Source view.
+         * @return This view after assignment.
+         */
         constexpr auto operator=(BodyView const& other) noexcept -> BodyView& = default;
 
-        /** @brief Rebind to another view's bytes. @param other Source view. @return This view after assignment. */
+        /**
+         * @brief Rebind to another view's bytes.
+         * @param other Source view.
+         * @return This view after assignment.
+         */
         constexpr auto operator=(BodyView&& other) noexcept -> BodyView&      = default;
 
         /**

@@ -276,7 +276,9 @@ namespace {
         return passed;
     }
 
-    /** @brief Remove only this test's temporary file. */
+    /**
+     * @brief Remove only this test's temporary file.
+     */
     struct TempFile {
         std::filesystem::path path{ std::filesystem::temp_directory_path() / std::format("mcr-session-{}.bin", std::chrono::steady_clock::now().time_since_epoch().count()) };
 
@@ -400,7 +402,9 @@ namespace {
 } // namespace
 
 namespace {
-    /** @brief Expose continuation helpers to small test interceptor functions. */
+    /**
+     * @brief Expose continuation helpers to small test interceptor functions.
+     */
     class FunctionalInterceptor : public mcr::Interceptor {
     public:
         using Interceptor::Proceed;

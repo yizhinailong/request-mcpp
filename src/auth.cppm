@@ -10,7 +10,9 @@ import std;
 
 export namespace mcr {
 
-    /** @brief Authentication policies retaining cpr's uint8_t names and ordinal values. */
+    /**
+     * @brief Authentication policies retaining cpr's uint8_t names and ordinal values.
+     */
     enum class AuthMode : std::uint8_t {
         BASIC,     ///< HTTP Basic authentication.
         DIGEST,    ///< HTTP Digest authentication.
