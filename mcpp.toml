@@ -9,3 +9,16 @@ path = "src/mcr.cppm"
 
 [dependencies.compat]
 curl = "8.21.0"
+
+# Match compat.curl's native TLS backends: OpenSSL on Linux/macOS, Schannel on Windows.
+[target.linux.dependencies.compat]
+openssl = "3.5.1"
+
+[target.linux.build]
+defines = ["MCR_SSL_CTX_OPENSSL"]
+
+[target.macos.dependencies.compat]
+openssl = "3.5.1"
+
+[target.macos.build]
+defines = ["MCR_SSL_CTX_OPENSSL"]

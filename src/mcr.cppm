@@ -5,6 +5,7 @@
 export module mcr;
 
 export import mcr.accept_encoding;
+export import mcr.api;
 export import mcr.async;
 export import mcr.async_wrapper;
 export import mcr.auth;
@@ -22,6 +23,7 @@ export import mcr.curlholder;
 export import mcr.curlmultiholder;
 export import mcr.error;
 export import mcr.file;
+export import mcr.filesystem;
 export import mcr.http_version;
 export import mcr.interface;
 export import mcr.interceptor;
@@ -44,6 +46,7 @@ export import mcr.secure_string;
 export import mcr.session;
 export import mcr.singleton;
 export import mcr.sse;
+export import mcr.ssl_ctx;
 export import mcr.ssl_options;
 export import mcr.status_code;
 export import mcr.threadpool;
@@ -52,3 +55,4 @@ export import mcr.types;
 export import mcr.unix_socket;
 export import mcr.util;
 export import mcr.verbose;
+export import mcr.version;

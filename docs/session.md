@@ -160,7 +160,7 @@ multi.RemoveSession(first);  // 释放归属后，可以再次直接调用 first
 - Session 销毁前重置 curl 选项，使外部保留的 CurlHolder 不引用已销毁的回调或正文数据。
 
 本地验证：`mcpp build`、`mcpp test`。
-`tests/test_session.cpp` 内置跨 Windows / POSIX 的回环 HTTP 服务，使用系统分配的端口，
+`tests/test_session.cpp` 使用 `tests/fixtures/http_server.hpp` 中跨 Windows / POSIX 的回环 HTTP 服务，使用系统分配的端口，
 不依赖 Python、外部网络或固定端口。覆盖连接复用、方法切换、上传下载、请求选项、
 重定向、错误恢复、取消、回调异常、SSE、连接池、异步生命周期、代理认证、拦截器
 重试、批次归属和下载。并发测试通过必须同时到达两个请求才能应答的服务端屏障验证。
@@ -172,3 +172,5 @@ Windows 上需要 PATH 中的 PowerShell 7.5 或更高版本（.NET 9+），通�
 公钥固定、TLS 1.2、证书快照、P12 错误密码及凭据清除。
 仅在出现上述精确 Schannel 错误时打印 `SKIP`，保留文件与复制后 blob 的错误一致性检查；
 其余环境要求双向 TLS 成功。非 Windows 当前只运行类型与 setter 检查并显式跳过 HTTPS。
+
+无需手动管理 Session 的请求可使用 [自由函数 API](api.md)，包括同步、异步、批量和下载入口。
