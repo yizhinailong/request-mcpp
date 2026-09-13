@@ -10,7 +10,7 @@ export module mcr.curlmultiholder;
 
 import std;
 
-export namespace mcr {
+export namespace mcr::curl {
 
     /**
      * @brief Own a multi handle without owning the easy handles added to it.
@@ -29,7 +29,7 @@ export namespace mcr {
          */
         CurlMultiHolder() : handle{ curl_multi_init() } {
             if (!handle) {
-                throw std::runtime_error{ "mcr::CurlMultiHolder: curl_multi_init failed." };
+                throw std::runtime_error{ "mcr::curl::CurlMultiHolder: curl_multi_init failed." };
             }
         }
 
@@ -74,4 +74,4 @@ export namespace mcr {
         }
     };
 
-} // namespace mcr
+} // namespace mcr::curl

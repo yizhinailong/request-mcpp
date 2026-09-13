@@ -18,7 +18,7 @@ mcr::Payload from_range{ pairs.cbegin(), pairs.cend() };
 mcr::Payload empty{};
 
 // After curl_global_init(), and before curl_global_cleanup():
-mcr::CurlHolder holder;
+mcr::curl::CurlHolder holder;
 auto encoded = form.GetContent(holder);
 // name=hello%20world&flag=&name=x%2By
 ```

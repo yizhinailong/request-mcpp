@@ -172,7 +172,7 @@ export namespace mcr {
         MultiPerform*                             m_multi_owner{};                          ///< Batch that currently owns this session, if any.
         bool                                      m_multi_preparing{};                      ///< Permit the owning batch to prepare its handle.
         bool                                      m_in_transfer{};                          ///< Reject recursive transfers from curl callbacks.
-        std::shared_ptr<CurlHolder>               m_curl{ std::make_shared<CurlHolder>() }; ///< Owned transfer resources.
+        std::shared_ptr<curl::CurlHolder>         m_curl{ std::make_shared<curl::CurlHolder>() }; ///< Owned transfer resources.
         Url                                       m_url;                                    ///< Base URL before adding parameters.
         Parameters                                m_parameters;                             ///< Persistent URL parameters.
         Header                                    m_header;                                 ///< Persistent request headers.
@@ -645,7 +645,7 @@ export namespace mcr {
          * @brief Access the easy handle for advanced configuration or prepared transfers.
          * @return Shared holder; options are reset when the session dies.
          */
-        [[nodiscard]] auto GetCurlHolder() -> std::shared_ptr<CurlHolder> { return m_curl; }
+        [[nodiscard]] auto GetCurlHolder() -> std::shared_ptr<curl::CurlHolder> { return m_curl; }
 
         /**
          * @brief Combine encoded parameters with the URL's existing query, before any fragment.
@@ -1642,7 +1642,7 @@ export namespace mcr {
         using DownloadTarget = std::variant<WriteCallback, std::reference_wrapper<std::ofstream>>;
         Sessions                                       m_sessions;           ///< Sessions and their current methods.
         std::vector<std::weak_ptr<Session>>            m_claimed;            ///< Claims used to release ownership after mutable list edits.
-        std::unique_ptr<CurlMultiHolder>               m_multi;              ///< Owned multi handle, allocated lazily after moving out.
+        std::unique_ptr<curl::CurlMultiHolder>         m_multi;              ///< Owned multi handle, allocated lazily after moving out.
         std::unordered_map<Session*, DownloadTarget>   m_downloads;          ///< Destinations for the current batch request.
         std::vector<std::shared_ptr<InterceptorMulti>> m_interceptors;       ///< Batch interceptor chain.
         std::size_t                                    m_next_interceptor{}; ///< Next interceptor for nested retries.

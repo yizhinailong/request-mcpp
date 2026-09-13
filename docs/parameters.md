@@ -13,7 +13,7 @@ query.Add(mcr::Parameter{ "q", "x+y" });
 auto raw = query.GetContent(); // q=hello world&flag&q=x+y
 
 // After curl_global_init(), and before curl_global_cleanup():
-mcr::CurlHolder holder;
+mcr::curl::CurlHolder holder;
 auto encoded = query.GetContent(holder);
 // q=hello%20world&flag&q=x%2By
 ```

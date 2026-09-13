@@ -29,7 +29,7 @@ static_assert(!std::is_default_constructible_v<mcr::Pair>);
 static_assert(std::is_same_v<decltype(mcr::Parameter::key), std::string>);
 static_assert(std::is_same_v<decltype(mcr::Pair::value), std::string>);
 static_assert(std::is_same_v<decltype(std::declval<Parameters const&>().GetContent()), std::string>);
-static_assert(std::is_same_v<decltype(std::declval<Pairs const&>().GetContent(std::declval<mcr::CurlHolder const&>())), std::string>);
+static_assert(std::is_same_v<decltype(std::declval<Pairs const&>().GetContent(std::declval<mcr::curl::CurlHolder const&>())), std::string>);
 
 namespace {
 
@@ -121,7 +121,7 @@ namespace {
     }
 
     template <typename Container, typename Element>
-    auto check_ownership(mcr::CurlHolder const& holder) -> bool {
+    auto check_ownership(mcr::curl::CurlHolder const& holder) -> bool {
         std::string key{ "first" };
         std::string value{ "one" };
         Element     element{ key, value };
@@ -153,7 +153,7 @@ namespace {
         return passed;
     }
 
-    auto check_encoding(mcr::CurlHolder const& holder) -> bool {
+    auto check_encoding(mcr::curl::CurlHolder const& holder) -> bool {
         Parameters parameters{
             {       "a b&=", "x+y/%" },
             { "empty value",      "" },
@@ -197,7 +197,7 @@ namespace {
         return passed;
     }
 
-    auto check_empty_entries(mcr::CurlHolder const& holder) -> bool {
+    auto check_empty_entries(mcr::curl::CurlHolder const& holder) -> bool {
         Parameters parameters{
             {      "",  "" },
             {      "",  "" },
@@ -233,8 +233,8 @@ namespace {
 
     template <typename Container>
     auto check_holder_lifetime() -> bool {
-        mcr::CurlHolder source;
-        mcr::CurlHolder owner{ std::move(source) };
+        mcr::curl::CurlHolder source;
+        mcr::curl::CurlHolder owner{ std::move(source) };
         Container       empty{};
         bool            passed{ check(empty.GetContent(source).empty(), "empty containers must not consult the supplied holder") };
         Container       values{
@@ -262,7 +262,7 @@ int main() {
         return 1;
     }
     try {
-        mcr::CurlHolder holder;
+        mcr::curl::CurlHolder holder;
         passed &= check_ownership<Parameters, mcr::Parameter>(holder);
         passed &= check_ownership<Pairs, mcr::Pair>(holder);
         passed &= check_encoding(holder);

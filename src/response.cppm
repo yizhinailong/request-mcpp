@@ -59,7 +59,7 @@ export namespace mcr {
          * @param transfer_error Transport outcome.
          * @throws std::invalid_argument If the holder or easy handle is null.
          */
-        Response(std::shared_ptr<CurlHolder> curl, std::string&& body, std::string&& headers, Cookies&& received_cookies = {}, Error&& transfer_error = {})
+        Response(std::shared_ptr<curl::CurlHolder> curl, std::string&& body, std::string&& headers, Cookies&& received_cookies = {}, Error&& transfer_error = {})
             : text{ std::move(body) }, cookies{ std::move(received_cookies) }, error{ std::move(transfer_error) }, raw_header{ std::move(headers) } {
             if (!curl || !curl->handle) {
                 throw std::invalid_argument{ "mcr::Response requires an active curl holder." };

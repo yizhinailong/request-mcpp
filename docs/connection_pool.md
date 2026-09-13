@@ -15,8 +15,8 @@ import mcr;
 // After successful curl_global_init(), and before curl_global_cleanup():
 {
     mcr::ConnectionPool pool;
-    mcr::CurlHolder first;
-    mcr::CurlHolder second;
+    mcr::curl::CurlHolder first;
+    mcr::curl::CurlHolder second;
     pool.SetupHandler(first.handle);
     pool.SetupHandler(second.handle);
     // Configure and perform the requests sequentially through libcurl.

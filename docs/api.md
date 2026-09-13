@@ -113,7 +113,7 @@ mcpp 的生成目录；修改版本会重新生成，无需维护第二份版本
 完整版本字符串保留后缀，三段数字分别占 8 位；超出范围时构建失败。
 `CURL_VERSION_NUM` 描述构建头文件，运行时动态库信息仍应通过 curl 自身接口查询。
 
-SSL 上下文入口：
+SSL 上下文入口位于 `mcr::curl`，详见 [curl 后端命名空间](curl.md)：
 
 ```cpp
 #include <curl/curl.h>
@@ -121,17 +121,17 @@ import mcr.ssl_ctx;
 
 // ca_pem 是 NUL 结尾且在整个传输期间有效的 PEM bundle。
 curl_easy_setopt(handle, CURLOPT_SSL_CTX_FUNCTION,
-                 &mcr::sslctx_function_load_ca_cert_from_buffer);
+                 &mcr::curl::sslctx_function_load_ca_cert_from_buffer);
 curl_easy_setopt(handle, CURLOPT_SSL_CTX_DATA, ca_pem.data());
 ```
 
-- `sslctx_function_load_ca_cert_from_buffer` 接收与本库链接的 OpenSSL 所创建的 SSL_CTX。
+- `mcr::curl::sslctx_function_load_ca_cert_from_buffer` 接收与本库链接的 OpenSSL 所创建的 SSL_CTX。
   先解析整份 PEM bundle，再向 trust store 添加证书；重复 CA 可重复加载。
   不抛出异常，不向标准错误流打印证书解析信息，也不取得传入指针的所有权。
 - 空指针、空 bundle、无法解析的证书返回 `CURLE_ABORTED_BY_CALLBACK`；
   分配失败返回 `CURLE_OUT_OF_MEMORY`。解析到坏证书时，尚未修改 trust store。
   OpenSSL 在添加阶段发生错误时可能已加入部分证书。
-- `SSL_CTX_OPENSSL_ENABLED` 指示是否编译了 OpenSSL 上下文加载支持。
+- `mcr::curl::SSL_CTX_OPENSSL_ENABLED` 指示是否编译了 OpenSSL 上下文加载支持。
   manifest 与当前 compat.curl 的后端一致：Linux/macOS 直接声明 OpenSSL 3.5.1
   依赖并定义 `MCR_SSL_CTX_OPENSSL`；Windows 使用 Schannel，入口返回
   `CURLE_NOT_BUILT_IN`。不支持的后端不会假装已经装载 CA。

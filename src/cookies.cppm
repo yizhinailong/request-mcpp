@@ -189,7 +189,7 @@ export namespace mcr {
          * Domain, path, HTTPS, and expiration metadata are not included in the request header.
          * Exceptions from CurlHolder::UrlEncode() propagate.
          */
-        [[nodiscard]] auto GetEncoded(CurlHolder const& holder) const -> std::string {
+        [[nodiscard]] auto GetEncoded(curl::CurlHolder const& holder) const -> std::string {
             std::string result;
             for (auto const& cookie : m_cookies) {
                 if (encode) {

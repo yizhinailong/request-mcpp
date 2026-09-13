@@ -51,11 +51,11 @@ namespace {
     }
 
     auto check_openssl() -> bool {
-        static_assert(mcr::SSL_CTX_OPENSSL_ENABLED);
+        static_assert(mcr::curl::SSL_CTX_OPENSSL_ENABLED);
         std::unique_ptr<SSL_CTX, decltype(&SSL_CTX_free)> context{ SSL_CTX_new(TLS_method()), &SSL_CTX_free };
         require(bool(context));
         auto load = [&](std::string bytes) {
-            return mcr::sslctx_function_load_ca_cert_from_buffer(nullptr, context.get(), bytes.data());
+            return mcr::curl::sslctx_function_load_ca_cert_from_buffer(nullptr, context.get(), bytes.data());
         };
         auto* store{ SSL_CTX_get_cert_store(context.get()) };
         auto  count = [&] {
@@ -78,15 +78,15 @@ namespace {
 } // namespace
 
 auto main() -> int {
-    static_assert(noexcept(mcr::sslctx_function_load_ca_cert_from_buffer(nullptr, nullptr, nullptr)));
-    bool passed{ check(mcr::sslctx_function_load_ca_cert_from_buffer(nullptr, nullptr, nullptr) == CURLE_ABORTED_BY_CALLBACK, "null callback arguments must fail without throwing") };
+    static_assert(noexcept(mcr::curl::sslctx_function_load_ca_cert_from_buffer(nullptr, nullptr, nullptr)));
+    bool passed{ check(mcr::curl::sslctx_function_load_ca_cert_from_buffer(nullptr, nullptr, nullptr) == CURLE_ABORTED_BY_CALLBACK, "null callback arguments must fail without throwing") };
     try {
 #ifdef MCR_SSL_CTX_OPENSSL
         passed &= check_openssl();
 #else
-        static_assert(!mcr::SSL_CTX_OPENSSL_ENABLED);
+        static_assert(!mcr::curl::SSL_CTX_OPENSSL_ENABLED);
         char context{}, buffer{};
-        passed &= check(mcr::sslctx_function_load_ca_cert_from_buffer(nullptr, &context, &buffer) == CURLE_NOT_BUILT_IN, "non-OpenSSL builds must report unsupported context loading");
+        passed &= check(mcr::curl::sslctx_function_load_ca_cert_from_buffer(nullptr, &context, &buffer) == CURLE_NOT_BUILT_IN, "non-OpenSSL builds must report unsupported context loading");
 #endif
     } catch (std::exception const& error) {
         passed = check(false, error.what());

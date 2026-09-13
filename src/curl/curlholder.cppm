@@ -12,7 +12,7 @@ export import mcr.secure_string;
 
 import std;
 
-export namespace mcr {
+export namespace mcr::curl {
 
     /**
      * @brief Own an easy handle, header and resolve lists, MIME data, and an error buffer.
@@ -42,7 +42,7 @@ export namespace mcr {
                 handle = curl_easy_init();
             }
             if (!handle) {
-                throw std::runtime_error{ "mcr::CurlHolder: curl_easy_init failed." };
+                throw std::runtime_error{ "mcr::curl::CurlHolder: curl_easy_init failed." };
             }
             bindErrorBuffer();
         }
@@ -170,13 +170,13 @@ export namespace mcr {
          */
         auto checkedLength(std::string_view input) const -> int {
             if (!handle) {
-                throw std::logic_error{ "mcr::CurlHolder: URL conversion requires an active handle." };
+                throw std::logic_error{ "mcr::curl::CurlHolder: URL conversion requires an active handle." };
             }
             if (std::cmp_greater(input.size(), (std::numeric_limits<int>::max)())) {
-                throw std::length_error{ "mcr::CurlHolder: URL input exceeds curl's int length limit." };
+                throw std::length_error{ "mcr::curl::CurlHolder: URL input exceeds curl's int length limit." };
             }
             return static_cast<int>(input.size());
         }
     };
 
-} // namespace mcr
+} // namespace mcr::curl

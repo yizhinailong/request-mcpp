@@ -7,14 +7,14 @@
 import std;
 import mcr;
 
-static_assert(!std::is_copy_constructible_v<mcr::CurlHolder>);
-static_assert(!std::is_copy_assignable_v<mcr::CurlHolder>);
-static_assert(std::is_nothrow_move_constructible_v<mcr::CurlHolder>);
-static_assert(std::is_nothrow_move_assignable_v<mcr::CurlHolder>);
-static_assert(std::is_nothrow_destructible_v<mcr::CurlHolder>);
-static_assert(std::is_same_v<decltype(mcr::CurlHolder::error), std::array<char, CURL_ERROR_SIZE>>);
-static_assert(std::is_same_v<decltype(std::declval<mcr::CurlHolder const&>().UrlEncode({})), mcr::utils::SecureString>);
-static_assert(std::is_same_v<decltype(std::declval<mcr::CurlHolder const&>().UrlDecode({})), mcr::utils::SecureString>);
+static_assert(!std::is_copy_constructible_v<mcr::curl::CurlHolder>);
+static_assert(!std::is_copy_assignable_v<mcr::curl::CurlHolder>);
+static_assert(std::is_nothrow_move_constructible_v<mcr::curl::CurlHolder>);
+static_assert(std::is_nothrow_move_assignable_v<mcr::curl::CurlHolder>);
+static_assert(std::is_nothrow_destructible_v<mcr::curl::CurlHolder>);
+static_assert(std::is_same_v<decltype(mcr::curl::CurlHolder::error), std::array<char, CURL_ERROR_SIZE>>);
+static_assert(std::is_same_v<decltype(std::declval<mcr::curl::CurlHolder const&>().UrlEncode({})), mcr::utils::SecureString>);
+static_assert(std::is_same_v<decltype(std::declval<mcr::curl::CurlHolder const&>().UrlDecode({})), mcr::utils::SecureString>);
 
 namespace {
 
@@ -90,11 +90,11 @@ namespace {
         return { value.data(), value.size() };
     }
 
-    auto has_no_resources(mcr::CurlHolder const& holder) -> bool {
+    auto has_no_resources(mcr::curl::CurlHolder const& holder) -> bool {
         return !holder.handle && !holder.chunk && !holder.resolve_curl_list && !holder.multipart;
     }
 
-    auto attach_resources(mcr::CurlHolder& holder, int& mime_frees) -> bool {
+    auto attach_resources(mcr::curl::CurlHolder& holder, int& mime_frees) -> bool {
         holder.chunk             = curl_slist_append(nullptr, "X-Test: owned");
         holder.resolve_curl_list = curl_slist_append(nullptr, "example.test:80:127.0.0.1");
         holder.multipart         = curl_mime_init(holder.handle);
@@ -121,7 +121,7 @@ namespace {
         );
     }
 
-    auto check_error_buffer(mcr::CurlHolder& holder) -> bool {
+    auto check_error_buffer(mcr::curl::CurlHolder& holder) -> bool {
         // The invalid URL fails before any network connection is attempted.
         return check(
             curl_easy_setopt(holder.handle, CURLOPT_URL, "http://[") == CURLE_OK &&
@@ -131,7 +131,7 @@ namespace {
     }
 
     auto check_url_conversion() -> bool {
-        mcr::CurlHolder holder;
+        mcr::curl::CurlHolder holder;
         bool            passed{ check(holder.handle && !holder.chunk && !holder.resolve_curl_list && !holder.multipart && std::ranges::all_of(holder.error, [](char value) { return value == '\0'; }), "construction must create a handle and initialize empty resources and error storage") };
         passed &= check(holder.UrlEncode("Hello World!") == "Hello%20World%21" && holder.UrlDecode("Hello%20World%21") == "Hello World!", "URL helpers must preserve cpr's ASCII behavior");
         passed &= check(holder.UrlEncode("AZaz09-._~") == "AZaz09-._~", "unreserved URL characters must remain unescaped");
@@ -159,7 +159,7 @@ namespace {
         int  replaced_frees{ 0 };
         bool passed{ true };
         {
-            mcr::CurlHolder source;
+            mcr::curl::CurlHolder source;
             if (!attach_resources(source, source_frees)) {
                 return false;
             }
@@ -169,12 +169,12 @@ namespace {
             auto* multipart{ source.multipart };
             source.error.front() = 'x';
             auto const      old_error{ source.error };
-            mcr::CurlHolder moved{ std::move(source) };
+            mcr::curl::CurlHolder moved{ std::move(source) };
             passed &= check(has_no_resources(source) && moved.handle == handle && moved.chunk == chunk && moved.resolve_curl_list == resolve && moved.multipart == multipart && moved.error == old_error && source_frees == 0, "move construction must transfer every resource and preserve error text without freeing the source resources");
             passed &= check_error_buffer(moved);
             passed &= check(source.error == old_error, "moved handles must not write to the source object's error buffer");
             auto const      moved_error{ moved.error };
-            mcr::CurlHolder destination;
+            mcr::curl::CurlHolder destination;
             if (!attach_resources(destination, replaced_frees)) {
                 return false;
             }
@@ -197,7 +197,7 @@ namespace {
                 } catch (std::logic_error const&) {
                 }
             }
-            mcr::CurlHolder empty{ std::move(source) };
+            mcr::curl::CurlHolder empty{ std::move(source) };
             passed &= check(has_no_resources(empty), "moving an empty holder must remain safe");
             source  = std::move(destination);
             passed &= check(has_no_resources(destination) && source.UrlDecode("reused%20holder") == "reused holder", "a moved-from holder must be reusable by move assignment");
@@ -206,8 +206,8 @@ namespace {
 
         int discarded_frees{ 0 };
         {
-            mcr::CurlHolder source;
-            mcr::CurlHolder owner{ std::move(source) };
+            mcr::curl::CurlHolder source;
+            mcr::curl::CurlHolder owner{ std::move(source) };
             if (!attach_resources(owner, discarded_frees)) {
                 return false;
             }
@@ -222,13 +222,13 @@ namespace {
         {
             FailAllocations fail;
             try {
-                mcr::CurlHolder invalid;
+                mcr::curl::CurlHolder invalid;
                 passed &= check(false, "easy-handle initialization failure must throw instead of leaving a null handle");
             } catch (std::runtime_error const& error) {
                 passed &= check(std::string_view{ error.what() }.contains("curl_easy_init"), "initialization failure must identify the failed operation");
             }
         }
-        mcr::CurlHolder holder;
+        mcr::curl::CurlHolder holder;
         auto const      before{ g_live_allocations.load() };
         {
             FailAllocations fail;
@@ -243,7 +243,7 @@ namespace {
         for (int worker{ 0 }; worker < 8; ++worker) {
             workers.push_back(std::async(std::launch::async, [] {
                 for (int iteration{ 0 }; iteration < 8; ++iteration) {
-                    mcr::CurlHolder holder;
+                    mcr::curl::CurlHolder holder;
                     if (!holder.handle || holder.UrlEncode("thread safe") != "thread%20safe") {
                         return false;
                     }

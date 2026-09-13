@@ -273,7 +273,7 @@ namespace {
             passed &= check(false, "a null easy handle must be rejected");
         } catch (std::invalid_argument const&) {
         }
-        mcr::CurlHolder holder;
+        mcr::curl::CurlHolder holder;
         recovered.SetupHandler(holder.handle);
         return passed;
     }
@@ -281,7 +281,7 @@ namespace {
     auto check_attached_lifetime() -> bool {
         std::optional<mcr::ConnectionPool> original{ std::in_place };
         mcr::ConnectionPool const          survivor{ *original };
-        mcr::CurlHolder                    holder;
+        mcr::curl::CurlHolder              holder;
         original->SetupHandler(holder.handle);
         original.reset();
         survivor.SetupHandler(holder.handle);
@@ -296,7 +296,7 @@ namespace {
     }
 
     auto request(std::string const& url, mcr::ConnectionPool const* pool, long expected_connections) -> bool {
-        mcr::CurlHolder holder;
+        mcr::curl::CurlHolder holder;
         if (pool) {
             pool->SetupHandler(holder.handle);
         }

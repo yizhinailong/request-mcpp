@@ -1,6 +1,7 @@
 # CurlMultiHolder
 
-Import `mcr` or `mcr.curlmultiholder` to use `mcr::CurlMultiHolder`.
+Import `mcr` or `mcr.curlmultiholder` to use `mcr::curl::CurlMultiHolder`.
+See [curl backend namespaces](curl.md) for the other backend interfaces and migration details.
 It follows cpr's `include/cpr/curlmultiholder.h` and
 `cpr/curlmultiholder.cpp`: construction calls `curl_multi_init()`, the public
 `CURLM* handle` provides access to libcurl, and destruction calls
@@ -18,7 +19,7 @@ int main() {
     }
     int result{ 0 };
     try {
-        mcr::CurlMultiHolder multi;
+        mcr::curl::CurlMultiHolder multi;
         int running{ 0 };
         if (curl_multi_perform(multi.handle, &running) != CURLM_OK) {
             result = 1;

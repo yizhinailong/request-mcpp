@@ -294,7 +294,7 @@ export namespace mcr::utils {
      * @note Reuse CurlHolder::UrlEncode() for repeated conversions to avoid handle creation overhead.
      */
     [[nodiscard]] auto url_encode(std::string_view input) -> SecureString {
-        CurlHolder const holder;
+        curl::CurlHolder const holder;
         return holder.UrlEncode(input);
     }
 
@@ -308,7 +308,7 @@ export namespace mcr::utils {
      * cleanup remain the caller's responsibility, as for CurlHolder.
      */
     [[nodiscard]] auto url_decode(std::string_view input) -> SecureString {
-        CurlHolder const holder;
+        curl::CurlHolder const holder;
         return holder.UrlDecode(input);
     }
 

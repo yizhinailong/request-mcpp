@@ -14,7 +14,7 @@ module;
 module mcr.ssl_ctx;
 import std;
 
-namespace mcr {
+namespace mcr::curl {
     auto sslctx_function_load_ca_cert_from_buffer(CURL* /*curl*/, void* sslctx, void* raw_cert_buf) noexcept -> CURLcode {
         if (!sslctx || !raw_cert_buf) {
             return CURLE_ABORTED_BY_CALLBACK;
@@ -72,4 +72,4 @@ namespace mcr {
         return CURLE_NOT_BUILT_IN;
 #endif
     }
-} // namespace mcr
+} // namespace mcr::curl

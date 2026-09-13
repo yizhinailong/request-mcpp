@@ -6,7 +6,7 @@ module;
 #include <curl/curl.h>
 export module mcr.ssl_ctx;
 
-export namespace mcr {
+export namespace mcr::curl {
 #ifdef MCR_SSL_CTX_OPENSSL
     inline constexpr bool SSL_CTX_OPENSSL_ENABLED{ true }; ///< This build can load CA certificates into OpenSSL contexts.
 #else
@@ -25,4 +25,4 @@ export namespace mcr {
      * never throws or owns the supplied pointers. Prefer options::Ssl(options::ssl::CaBuffer{...}) for portable CA loading.
      */
     auto sslctx_function_load_ca_cert_from_buffer(CURL* curl, void* sslctx, void* raw_cert_buf) noexcept -> CURLcode;
-} // namespace mcr
+} // namespace mcr::curl

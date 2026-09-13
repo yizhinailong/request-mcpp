@@ -27,7 +27,7 @@ namespace {
 } // namespace
 
 namespace mcr {
-    MultiPerform::MultiPerform() : m_multi{ std::make_unique<CurlMultiHolder>() } {}
+    MultiPerform::MultiPerform() : m_multi{ std::make_unique<curl::CurlMultiHolder>() } {}
 
     MultiPerform::MultiPerform(MultiPerform&& other) noexcept {
         *this = std::move(other);
@@ -263,7 +263,7 @@ namespace mcr {
 
     auto MultiPerform::runPrepared() -> std::vector<Response> {
         if (!m_multi) {
-            m_multi = std::make_unique<CurlMultiHolder>();
+            m_multi = std::make_unique<curl::CurlMultiHolder>();
         }
         std::vector<Session*> attached;
         attached.reserve(m_sessions.size());

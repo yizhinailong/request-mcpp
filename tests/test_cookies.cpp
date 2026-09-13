@@ -136,7 +136,7 @@ namespace {
     }
 
     auto check_encoding() -> bool {
-        mcr::CurlHolder holder;
+        mcr::curl::CurlHolder holder;
         mcr::Cookies    cookies{
             {  "SID", "value" },
             { "lang", "en-US" }
@@ -184,7 +184,7 @@ namespace {
         };
         passed &= check(binary_quoted.GetEncoded(holder) == "binary=" + quoted_binary + "; ", "quoted binary values must remain verbatim");
 
-        mcr::CurlHolder owner{ std::move(holder) };
+        mcr::curl::CurlHolder owner{ std::move(holder) };
         passed &= check(mcr::Cookies{}.GetEncoded(holder).empty() && reserved.GetEncoded(holder) == "a b=c+d;%&; ", "empty and raw collections must not require an active curl handle");
         try {
             (void)cookies.GetEncoded(holder);

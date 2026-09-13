@@ -121,7 +121,7 @@ namespace {
         bool         passed{ check(empty.empty() && empty.encode, "a null curl list must yield an empty collection with encoding enabled") };
         mcr::Cookies cookies;
         {
-            mcr::CurlHolder owner;
+            mcr::curl::CurlHolder owner;
             for (char const* record : {
                      "127.0.0.1\tFALSE\t/\tFALSE\t1656908640\tstatus\ton",
                      ".example.test\tTrUe\t/account\tTRUE\t0\tstatus\tdebug",
