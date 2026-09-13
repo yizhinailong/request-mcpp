@@ -6,7 +6,7 @@ export module mcr.timeout;
 
 import std;
 
-export namespace mcr {
+export namespace mcr::options {
 
     /**
      * @brief A request timeout stored in milliseconds, following cpr's Timeout interface.
@@ -42,10 +42,10 @@ export namespace mcr {
         [[nodiscard]] auto Milliseconds() const -> long {
             auto const count{ ms.count() };
             if (std::cmp_greater(count, (std::numeric_limits<long>::max)())) {
-                throw std::overflow_error{ std::format("mcr::Timeout: timeout value overflow: {} ms.", count) };
+                throw std::overflow_error{ std::format("mcr::options::Timeout: timeout value overflow: {} ms.", count) };
             }
             if (std::cmp_less(count, (std::numeric_limits<long>::min)())) {
-                throw std::underflow_error{ std::format("mcr::Timeout: timeout value underflow: {} ms.", count) };
+                throw std::underflow_error{ std::format("mcr::options::Timeout: timeout value underflow: {} ms.", count) };
             }
             return static_cast<long>(count);
         }
@@ -53,4 +53,4 @@ export namespace mcr {
         std::chrono::milliseconds ms; ///< Stored duration, publicly mutable as in cpr.
     };
 
-} // namespace mcr
+} // namespace mcr::options

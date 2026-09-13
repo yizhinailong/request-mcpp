@@ -6,10 +6,10 @@
 
 ## Project Structure & Module Organization
 
-Source files are grouped by responsibility. Moving a file between directories does not change its public module name or namespace.
+Source files are grouped by responsibility. Public module names are independent of file paths. Request configuration types use `mcr::options`, with TLS option tags in `mcr::options::ssl`.
 
 - `src/mcr.cppm`: library entry module re-exporting the public interfaces.
-- `src/options/`: request transfer configuration, including verbosity, timeouts, redirects, protocol selection, authentication, proxies, and TLS options. Each option keeps its own module file.
+- `src/options/`: request transfer configuration in namespace `mcr::options`, including verbosity, timeouts, redirects, protocol selection, authentication, proxies, and TLS options. Each option keeps its existing module name, such as `mcr.verbose` or `mcr.timeout`.
 - `src/utils/`: HTTP parsing and curl callback utility functions.
 - `src/`: sessions, responses, request data, callbacks, and supporting runtime modules.
 - `tests/test_*.cpp`: standalone tests, with shared local HTTP fixtures under `tests/fixtures/`.

@@ -10,7 +10,7 @@ export namespace mcr {
 #ifdef MCR_SSL_CTX_OPENSSL
     inline constexpr bool SSL_CTX_OPENSSL_ENABLED{ true }; ///< This build can load CA certificates into OpenSSL contexts.
 #else
-    inline constexpr bool SSL_CTX_OPENSSL_ENABLED{ false }; ///< Schannel builds use ssl::CaBuffer instead.
+    inline constexpr bool SSL_CTX_OPENSSL_ENABLED{ false }; ///< Schannel builds use options::ssl::CaBuffer instead.
 #endif
 
     /**
@@ -22,7 +22,7 @@ export namespace mcr {
      * invalid arguments or malformed certificates, CURLE_OUT_OF_MEMORY on allocation failure,
      * or CURLE_NOT_BUILT_IN when OpenSSL context support is absent.
      * @note Configure CURLOPT_SSL_CTX_FUNCTION and CURLOPT_SSL_CTX_DATA together. This callback
-     * never throws or owns the supplied pointers. Prefer Ssl(CaBuffer{...}) for portable CA loading.
+     * never throws or owns the supplied pointers. Prefer options::Ssl(options::ssl::CaBuffer{...}) for portable CA loading.
      */
     auto sslctx_function_load_ca_cert_from_buffer(CURL* curl, void* sslctx, void* raw_cert_buf) noexcept -> CURLcode;
 } // namespace mcr

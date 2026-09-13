@@ -6,7 +6,7 @@ export module mcr.accept_encoding;
 
 import std;
 
-export namespace mcr {
+export namespace mcr::options {
 
     /**
      * @brief Built-in encoding names and the disabled sentinel, retaining cpr's enum names and values.
@@ -106,4 +106,4 @@ export namespace mcr {
         }
     };
 
-} // namespace mcr
+} // namespace mcr::options

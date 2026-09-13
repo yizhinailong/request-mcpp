@@ -10,7 +10,7 @@ import mcr;
 auto main() -> int {
     mcr::Session session;
     session.SetUrl(mcr::Url{ "http://127.0.0.1:8080/echo" });
-    session.SetTimeout(mcr::Timeout{ std::chrono::seconds{ 5 } });
+    session.SetTimeout(mcr::options::Timeout{ std::chrono::seconds{ 5 } });
     session.SetBody(mcr::Body{ "hello" });
     auto response = session.Post();
     if (response.error) {
@@ -40,20 +40,20 @@ TLS 和代理认证：
 ```cpp
 mcr::Session session;
 session.SetUrl(mcr::Url{ "https://localhost:8443/hello" });
-session.SetSslOptions(mcr::Ssl(
-    mcr::ssl::CaInfo{ "test-root.pem" },
-    mcr::ssl::TLSv1_2{},
-    mcr::ssl::MaxTLSv1_3{}
+session.SetSslOptions(mcr::options::Ssl(
+    mcr::options::ssl::CaInfo{ "test-root.pem" },
+    mcr::options::ssl::TLSv1_2{},
+    mcr::options::ssl::MaxTLSv1_3{}
 ));
-session.SetProxies(mcr::Proxies{ { "https", "http://127.0.0.1:8080" } });
-session.SetProxyAuth(mcr::ProxyAuthentication{
-    { "https", mcr::EncodedAuthentication{ "proxy-user", "proxy-password" } }
+session.SetProxies(mcr::options::Proxies{ { "https", "http://127.0.0.1:8080" } });
+session.SetProxyAuth(mcr::options::ProxyAuthentication{
+    { "https", mcr::options::EncodedAuthentication{ "proxy-user", "proxy-password" } }
 });
 auto response = session.Get();
 ```
 
 - 默认启用证书链和主机名校验。`SetVerifySsl` 同时切换两项；
-  `ssl::VerifyPeer` / `ssl::VerifyHost` 可分别配置。
+  `mcr::options::ssl::VerifyPeer` / `mcr::options::ssl::VerifyHost` 可分别配置。
 - 支持证书和私钥文件/内存数据、密码、CA 文件/目录/内存数据、公钥固定、CRL、
   OCSP 状态校验、TLS 版本上下限、ALPN、密码套件、会话缓存及吊销检查选项。
 - `SetSslOptions` 替换整套配置，空字段清除旧凭据、CA blob 和公钥固定。
@@ -137,7 +137,8 @@ multi.RemoveSession(first);  // 释放归属后，可以再次直接调用 first
 
 有意区别于 cpr：
 
-- 类型使用 `mcr` 命名空间。为避免模块循环，Session、MultiPerform 及两种拦截器
+- Session、MultiPerform 及两种拦截器使用 `mcr` 命名空间；传输配置使用 `mcr::options`，
+  TLS 选项标签使用 `mcr::options::ssl`，详见[选项命名空间](options.md)。为避免模块循环，这些会话和拦截器类型
   同属 `mcr.session`；`mcr.interceptor`、`mcr.multiperform` 提供转导出入口。
   总模块 `mcr` 也导出 `mcr.ssl_options` 和 `mcr.proxy_auth`。
 - 公共方法统一为 `Intercept` / `Proceed` 和 `ProxyAuthentication::Has`。

@@ -1,12 +1,12 @@
 # LimitRate
 
-Import `mcr` or `mcr.limit_rate` to use `mcr::LimitRate`.
+Import `mcr` or `mcr.limit_rate` to use `mcr::options::LimitRate`.
 
 ```cpp
 import mcr.limit_rate;
 
-mcr::LimitRate limited{ 1024, 2048 }; // Download and upload bytes per second.
-mcr::LimitRate unlimited{ 0, 0 };
+mcr::options::LimitRate limited{ 1024, 2048 }; // Download and upload bytes per second.
+mcr::options::LimitRate unlimited{ 0, 0 };
 limited.uprate = 4096;
 ```
 
@@ -21,7 +21,7 @@ signed 64-bit values verbatim, including negative values, without clamping or
 validation. Public fields can be updated independently. Copying, moving, and
 assignment preserve the two values without sharing state.
 
-Intentional differences from cpr are the C++23 module, namespace `mcr`,
+Intentional differences from cpr are the C++23 module, namespace `mcr::options`,
 constructor parameter names, and Doxygen documentation. Public field names and
 runtime behavior are unchanged.
 

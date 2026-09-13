@@ -6,7 +6,7 @@ export module mcr.proxies;
 
 import std;
 
-export namespace mcr {
+export namespace mcr::options {
 
     /**
      * @brief Store protocol-to-proxy mappings, following cpr's Proxies option.
@@ -61,4 +61,4 @@ export namespace mcr {
         }
     };
 
-} // namespace mcr
+} // namespace mcr::options

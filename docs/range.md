@@ -6,9 +6,9 @@ Import `mcr` or `mcr.range` to use both range types.
 import std;
 import mcr.range;
 
-mcr::Range range{ 2, 3 };
+mcr::options::Range range{ 2, 3 };
 std::println("{}", range.Str()); // 2-3
-mcr::MultiRange ranges{ mcr::Range{ std::nullopt, 3 }, mcr::Range{ 5, 6 } };
+mcr::options::MultiRange ranges{ mcr::options::Range{ std::nullopt, 3 }, mcr::options::Range{ 5, 6 } };
 std::println("{}", ranges.Str()); // 0-3, 5-6
 ```
 
@@ -38,7 +38,7 @@ produces an empty string. Changes to the original ranges do not affect the
 stored copies. Both types support independent copy/move construction and
 assignment, and every `Str()` call returns an owned string.
 
-Intentional API differences from cpr are the C++23 module, namespace `mcr`,
+Intentional API differences from cpr are the C++23 module, namespace `mcr::options`,
 `Str()` replacing `str()`, returning `std::string` without top-level const, and
 the private `m_ranges` member name. Multi-range formatting iterates by const
 reference. Formatting behavior is unchanged.

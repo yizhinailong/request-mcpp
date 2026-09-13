@@ -1,13 +1,13 @@
 # Resolve
 
-Import `mcr` or `mcr.resolve` to use `mcr::Resolve`.
+Import `mcr` or `mcr.resolve` to use `mcr::options::Resolve`.
 
 ```cpp
 import mcr;
 
-mcr::Resolve defaults{ "www.example.com", "127.0.0.1" }; // Ports 80 and 443.
-mcr::Resolve custom{ "www.example.com", "127.0.0.1", { 8080 } };
-mcr::Resolve empty_ports{ "www.example.com", "::1", {} }; // Also ports 80 and 443.
+mcr::options::Resolve defaults{ "www.example.com", "127.0.0.1" }; // Ports 80 and 443.
+mcr::options::Resolve custom{ "www.example.com", "127.0.0.1", { 8080 } };
+mcr::options::Resolve empty_ports{ "www.example.com", "::1", {} }; // Also ports 80 and 443.
 ```
 
 The public `host` and `addr` fields own `std::string` values. The public `ports`
@@ -21,7 +21,7 @@ only when constructing from a hostname and address; clearing `ports` later,
 copying, moving, or assigning a mapping does not restore default ports.
 
 The option follows cpr's `include/cpr/resolve.h`. Intentional differences are
-the C++23 module, namespace `mcr`, explicit `std::uint16_t`, and taking owned
+the C++23 module, namespace `mcr::options`, explicit `std::uint16_t`, and taking owned
 constructor inputs by value and moving them into members instead of copying
 from const references.
 

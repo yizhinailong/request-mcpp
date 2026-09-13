@@ -6,7 +6,7 @@ export module mcr.local_port_range;
 
 import std;
 
-export namespace mcr {
+export namespace mcr::options {
 
     /**
      * @brief Store a local port range value, following cpr's LocalPortRange option.
@@ -32,4 +32,4 @@ export namespace mcr {
         }
     };
 
-} // namespace mcr
+} // namespace mcr::options

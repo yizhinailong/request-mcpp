@@ -6,9 +6,9 @@ They follow cpr's `include/cpr/http_version.h`.
 ```cpp
 import mcr.http_version;
 
-mcr::HttpVersion automatic;
-mcr::HttpVersion explicit_version{ mcr::HttpVersionCode::VERSION_1_1 };
-automatic.code = mcr::HttpVersionCode::VERSION_1_0;
+mcr::options::HttpVersion automatic;
+mcr::options::HttpVersion explicit_version{ mcr::options::HttpVersionCode::VERSION_1_1 };
+automatic.code = mcr::options::HttpVersionCode::VERSION_1_0;
 ```
 
 `HttpVersionCode` is a scoped enum with underlying type `std::uint8_t`.

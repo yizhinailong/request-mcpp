@@ -6,7 +6,7 @@ export module mcr.unix_socket;
 
 import std;
 
-export namespace mcr {
+export namespace mcr::options {
 
     /**
      * @brief An immutable Unix domain socket path, following cpr's UnixSocket interface.
@@ -31,4 +31,4 @@ export namespace mcr {
         }
     };
 
-} // namespace mcr
+} // namespace mcr::options

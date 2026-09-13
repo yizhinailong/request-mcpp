@@ -6,7 +6,7 @@ export module mcr.limit_rate;
 
 import std;
 
-export namespace mcr {
+export namespace mcr::options {
 
     /**
      * @brief Store independent download and upload limits, following cpr's LimitRate option.
@@ -27,4 +27,4 @@ export namespace mcr {
         std::int64_t uprate{ 0 };   ///< Publicly mutable upload rate limit in bytes per second.
     };
 
-} // namespace mcr
+} // namespace mcr::options

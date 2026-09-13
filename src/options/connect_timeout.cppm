@@ -8,7 +8,7 @@ export import mcr.timeout;
 
 import std;
 
-export namespace mcr {
+export namespace mcr::options {
 
     /**
      * @brief Distinguish connection timeouts from overall request timeouts, following cpr.
@@ -30,4 +30,4 @@ export namespace mcr {
         ConnectTimeout(std::int32_t milliseconds) : Timeout{ milliseconds } {}
     };
 
-} // namespace mcr
+} // namespace mcr::options

@@ -8,7 +8,7 @@ module mcr.session;
 import std;
 
 namespace mcr {
-    auto Session::SetSslOptions(SslOptions const& options) -> void {
+    auto Session::SetSslOptions(options::SslOptions const& options) -> void {
         // Some backends reject even the default value for unsupported optional settings.
         auto optional_option = [this](CURLoption option, auto value, bool requested) {
             auto const result{ curl_easy_setopt(m_curl->handle, option, value) };

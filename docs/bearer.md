@@ -1,6 +1,6 @@
 # Bearer
 
-Import `mcr` or `mcr.bearer` to use `mcr::Bearer`, following cpr's
+Import `mcr` or `mcr.bearer` to use `mcr::options::Bearer`, following cpr's
 `include/cpr/bearer.h`. The module re-exports `mcr.secure_string` for derived
 classes that use its protected token storage.
 
@@ -8,8 +8,8 @@ classes that use its protected token storage.
 import std;
 import mcr.bearer;
 
-mcr::Bearer token{ "the_token" };
-mcr::Bearer from_view = std::string_view{ "another_token" };
+mcr::options::Bearer token{ "the_token" };
+mcr::options::Bearer from_view = std::string_view{ "another_token" };
 auto borrowed = token.GetToken(); // Points to "the_token", without a prefix.
 ```
 

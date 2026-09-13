@@ -6,7 +6,7 @@ export module mcr.low_speed;
 
 import std;
 
-export namespace mcr {
+export namespace mcr::options {
 
     /**
      * @brief Store the minimum transfer rate and duration used to detect a slow connection.
@@ -27,4 +27,4 @@ export namespace mcr {
         std::chrono::seconds time;  ///< Publicly mutable observation duration in whole seconds.
     };
 
-} // namespace mcr
+} // namespace mcr::options

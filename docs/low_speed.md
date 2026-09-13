@@ -1,13 +1,13 @@
 # LowSpeed
 
-Import `mcr` or `mcr.low_speed` to use `mcr::LowSpeed`.
+Import `mcr` or `mcr.low_speed` to use `mcr::options::LowSpeed`.
 
 ```cpp
 import std;
 import mcr.low_speed;
 
 using namespace std::chrono_literals;
-mcr::LowSpeed option{ 1000, 1s };
+mcr::options::LowSpeed option{ 1000, 1s };
 option.limit = 2048;
 option.time = 2min; // Stored as 120 seconds.
 ```

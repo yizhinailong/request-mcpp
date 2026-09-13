@@ -8,11 +8,11 @@ import mcr;
 using ProxyMap  = std::map<std::string, std::string>;
 using ProxyList = std::initializer_list<ProxyMap::value_type>;
 
-static_assert(std::is_default_constructible_v<mcr::Proxies>);
-static_assert(std::is_constructible_v<mcr::Proxies, ProxyMap const&>);
-static_assert(!std::is_convertible_v<ProxyMap, mcr::Proxies>);
-static_assert(std::is_convertible_v<ProxyList, mcr::Proxies>);
-static_assert(std::is_same_v<decltype(std::declval<mcr::Proxies&>()["http"]), std::string const&>);
+static_assert(std::is_default_constructible_v<mcr::options::Proxies>);
+static_assert(std::is_constructible_v<mcr::options::Proxies, ProxyMap const&>);
+static_assert(!std::is_convertible_v<ProxyMap, mcr::options::Proxies>);
+static_assert(std::is_convertible_v<ProxyList, mcr::options::Proxies>);
+static_assert(std::is_same_v<decltype(std::declval<mcr::options::Proxies&>()["http"]), std::string const&>);
 
 namespace {
 
@@ -24,14 +24,14 @@ namespace {
     }
 
     auto check_construction() -> bool {
-        mcr::Proxies const defaults;
-        mcr::Proxies const empty_list(ProxyList{});
-        mcr::Proxies const empty_map(ProxyMap{});
+        mcr::options::Proxies const defaults;
+        mcr::options::Proxies const empty_list(ProxyList{});
+        mcr::options::Proxies const empty_map(ProxyMap{});
         bool               passed{ check(!defaults.Has("http") && !defaults.Has("") && !empty_list.Has("https") && !empty_map.Has("http"), "default and empty inputs must contain no mappings") };
 
         std::string  protocol{ "http" };
         std::string  address{ "http://proxy.test:8080" };
-        mcr::Proxies from_list = {
+        mcr::options::Proxies from_list = {
             { protocol,                    address },
             {  "https", "socks5://proxy.test:1080" }
         };
@@ -43,7 +43,7 @@ namespace {
             {     "http", "proxy.test:3128" },
             { "no_proxy",                "" }
         };
-        mcr::Proxies from_map{ source };
+        mcr::options::Proxies from_map{ source };
         source["http"] = "changed";
         source.erase("no_proxy");
         source["https"]  = "added";
@@ -51,7 +51,7 @@ namespace {
         (void)from_map["ftp"];
         passed &= check(!source.contains("ftp"), "subscript insertion must not modify the source map");
 
-        mcr::Proxies duplicate{
+        mcr::options::Proxies duplicate{
             { "http",  "first" },
             { "http", "second" }
         };
@@ -60,7 +60,7 @@ namespace {
     }
 
     auto check_lookup() -> bool {
-        mcr::Proxies proxies{
+        mcr::options::Proxies proxies{
             {              "http",                   "lower" },
             {              "HTTP",                   "upper" },
             {             "https",                        "" },
@@ -88,7 +88,7 @@ namespace {
 
         std::string const binary_key{ "h\0ttp", 5 };
         std::string const binary_address{ "proxy\0address", 13 };
-        mcr::Proxies      binary{
+        mcr::options::Proxies binary{
             { binary_key, binary_address }
         };
         passed &= check(binary.Has(binary_key) && !binary.Has("h") && binary[binary_key] == binary_address, "keys and addresses must retain embedded null bytes");
@@ -98,18 +98,18 @@ namespace {
     }
 
     auto check_value_semantics() -> bool {
-        mcr::Proxies original{
+        mcr::options::Proxies original{
             { "http", "proxy.test:8080" }
         };
-        mcr::Proxies copied{ original };
-        original = mcr::Proxies{
+        mcr::options::Proxies copied{ original };
+        original = mcr::options::Proxies{
             { "https", "proxy.test:8443" }
         };
         (void)copied["no_proxy"];
-        mcr::Proxies moved{ std::move(copied) };
-        mcr::Proxies assigned;
+        mcr::options::Proxies moved{ std::move(copied) };
+        mcr::options::Proxies assigned;
         assigned = moved;
-        mcr::Proxies move_assigned;
+        mcr::options::Proxies move_assigned;
         move_assigned = std::move(moved);
         (void)assigned["ftp"];
         return check(original.Has("https") && !original.Has("http") && !original.Has("no_proxy") && assigned["http"] == "proxy.test:8080" && assigned.Has("ftp") && move_assigned["http"] == "proxy.test:8080" && move_assigned.Has("no_proxy") && !move_assigned.Has("ftp"), "copying, moving, assignment, and insertion must preserve independent mappings");

@@ -176,9 +176,9 @@ export namespace mcr {
         Url                                       m_url;                                    ///< Base URL before adding parameters.
         Parameters                                m_parameters;                             ///< Persistent URL parameters.
         Header                                    m_header;                                 ///< Persistent request headers.
-        Proxies                                   m_proxies;                                ///< Persistent proxy selection.
-        ProxyAuthentication                       m_proxy_auth;                             ///< Persistent encoded proxy credentials.
-        AcceptEncoding                            m_accept_encoding;                        ///< Compression preference.
+        options::Proxies                          m_proxies;                                ///< Persistent proxy selection.
+        options::ProxyAuthentication              m_proxy_auth;                             ///< Persistent encoded proxy credentials.
+        options::AcceptEncoding                   m_accept_encoding;                        ///< Compression preference.
         Content                                   m_content;                                ///< Owned or borrowed request content.
         ReadCallback                              m_read;                                   ///< Optional upload producer.
         HeaderCallback                            m_header_callback;                        ///< Optional header observer.
@@ -203,7 +203,7 @@ export namespace mcr {
         Session() {
             auto const* version{ curl_version_info(CURLVERSION_NOW) };
             SetUserAgent(UserAgent{ std::string{ "curl/" } + version->version });
-            SetRedirect(Redirect{});
+            SetRedirect(options::Redirect{});
             setOption(CURLOPT_COOKIEFILE, "");
             setOption(CURLOPT_NOSIGNAL, 1L);
             setOption(CURLOPT_TCP_KEEPALIVE, 1L);
@@ -270,13 +270,13 @@ export namespace mcr {
          * @brief Set the total transfer timeout.
          * @param timeout Duration; zero disables the timeout.
          */
-        auto SetTimeout(Timeout const& timeout) -> void { setOption(CURLOPT_TIMEOUT_MS, timeout.Milliseconds()); }
+        auto SetTimeout(options::Timeout const& timeout) -> void { setOption(CURLOPT_TIMEOUT_MS, timeout.Milliseconds()); }
 
         /**
          * @brief Set the connection timeout.
          * @param timeout Connection establishment deadline.
          */
-        auto SetConnectTimeout(ConnectTimeout const& timeout) -> void { setOption(CURLOPT_CONNECTTIMEOUT_MS, timeout.Milliseconds()); }
+        auto SetConnectTimeout(options::ConnectTimeout const& timeout) -> void { setOption(CURLOPT_CONNECTTIMEOUT_MS, timeout.Milliseconds()); }
 
         /**
          * @brief Attach a borrowed connection pool.
@@ -288,15 +288,15 @@ export namespace mcr {
          * @brief Configure HTTP credentials.
          * @param auth Owned credentials and authentication policy to copy into curl.
          */
-        auto SetAuth(Authentication const& auth) -> void {
+        auto SetAuth(options::Authentication const& auth) -> void {
             long mode{};
             switch (auth.GetAuthMode()) {
-                case AuthMode::BASIC    : mode = CURLAUTH_BASIC; break;
-                case AuthMode::DIGEST   : mode = CURLAUTH_DIGEST; break;
-                case AuthMode::NTLM     : mode = CURLAUTH_NTLM; break;
-                case AuthMode::NEGOTIATE: mode = CURLAUTH_NEGOTIATE; break;
-                case AuthMode::ANY      : mode = static_cast<long>(CURLAUTH_ANY); break;
-                case AuthMode::ANYSAFE  : mode = static_cast<long>(CURLAUTH_ANYSAFE); break;
+                case options::AuthMode::BASIC    : mode = CURLAUTH_BASIC; break;
+                case options::AuthMode::DIGEST   : mode = CURLAUTH_DIGEST; break;
+                case options::AuthMode::NTLM     : mode = CURLAUTH_NTLM; break;
+                case options::AuthMode::NEGOTIATE: mode = CURLAUTH_NEGOTIATE; break;
+                case options::AuthMode::ANY      : mode = static_cast<long>(CURLAUTH_ANY); break;
+                case options::AuthMode::ANYSAFE  : mode = static_cast<long>(CURLAUTH_ANYSAFE); break;
                 default                 : throw std::invalid_argument{ "mcr::Session: unknown authentication mode." };
             }
             setOption(CURLOPT_HTTPAUTH, mode);
@@ -307,7 +307,7 @@ export namespace mcr {
          * @brief Configure a bearer token.
          * @param token Token copied into curl.
          */
-        auto SetBearer(Bearer const& token) -> void {
+        auto SetBearer(options::Bearer const& token) -> void {
             setOption(CURLOPT_HTTPAUTH, static_cast<long>(CURLAUTH_BEARER));
             setOption(CURLOPT_XOAUTH2_BEARER, token.GetToken());
         }
@@ -334,31 +334,31 @@ export namespace mcr {
          * @brief Copy proxy mappings.
          * @param proxies Protocol and no_proxy mappings.
          */
-        auto SetProxies(Proxies const& proxies) -> void { m_proxies = proxies; }
+        auto SetProxies(options::Proxies const& proxies) -> void { m_proxies = proxies; }
 
         /**
          * @brief Move proxy mappings.
          * @param proxies Protocol and no_proxy mappings.
          */
-        auto SetProxies(Proxies&& proxies) -> void { m_proxies = std::move(proxies); }
+        auto SetProxies(options::Proxies&& proxies) -> void { m_proxies = std::move(proxies); }
 
         /**
          * @brief Copy protocol-specific proxy credentials.
          * @param auth Credentials to own.
          */
-        auto SetProxyAuth(ProxyAuthentication const& auth) -> void { m_proxy_auth = auth; }
+        auto SetProxyAuth(options::ProxyAuthentication const& auth) -> void { m_proxy_auth = auth; }
 
         /**
          * @brief Move protocol-specific proxy credentials.
          * @param auth Credentials to own.
          */
-        auto SetProxyAuth(ProxyAuthentication&& auth) -> void { m_proxy_auth = std::move(auth); }
+        auto SetProxyAuth(options::ProxyAuthentication&& auth) -> void { m_proxy_auth = std::move(auth); }
 
         /**
          * @brief Configure certificate and hostname verification together.
          * @param verify Verification preference.
          */
-        auto SetVerifySsl(VerifySsl const& verify) -> void {
+        auto SetVerifySsl(options::VerifySsl const& verify) -> void {
             setOption(CURLOPT_SSL_VERIFYPEER, verify.verify ? 1L : 0L);
             setOption(CURLOPT_SSL_VERIFYHOST, verify.verify ? 2L : 0L);
         }
@@ -369,7 +369,7 @@ export namespace mcr {
          * @throws std::runtime_error If a requested feature is not supported by the linked TLS backend.
          * @note Defaults for unavailable optional features are tolerated. A failed call may apply earlier options.
          */
-        auto SetSslOptions(SslOptions const& options) -> void;
+        auto SetSslOptions(options::SslOptions const& options) -> void;
 
         /**
          * @brief Copy multipart descriptors.
@@ -387,18 +387,18 @@ export namespace mcr {
          * @brief Configure redirect handling.
          * @param redirect Limits, credential forwarding, and POST preservation.
          */
-        auto SetRedirect(Redirect const& redirect) -> void {
+        auto SetRedirect(options::Redirect const& redirect) -> void {
             setOption(CURLOPT_FOLLOWLOCATION, redirect.follow ? 1L : 0L);
             setOption(CURLOPT_MAXREDIRS, redirect.maximum);
             setOption(CURLOPT_UNRESTRICTED_AUTH, redirect.cont_send_cred ? 1L : 0L);
             long mask{};
-            if (any(redirect.post_flags & PostRedirectFlags::POST_301)) {
+            if (any(redirect.post_flags & options::PostRedirectFlags::POST_301)) {
                 mask |= CURL_REDIR_POST_301;
             }
-            if (any(redirect.post_flags & PostRedirectFlags::POST_302)) {
+            if (any(redirect.post_flags & options::PostRedirectFlags::POST_302)) {
                 mask |= CURL_REDIR_POST_302;
             }
-            if (any(redirect.post_flags & PostRedirectFlags::POST_303)) {
+            if (any(redirect.post_flags & options::PostRedirectFlags::POST_303)) {
                 mask |= CURL_REDIR_POST_303;
             }
             setOption(CURLOPT_POSTREDIR, mask);
@@ -435,7 +435,7 @@ export namespace mcr {
          * @brief Configure low-speed cancellation.
          * @param low_speed Minimum rate and observation duration.
          */
-        auto SetLowSpeed(LowSpeed const& low_speed) -> void {
+        auto SetLowSpeed(options::LowSpeed const& low_speed) -> void {
             setOption(CURLOPT_LOW_SPEED_LIMIT, static_cast<long>(low_speed.limit));
             setOption(CURLOPT_LOW_SPEED_TIME, static_cast<long>(low_speed.time.count()));
         }
@@ -444,7 +444,7 @@ export namespace mcr {
          * @brief Configure a Unix socket.
          * @param unix_socket Socket path copied into curl.
          */
-        auto SetUnixSocket(UnixSocket const& unix_socket) -> void { setOption(CURLOPT_UNIX_SOCKET_PATH, unix_socket.GetUnixSocketString()); }
+        auto SetUnixSocket(options::UnixSocket const& unix_socket) -> void { setOption(CURLOPT_UNIX_SOCKET_PATH, unix_socket.GetUnixSocketString()); }
 
         /**
          * @brief Set or clear the upload producer.
@@ -479,7 +479,7 @@ export namespace mcr {
          */
         auto SetDebugCallback(DebugCallback const& debug) -> void {
             m_debug = debug;
-            SetVerbose(Verbose{ bool(m_debug.callback) });
+            SetVerbose(options::Verbose{ bool(m_debug.callback) });
         }
 
         /**
@@ -495,41 +495,41 @@ export namespace mcr {
          * @brief Enable or disable curl diagnostics.
          * @param verbose Logging preference.
          */
-        auto SetVerbose(Verbose const& verbose) -> void { setOption(CURLOPT_VERBOSE, verbose.verbose ? 1L : 0L); }
+        auto SetVerbose(options::Verbose const& verbose) -> void { setOption(CURLOPT_VERBOSE, verbose.verbose ? 1L : 0L); }
 
         /**
          * @brief Bind an outgoing interface.
          * @param iface Empty text restores automatic selection.
          */
-        auto SetInterface(Interface const& iface) -> void { setOption(CURLOPT_INTERFACE, iface.Str().empty() ? nullptr : iface.CStr()); }
+        auto SetInterface(options::Interface const& iface) -> void { setOption(CURLOPT_INTERFACE, iface.Str().empty() ? nullptr : iface.CStr()); }
 
         /**
          * @brief Choose the first local port.
          * @param local_port Port number.
          */
-        auto SetLocalPort(LocalPort const& local_port) -> void { setOption(CURLOPT_LOCALPORT, static_cast<long>(static_cast<std::uint16_t>(local_port))); }
+        auto SetLocalPort(options::LocalPort const& local_port) -> void { setOption(CURLOPT_LOCALPORT, static_cast<long>(static_cast<std::uint16_t>(local_port))); }
 
         /**
          * @brief Choose the local port search range.
          * @param local_port_range Number of ports to try.
          */
-        auto SetLocalPortRange(LocalPortRange const& local_port_range) -> void { setOption(CURLOPT_LOCALPORTRANGE, static_cast<long>(static_cast<std::uint16_t>(local_port_range))); }
+        auto SetLocalPortRange(options::LocalPortRange const& local_port_range) -> void { setOption(CURLOPT_LOCALPORTRANGE, static_cast<long>(static_cast<std::uint16_t>(local_port_range))); }
 
         /**
          * @brief Set the preferred HTTP version.
          * @param version Protocol preference supported by the linked curl build.
          */
-        auto SetHttpVersion(HttpVersion const& version) -> void {
+        auto SetHttpVersion(options::HttpVersion const& version) -> void {
             long value{};
             switch (version.code) {
-                case HttpVersionCode::VERSION_NONE               : value = CURL_HTTP_VERSION_NONE; break;
-                case HttpVersionCode::VERSION_1_0                : value = CURL_HTTP_VERSION_1_0; break;
-                case HttpVersionCode::VERSION_1_1                : value = CURL_HTTP_VERSION_1_1; break;
-                case HttpVersionCode::VERSION_2_0                : value = CURL_HTTP_VERSION_2_0; break;
-                case HttpVersionCode::VERSION_2_0_TLS            : value = CURL_HTTP_VERSION_2TLS; break;
-                case HttpVersionCode::VERSION_2_0_PRIOR_KNOWLEDGE: value = CURL_HTTP_VERSION_2_PRIOR_KNOWLEDGE; break;
-                case HttpVersionCode::VERSION_3_0                : value = CURL_HTTP_VERSION_3; break;
-                case HttpVersionCode::VERSION_3_0_ONLY           : value = CURL_HTTP_VERSION_3ONLY; break;
+                case options::HttpVersionCode::VERSION_NONE               : value = CURL_HTTP_VERSION_NONE; break;
+                case options::HttpVersionCode::VERSION_1_0                : value = CURL_HTTP_VERSION_1_0; break;
+                case options::HttpVersionCode::VERSION_1_1                : value = CURL_HTTP_VERSION_1_1; break;
+                case options::HttpVersionCode::VERSION_2_0                : value = CURL_HTTP_VERSION_2_0; break;
+                case options::HttpVersionCode::VERSION_2_0_TLS            : value = CURL_HTTP_VERSION_2TLS; break;
+                case options::HttpVersionCode::VERSION_2_0_PRIOR_KNOWLEDGE: value = CURL_HTTP_VERSION_2_PRIOR_KNOWLEDGE; break;
+                case options::HttpVersionCode::VERSION_3_0                : value = CURL_HTTP_VERSION_3; break;
+                case options::HttpVersionCode::VERSION_3_0_ONLY           : value = CURL_HTTP_VERSION_3ONLY; break;
                 default                                          : throw std::invalid_argument{ "mcr::Session: unknown HTTP version." };
             }
             setOption(CURLOPT_HTTP_VERSION, value);
@@ -539,19 +539,19 @@ export namespace mcr {
          * @brief Request one byte range.
          * @param range Range serialized for curl.
          */
-        auto SetRange(Range const& range) -> void { setOption(CURLOPT_RANGE, range.Str().c_str()); }
+        auto SetRange(options::Range const& range) -> void { setOption(CURLOPT_RANGE, range.Str().c_str()); }
 
         /**
          * @brief Replace hostname resolution overrides.
          * @param resolve One mapping.
          */
-        auto SetResolve(Resolve const& resolve) -> void { SetResolves({ resolve }); }
+        auto SetResolve(options::Resolve const& resolve) -> void { SetResolves({ resolve }); }
 
         /**
          * @brief Replace all hostname resolution overrides.
          * @param resolves Mappings; empty clears the list.
          */
-        auto SetResolves(std::vector<Resolve> const& resolves) -> void {
+        auto SetResolves(std::vector<options::Resolve> const& resolves) -> void {
             CurlList list{ nullptr, &curl_slist_free_all };
             for (auto const& resolve : resolves) {
                 for (auto port : resolve.ports) {
@@ -566,31 +566,31 @@ export namespace mcr {
          * @brief Request multiple byte ranges.
          * @param multi_range Ranges serialized for curl.
          */
-        auto SetMultiRange(MultiRange const& multi_range) -> void { setOption(CURLOPT_RANGE, multi_range.Str().c_str()); }
+        auto SetMultiRange(options::MultiRange const& multi_range) -> void { setOption(CURLOPT_RANGE, multi_range.Str().c_str()); }
 
         /**
          * @brief Set response buffer reservation.
          * @param reserve_size Minimum capacity requested before each transfer.
          */
-        auto SetReserveSize(ReserveSize const& reserve_size) -> void { ResponseStringReserve(reserve_size.size); }
+        auto SetReserveSize(options::ReserveSize const& reserve_size) -> void { ResponseStringReserve(reserve_size.size); }
 
         /**
          * @brief Copy compression preferences.
          * @param accept_encoding Encodings to advertise and decode.
          */
-        auto SetAcceptEncoding(AcceptEncoding const& accept_encoding) -> void { m_accept_encoding = accept_encoding; }
+        auto SetAcceptEncoding(options::AcceptEncoding const& accept_encoding) -> void { m_accept_encoding = accept_encoding; }
 
         /**
          * @brief Move compression preferences.
          * @param accept_encoding Encodings to advertise and decode.
          */
-        auto SetAcceptEncoding(AcceptEncoding&& accept_encoding) -> void { m_accept_encoding = std::move(accept_encoding); }
+        auto SetAcceptEncoding(options::AcceptEncoding&& accept_encoding) -> void { m_accept_encoding = std::move(accept_encoding); }
 
         /**
          * @brief Limit upload and download rates.
          * @param limit_rate Bytes per second; zero means unlimited.
          */
-        auto SetLimitRate(LimitRate const& limit_rate) -> void {
+        auto SetLimitRate(options::LimitRate const& limit_rate) -> void {
             setOption(CURLOPT_MAX_RECV_SPEED_LARGE, static_cast<curl_off_t>(limit_rate.downrate));
             setOption(CURLOPT_MAX_SEND_SPEED_LARGE, static_cast<curl_off_t>(limit_rate.uprate));
         }
@@ -1034,13 +1034,13 @@ export namespace mcr {
          * @brief Forward a Timeout option to its setter.
          * @param value Option to apply.
          */
-        auto SetOption(Timeout const& value) -> void { SetTimeout(value); }
+        auto SetOption(options::Timeout const& value) -> void { SetTimeout(value); }
 
         /**
          * @brief Forward a ConnectTimeout option to its setter.
          * @param value Option to apply.
          */
-        auto SetOption(ConnectTimeout const& value) -> void { SetConnectTimeout(value); }
+        auto SetOption(options::ConnectTimeout const& value) -> void { SetConnectTimeout(value); }
 
         /**
          * @brief Forward a ConnectionPool option to its setter.
@@ -1052,13 +1052,13 @@ export namespace mcr {
          * @brief Forward a Authentication option to its setter.
          * @param value Option to apply.
          */
-        auto SetOption(Authentication const& value) -> void { SetAuth(value); }
+        auto SetOption(options::Authentication const& value) -> void { SetAuth(value); }
 
         /**
          * @brief Forward a Bearer option to its setter.
          * @param value Option to apply.
          */
-        auto SetOption(Bearer const& value) -> void { SetBearer(value); }
+        auto SetOption(options::Bearer const& value) -> void { SetBearer(value); }
 
         /**
          * @brief Forward a UserAgent option to its setter.
@@ -1082,37 +1082,37 @@ export namespace mcr {
          * @brief Forward a Proxies option to its setter.
          * @param value Option to apply.
          */
-        auto SetOption(Proxies const& value) -> void { SetProxies(value); }
+        auto SetOption(options::Proxies const& value) -> void { SetProxies(value); }
 
         /**
          * @brief Move a Proxies option into this session.
          * @param value Option to transfer.
          */
-        auto SetOption(Proxies&& value) -> void { SetProxies(std::move(value)); }
+        auto SetOption(options::Proxies&& value) -> void { SetProxies(std::move(value)); }
 
         /**
          * @brief Copy proxy authentication.
          * @param value Protocol credentials.
          */
-        auto SetOption(ProxyAuthentication const& value) -> void { SetProxyAuth(value); }
+        auto SetOption(options::ProxyAuthentication const& value) -> void { SetProxyAuth(value); }
 
         /**
          * @brief Move proxy authentication.
          * @param value Protocol credentials.
          */
-        auto SetOption(ProxyAuthentication&& value) -> void { SetProxyAuth(std::move(value)); }
+        auto SetOption(options::ProxyAuthentication&& value) -> void { SetProxyAuth(std::move(value)); }
 
         /**
          * @brief Apply combined TLS verification.
          * @param value Verification preference.
          */
-        auto SetOption(VerifySsl const& value) -> void { SetVerifySsl(value); }
+        auto SetOption(options::VerifySsl const& value) -> void { SetVerifySsl(value); }
 
         /**
          * @brief Replace TLS configuration.
          * @param value Owned TLS options.
          */
-        auto SetOption(SslOptions const& value) -> void { SetSslOptions(value); }
+        auto SetOption(options::SslOptions const& value) -> void { SetSslOptions(value); }
 
         /**
          * @brief Forward a Multipart option to its setter.
@@ -1130,7 +1130,7 @@ export namespace mcr {
          * @brief Forward a Redirect option to its setter.
          * @param value Option to apply.
          */
-        auto SetOption(Redirect const& value) -> void { SetRedirect(value); }
+        auto SetOption(options::Redirect const& value) -> void { SetRedirect(value); }
 
         /**
          * @brief Forward a Cookies option to its setter.
@@ -1196,91 +1196,91 @@ export namespace mcr {
          * @brief Forward a LowSpeed option to its setter.
          * @param value Option to apply.
          */
-        auto SetOption(LowSpeed const& value) -> void { SetLowSpeed(value); }
+        auto SetOption(options::LowSpeed const& value) -> void { SetLowSpeed(value); }
 
         /**
          * @brief Forward a Verbose option to its setter.
          * @param value Option to apply.
          */
-        auto SetOption(Verbose const& value) -> void { SetVerbose(value); }
+        auto SetOption(options::Verbose const& value) -> void { SetVerbose(value); }
 
         /**
          * @brief Forward a UnixSocket option to its setter.
          * @param value Option to apply.
          */
-        auto SetOption(UnixSocket const& value) -> void { SetUnixSocket(value); }
+        auto SetOption(options::UnixSocket const& value) -> void { SetUnixSocket(value); }
 
         /**
          * @brief Forward a Interface option to its setter.
          * @param value Option to apply.
          */
-        auto SetOption(Interface const& value) -> void { SetInterface(value); }
+        auto SetOption(options::Interface const& value) -> void { SetInterface(value); }
 
         /**
          * @brief Forward a LocalPort option to its setter.
          * @param value Option to apply.
          */
-        auto SetOption(LocalPort const& value) -> void { SetLocalPort(value); }
+        auto SetOption(options::LocalPort const& value) -> void { SetLocalPort(value); }
 
         /**
          * @brief Forward a LocalPortRange option to its setter.
          * @param value Option to apply.
          */
-        auto SetOption(LocalPortRange const& value) -> void { SetLocalPortRange(value); }
+        auto SetOption(options::LocalPortRange const& value) -> void { SetLocalPortRange(value); }
 
         /**
          * @brief Forward a HttpVersion option to its setter.
          * @param value Option to apply.
          */
-        auto SetOption(HttpVersion const& value) -> void { SetHttpVersion(value); }
+        auto SetOption(options::HttpVersion const& value) -> void { SetHttpVersion(value); }
 
         /**
          * @brief Forward a Range option to its setter.
          * @param value Option to apply.
          */
-        auto SetOption(Range const& value) -> void { SetRange(value); }
+        auto SetOption(options::Range const& value) -> void { SetRange(value); }
 
         /**
          * @brief Forward a MultiRange option to its setter.
          * @param value Option to apply.
          */
-        auto SetOption(MultiRange const& value) -> void { SetMultiRange(value); }
+        auto SetOption(options::MultiRange const& value) -> void { SetMultiRange(value); }
 
         /**
          * @brief Forward a ReserveSize option to its setter.
          * @param value Option to apply.
          */
-        auto SetOption(ReserveSize const& value) -> void { SetReserveSize(value); }
+        auto SetOption(options::ReserveSize const& value) -> void { SetReserveSize(value); }
 
         /**
          * @brief Forward a AcceptEncoding option to its setter.
          * @param value Option to apply.
          */
-        auto SetOption(AcceptEncoding const& value) -> void { SetAcceptEncoding(value); }
+        auto SetOption(options::AcceptEncoding const& value) -> void { SetAcceptEncoding(value); }
 
         /**
          * @brief Move a AcceptEncoding option into this session.
          * @param value Option to transfer.
          */
-        auto SetOption(AcceptEncoding&& value) -> void { SetAcceptEncoding(std::move(value)); }
+        auto SetOption(options::AcceptEncoding&& value) -> void { SetAcceptEncoding(std::move(value)); }
 
         /**
          * @brief Forward a LimitRate option to its setter.
          * @param value Option to apply.
          */
-        auto SetOption(LimitRate const& value) -> void { SetLimitRate(value); }
+        auto SetOption(options::LimitRate const& value) -> void { SetLimitRate(value); }
 
         /**
          * @brief Forward a Resolve option to its setter.
          * @param value Option to apply.
          */
-        auto SetOption(Resolve const& value) -> void { SetResolve(value); }
+        auto SetOption(options::Resolve const& value) -> void { SetResolve(value); }
 
         /**
          * @brief Forward a std::vector<Resolve> option to its setter.
          * @param value Option to apply.
          */
-        auto SetOption(std::vector<Resolve> const& value) -> void { SetResolves(value); }
+        auto SetOption(std::vector<options::Resolve> const& value) -> void { SetResolves(value); }
 
     private:
         using CurlList = std::unique_ptr<curl_slist, decltype(&curl_slist_free_all)>;

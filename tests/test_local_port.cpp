@@ -5,7 +5,7 @@
 import std;
 import mcr;
 
-static_assert(!std::is_same_v<mcr::LocalPort, mcr::LocalPortRange>);
+static_assert(!std::is_same_v<mcr::options::LocalPort, mcr::options::LocalPortRange>);
 
 namespace {
 
@@ -46,8 +46,8 @@ namespace {
 } // namespace
 
 int main() {
-    bool passed{ check_option<mcr::LocalPort>("LocalPort") };
-    passed &= check_option<mcr::LocalPortRange>("LocalPortRange");
+    bool passed{ check_option<mcr::options::LocalPort>("LocalPort") };
+    passed &= check_option<mcr::options::LocalPortRange>("LocalPortRange");
     if (!passed) {
         return 1;
     }

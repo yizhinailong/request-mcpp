@@ -30,28 +30,28 @@ namespace {
     }
 
     auto check_options() -> bool {
-        auto defaults{ mcr::Ssl() };
+        auto defaults{ mcr::options::Ssl() };
         bool passed{ check(defaults.verify_host && defaults.verify_peer && !defaults.verify_status && defaults.enable_alpn && defaults.session_id_cache, "default TLS options must retain certificate and hostname verification") };
-        passed &= check(mcr::VerifySsl{}.verify && !bool(mcr::VerifySsl{ false }), "combined verification must default to enabled");
-        auto options{ mcr::Ssl(mcr::ssl::DerCert{ "cert.der" }, mcr::ssl::DerKey{ "key.der", "password" }, mcr::ssl::CaInfo{ "ca.pem" }, mcr::ssl::CaPath{ "ca-directory" }, mcr::ssl::Crl{ "revoked.pem" }, mcr::ssl::TLSv1_2{}, mcr::ssl::MaxTLSv1_3{}, mcr::ssl::ALPN{ false }, mcr::ssl::VerifyHost{ false }, mcr::ssl::VerifyPeer{ false }, mcr::ssl::VerifyStatus{ true }, mcr::ssl::SessionIdCache{ false }, mcr::ssl::NoRevoke{ true }, mcr::ssl::Ciphers{ "cipher" }, mcr::ssl::TLS13_Ciphers{ "cipher13" }) };
+        passed &= check(mcr::options::VerifySsl{}.verify && !bool(mcr::options::VerifySsl{ false }), "combined verification must default to enabled");
+        auto options{ mcr::options::Ssl(mcr::options::ssl::DerCert{ "cert.der" }, mcr::options::ssl::DerKey{ "key.der", "password" }, mcr::options::ssl::CaInfo{ "ca.pem" }, mcr::options::ssl::CaPath{ "ca-directory" }, mcr::options::ssl::Crl{ "revoked.pem" }, mcr::options::ssl::TLSv1_2{}, mcr::options::ssl::MaxTLSv1_3{}, mcr::options::ssl::ALPN{ false }, mcr::options::ssl::VerifyHost{ false }, mcr::options::ssl::VerifyPeer{ false }, mcr::options::ssl::VerifyStatus{ true }, mcr::options::ssl::SessionIdCache{ false }, mcr::options::ssl::NoRevoke{ true }, mcr::options::ssl::Ciphers{ "cipher" }, mcr::options::ssl::TLS13_Ciphers{ "cipher13" }) };
         passed &= check(options.cert_file == "cert.der" && options.key_file == "key.der" && options.cert_type == "DER" && options.key_type == "DER" && options.key_pass == "password", "certificate/key formats, paths, and passwords must be owned");
         passed &= check(options.ssl_version == CURL_SSLVERSION_TLSv1_2 && options.max_version == CURL_SSLVERSION_MAX_TLSv1_3 && !options.enable_alpn && !options.verify_peer && !options.verify_host && options.verify_status && !options.session_id_cache && options.ssl_no_revoke, "TLS bounds and boolean preferences must be stored independently");
         std::string const binary{ "certificate\0bytes", 17 };
-        options.SetOption(mcr::ssl::DerBlob{ binary });
-        options.SetOption(mcr::ssl::KeyBlob{ binary, "new-password" });
-        options.SetOption(mcr::ssl::CaInfoBlob{ "CA bytes" });
+        options.SetOption(mcr::options::ssl::DerBlob{ binary });
+        options.SetOption(mcr::options::ssl::KeyBlob{ binary, "new-password" });
+        options.SetOption(mcr::options::ssl::CaInfoBlob{ "CA bytes" });
         passed &= check(options.cert_file.empty() && options.key_file.empty() && options.ca_info.empty() && std::string_view{ options.cert_blob } == binary && std::string_view{ options.key_blob } == binary && options.key_pass == "new-password", "blob options must replace file sources and preserve binary bytes");
-        options.SetOption(mcr::ssl::PemCert{ "new.pem" });
-        options.SetOption(mcr::ssl::PemKey{ "new-key.pem" });
-        options.SetOption(mcr::ssl::CaBuffer{ "buffer" });
+        options.SetOption(mcr::options::ssl::PemCert{ "new.pem" });
+        options.SetOption(mcr::options::ssl::PemKey{ "new-key.pem" });
+        options.SetOption(mcr::options::ssl::CaBuffer{ "buffer" });
         passed &= check(options.cert_blob.empty() && options.key_blob.empty() && options.key_pass.empty() && options.cert_type == "PEM" && options.ca_info_blob.empty() && options.ca_buffer == "buffer", "replacement options must clear obsolete sources and passphrases");
         mcr::Session session;
         session.SetOption(defaults);
-        session.SetOption(mcr::VerifySsl{ false });
+        session.SetOption(mcr::options::VerifySsl{ false });
         session.SetVerifySsl({});
-        session.SetSslOptions(mcr::Ssl(mcr::ssl::TLSv1_2{}, mcr::ssl::MaxTLSv1_2{}));
+        session.SetSslOptions(mcr::options::Ssl(mcr::options::ssl::TLSv1_2{}, mcr::options::ssl::MaxTLSv1_2{}));
         try {
-            session.SetSslOptions(mcr::Ssl(mcr::ssl::SslFastStart{ true }));
+            session.SetSslOptions(mcr::options::Ssl(mcr::options::ssl::SslFastStart{ true }));
 #if LIBCURL_VERSION_NUM >= 0x080F00
             passed &= check(false, "removed TLS false-start support must not be silently accepted");
 #endif
@@ -161,7 +161,7 @@ namespace {
             {    "https",  "" },
             { "no_proxy", "*" }
         });
-        session.SetTimeout(mcr::Timeout{ 3000ms });
+        session.SetTimeout(mcr::options::Timeout{ 3000ms });
         bool passed{ check(bool(session.Get().error), "untrusted generated certificates must be rejected by default") };
         session.SetVerifySsl(false);
         auto unverified{ session.Get() };
@@ -174,9 +174,9 @@ namespace {
         // Generated certificates have no online revocation service. Keep chain and hostname
         // verification enabled while explicitly disabling revocation checks for this fixture.
         auto local_tls  = [](auto&&... options) {
-            return mcr::Ssl(mcr::ssl::NoRevoke{ true }, std::forward<decltype(options)>(options)...);
+            return mcr::options::Ssl(mcr::options::ssl::NoRevoke{ true }, std::forward<decltype(options)>(options)...);
         };
-        auto trust{ local_tls(mcr::ssl::CaInfo{ fixture.Path("ca.pem") }, mcr::ssl::TLSv1_2{}, mcr::ssl::MaxTLSv1_2{}) };
+        auto trust{ local_tls(mcr::options::ssl::CaInfo{ fixture.Path("ca.pem") }, mcr::options::ssl::TLSv1_2{}, mcr::options::ssl::MaxTLSv1_2{}) };
         session.SetSslOptions(trust);
         auto trusted{ session.Get() };
         if (trusted.error) {
@@ -185,19 +185,19 @@ namespace {
         passed &= check(!trusted.error && trusted.text == "TLS works" && !trusted.GetCertInfos().empty(), "CA files and TLS 1.2 bounds must permit a verified connection and capture certificates");
         session.SetUrl(fixture.Url(false, "127.0.0.1"));
         passed &= check(bool(session.Get().error), "trusted certificates must still fail hostname mismatch");
-        trust.SetOption(mcr::ssl::VerifyHost{ false });
+        trust.SetOption(mcr::options::ssl::VerifyHost{ false });
         session.SetSslOptions(trust);
         passed &= check(session.Get().text == "TLS works", "hostname verification must be configurable independently of peer trust");
         session.SetUrl(fixture.Url());
-        session.SetSslOptions(local_tls(mcr::ssl::CaInfoBlob{ read_file(fixture.Path("ca.pem")) }));
+        session.SetSslOptions(local_tls(mcr::options::ssl::CaInfoBlob{ read_file(fixture.Path("ca.pem")) }));
         passed &= check(session.Get().text == "TLS works", "CA blobs must survive destruction of temporary option storage");
-        session.SetSslOptions(mcr::Ssl());
+        session.SetSslOptions(mcr::options::Ssl());
         passed &= check(bool(session.Get().error), "replacing TLS options with defaults must clear prior CA blobs");
-        session.SetSslOptions(local_tls(mcr::ssl::CaBuffer{ read_file(fixture.Path("ca.pem")) }, mcr::ssl::PinnedPublicKey{ read_file(fixture.Path("pin.txt")) }));
+        session.SetSslOptions(local_tls(mcr::options::ssl::CaBuffer{ read_file(fixture.Path("ca.pem")) }, mcr::options::ssl::PinnedPublicKey{ read_file(fixture.Path("pin.txt")) }));
         passed &= check(session.Get().text == "TLS works", "CaBuffer and a matching public-key pin must work together");
-        session.SetSslOptions(local_tls(mcr::ssl::CaInfo{ fixture.Path("ca.pem") }, mcr::ssl::PinnedPublicKey{ "sha256//AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=" }));
+        session.SetSslOptions(local_tls(mcr::options::ssl::CaInfo{ fixture.Path("ca.pem") }, mcr::options::ssl::PinnedPublicKey{ "sha256//AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=" }));
         passed &= check(session.Get().error.code == mcr::ErrorCode::SSL_PINNEDPUBKEYNOTMATCH, "mismatched public-key pins must reject the connection");
-        trust   = local_tls(mcr::ssl::CaInfo{ fixture.Path("ca.pem") });
+        trust   = local_tls(mcr::options::ssl::CaInfo{ fixture.Path("ca.pem") });
         session.SetSslOptions(trust);
         passed &= check(session.Get().text == "TLS works", "replacement TLS options must remove old public-key pins");
         session.SetUrl(fixture.Url(true));
@@ -212,8 +212,8 @@ namespace {
             passed         &= check(bad_password.error.code == mcr::ErrorCode::SSL_CERTPROBLEM, "an incorrect PKCS12 password must fail client credential import");
             trust.key_pass  = "fixture-password";
         } else {
-            trust.SetOption(mcr::ssl::PemCert{ fixture.Path("client.pem") });
-            trust.SetOption(mcr::ssl::PemKey{ fixture.Path("client-key.pem") });
+            trust.SetOption(mcr::options::ssl::PemCert{ fixture.Path("client.pem") });
+            trust.SetOption(mcr::options::ssl::PemKey{ fixture.Path("client-key.pem") });
         }
         session.SetSslOptions(trust);
         auto mutual{ session.Get() };
@@ -234,14 +234,14 @@ namespace {
             trust.cert_file.clear();
             trust.cert_blob = read_file(fixture.Path("client.p12"));
         } else {
-            trust.SetOption(mcr::ssl::PemBlob{ read_file(fixture.Path("client.pem")) });
-            trust.SetOption(mcr::ssl::KeyBlob{ read_file(fixture.Path("client-key.pem")) });
+            trust.SetOption(mcr::options::ssl::PemBlob{ read_file(fixture.Path("client.pem")) });
+            trust.SetOption(mcr::options::ssl::KeyBlob{ read_file(fixture.Path("client-key.pem")) });
         }
         session.SetSslOptions(trust);
         trust = {};
         auto blob_mutual{ session.Get() };
         passed &= check(limited ? unsupported_credentials(blob_mutual) : (!blob_mutual.error && blob_mutual.text == "TLS works"), "copied certificate blobs must reach the same TLS result after source storage is destroyed");
-        session.SetSslOptions(local_tls(mcr::ssl::CaInfo{ fixture.Path("ca.pem") }));
+        session.SetSslOptions(local_tls(mcr::options::ssl::CaInfo{ fixture.Path("ca.pem") }));
         auto cleared{ session.Get() };
         passed &= check(bool(cleared.error) && !unsupported_credentials(cleared), "replacing TLS credentials must clear old certificate blobs and passwords");
         passed &= check(trusted.status_code == 200 && !trusted.GetCertInfos().empty(), "earlier certificate snapshots must survive later failed handshakes");

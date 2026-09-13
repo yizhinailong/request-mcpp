@@ -7,18 +7,18 @@
 import std;
 import mcr;
 
-using Code = mcr::HttpVersionCode;
+using Code = mcr::options::HttpVersionCode;
 
 static_assert(std::is_same_v<std::underlying_type_t<Code>, std::uint8_t>);
-static_assert(std::is_same_v<decltype(mcr::HttpVersion::code), Code>);
-static_assert(std::is_nothrow_default_constructible_v<mcr::HttpVersion>);
-static_assert(std::is_nothrow_constructible_v<mcr::HttpVersion, Code>);
-static_assert(!std::is_convertible_v<Code, mcr::HttpVersion>);
-static_assert(!std::is_convertible_v<mcr::HttpVersion, Code>);
-static_assert(!std::is_constructible_v<mcr::HttpVersion, int>);
+static_assert(std::is_same_v<decltype(mcr::options::HttpVersion::code), Code>);
+static_assert(std::is_nothrow_default_constructible_v<mcr::options::HttpVersion>);
+static_assert(std::is_nothrow_constructible_v<mcr::options::HttpVersion, Code>);
+static_assert(!std::is_convertible_v<Code, mcr::options::HttpVersion>);
+static_assert(!std::is_convertible_v<mcr::options::HttpVersion, Code>);
+static_assert(!std::is_constructible_v<mcr::options::HttpVersion, int>);
 static_assert(!std::is_convertible_v<Code, long>);
-static_assert(mcr::HttpVersion{}.code == Code::VERSION_NONE);
-static_assert(mcr::HttpVersion{ Code::VERSION_1_1 }.code == Code::VERSION_1_1);
+static_assert(mcr::options::HttpVersion{}.code == Code::VERSION_NONE);
+static_assert(mcr::options::HttpVersion{ Code::VERSION_1_1 }.code == Code::VERSION_1_1);
 
 namespace {
 
@@ -63,7 +63,7 @@ namespace {
 
     static_assert([] {
         for (std::size_t i{ 0 }; i < std::size(CODES); ++i) {
-            if (std::to_underlying(CODES[i]) != i || mcr::HttpVersion{ CODES[i] }.code != CODES[i]) {
+            if (std::to_underlying(CODES[i]) != i || mcr::options::HttpVersion{ CODES[i] }.code != CODES[i]) {
                 return false;
             }
         }
@@ -74,20 +74,20 @@ namespace {
 
 int main() {
     for (auto const code : CODES) {
-        mcr::HttpVersion original{ code };
-        mcr::HttpVersion copied{ original };
+        mcr::options::HttpVersion original{ code };
+        mcr::options::HttpVersion copied{ original };
         original.code = static_cast<Code>(255);
-        mcr::HttpVersion moved{ std::move(copied) };
-        mcr::HttpVersion assigned;
+        mcr::options::HttpVersion moved{ std::move(copied) };
+        mcr::options::HttpVersion assigned;
         assigned = moved;
-        mcr::HttpVersion move_assigned;
+        mcr::options::HttpVersion move_assigned;
         move_assigned = std::move(assigned);
         if (move_assigned.code != code || original.code != static_cast<Code>(255)) {
             std::println("test_http_version: copies and public field updates must retain independent codes");
             return 1;
         }
     }
-    mcr::HttpVersion const unnamed{ static_cast<Code>(255) };
+    mcr::options::HttpVersion const unnamed{ static_cast<Code>(255) };
     if (std::to_underlying(unnamed.code) != 255) {
         std::println("test_http_version: construction must preserve unnamed codes without validation, matching cpr");
         return 1;

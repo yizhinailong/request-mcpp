@@ -8,7 +8,7 @@ export module mcr.ssl_options;
 export import mcr.secure_string;
 import std;
 
-export namespace mcr {
+export namespace mcr::options {
     /**
      * @brief Enable or disable certificate and hostname verification together.
      */
@@ -701,4 +701,4 @@ export namespace mcr {
         (result.SetOption(std::forward<Ts>(options)), ...);
         return result;
     }
-} // namespace mcr
+} // namespace mcr::options

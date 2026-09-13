@@ -6,7 +6,7 @@ They follow cpr's `include/cpr/auth.h` and `cpr/auth.cpp`.
 ```cpp
 import mcr.auth;
 
-mcr::Authentication auth{ "user", "password", mcr::AuthMode::BASIC };
+mcr::options::Authentication auth{ "user", "password", mcr::options::AuthMode::BASIC };
 auto mode = auth.GetAuthMode();
 auto credentials = auth.GetAuthString(); // Borrowed pointer to "user:password".
 ```
@@ -52,7 +52,7 @@ for credential storage, and makes no curl calls. `SecureAllocator` wipes heap
 storage when it is deallocated; small-string inline storage, source buffers,
 and external copies retain the limitations described in [secure_string.md](secure_string.md).
 
-Intentional differences from cpr are the C++23 module, namespace `mcr`, and
+Intentional differences from cpr are the C++23 module, namespace `mcr::options`, and
 private `m_auth_string` / `m_auth_mode` names. Construction uses checked string
 operations without cpr's unchecked combined-length arithmetic for `reserve`.
 Public signatures and credential formatting are preserved.

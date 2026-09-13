@@ -5,15 +5,15 @@
 import std;
 import mcr;
 
-static_assert(std::is_same_v<decltype(mcr::LowSpeed::limit), std::int32_t>);
-static_assert(std::is_same_v<decltype(mcr::LowSpeed::time), std::chrono::seconds>);
-static_assert(!std::is_default_constructible_v<mcr::LowSpeed>);
-static_assert(!std::is_constructible_v<mcr::LowSpeed, std::int32_t>);
-static_assert(!std::is_constructible_v<mcr::LowSpeed, std::int32_t, std::int32_t>);
-static_assert(!std::is_constructible_v<mcr::LowSpeed, std::int32_t, std::chrono::milliseconds>);
-static_assert(!std::is_constructible_v<mcr::LowSpeed, std::int32_t, std::chrono::duration<double>>);
-static_assert(std::is_constructible_v<mcr::LowSpeed, std::int32_t, std::chrono::seconds>);
-static_assert(std::is_constructible_v<mcr::LowSpeed, std::int32_t, std::chrono::minutes>);
+static_assert(std::is_same_v<decltype(mcr::options::LowSpeed::limit), std::int32_t>);
+static_assert(std::is_same_v<decltype(mcr::options::LowSpeed::time), std::chrono::seconds>);
+static_assert(!std::is_default_constructible_v<mcr::options::LowSpeed>);
+static_assert(!std::is_constructible_v<mcr::options::LowSpeed, std::int32_t>);
+static_assert(!std::is_constructible_v<mcr::options::LowSpeed, std::int32_t, std::int32_t>);
+static_assert(!std::is_constructible_v<mcr::options::LowSpeed, std::int32_t, std::chrono::milliseconds>);
+static_assert(!std::is_constructible_v<mcr::options::LowSpeed, std::int32_t, std::chrono::duration<double>>);
+static_assert(std::is_constructible_v<mcr::options::LowSpeed, std::int32_t, std::chrono::seconds>);
+static_assert(std::is_constructible_v<mcr::options::LowSpeed, std::int32_t, std::chrono::minutes>);
 
 int main() {
     using namespace std::chrono_literals;
@@ -31,29 +31,29 @@ int main() {
         { (std::numeric_limits<std::int32_t>::max)(), (Seconds::min)() },
     };
     for (auto const& [limit, time] : cases) {
-        mcr::LowSpeed const option = { limit, time };
+        mcr::options::LowSpeed const option = { limit, time };
         if (option.limit != limit || option.time != time) {
             std::println("test_low_speed: construction must preserve limit {} and duration {} seconds without narrowing or normalization", limit, time.count());
             return 1;
         }
     }
 
-    mcr::LowSpeed const minutes{ 1000, 2min };
-    mcr::LowSpeed const hours{ 2000, 1h };
-    mcr::LowSpeed const truncated{ 3000, std::chrono::duration_cast<Seconds>(1500ms) };
+    mcr::options::LowSpeed const minutes{ 1000, 2min };
+    mcr::options::LowSpeed const hours{ 2000, 1h };
+    mcr::options::LowSpeed const truncated{ 3000, std::chrono::duration_cast<Seconds>(1500ms) };
     if (minutes.limit != 1000 || minutes.time != 120s || hours.limit != 2000 || hours.time != 3600s || truncated.time != 1s) {
         std::println("test_low_speed: chrono conversions must use seconds and require explicit subsecond truncation");
         return 1;
     }
 
-    mcr::LowSpeed original{ 1000, 1s };
-    mcr::LowSpeed copied{ original };
+    mcr::options::LowSpeed original{ 1000, 1s };
+    mcr::options::LowSpeed copied{ original };
     original.limit = 0;
     original.time  = -1s;
-    mcr::LowSpeed moved{ std::move(copied) };
-    mcr::LowSpeed assigned{ 0, 0s };
+    mcr::options::LowSpeed moved{ std::move(copied) };
+    mcr::options::LowSpeed assigned{ 0, 0s };
     assigned = moved;
-    mcr::LowSpeed move_assigned{ 0, 0s };
+    mcr::options::LowSpeed move_assigned{ 0, 0s };
     move_assigned  = std::move(moved);
     assigned.limit = 2048;
     assigned.time  = 3min;

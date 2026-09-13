@@ -32,12 +32,12 @@ namespace {
 
     auto configure(mcr::Session& session, HttpServer const& server, std::string_view path = "/hello") -> void {
         session.SetOption(server.Url(path));
-        session.SetOption(mcr::Proxies{
+        session.SetOption(mcr::options::Proxies{
             {     "http",  "" },
             { "no_proxy", "*" }
         });
-        session.SetOption(mcr::Timeout{ 3000ms });
-        session.SetOption(mcr::HttpVersion{ mcr::HttpVersionCode::VERSION_1_1 });
+        session.SetOption(mcr::options::Timeout{ 3000ms });
+        session.SetOption(mcr::options::HttpVersion{ mcr::options::HttpVersionCode::VERSION_1_1 });
     }
 
     auto check_reuse(HttpServer const& server) -> bool {
@@ -135,19 +135,19 @@ namespace {
         });
         session.GetHeader()["Another"] = "value";
         session.SetOption(mcr::UserAgent{ "session-test" });
-        session.SetOption(mcr::AcceptEncoding{ mcr::AcceptEncodingMethods::disabled });
-        session.SetOption(mcr::ReserveSize{ 4096 });
-        session.SetOption(mcr::ConnectTimeout{ 1000ms });
-        session.SetOption(mcr::LimitRate{ 0, 0 });
+        session.SetOption(mcr::options::AcceptEncoding{ mcr::options::AcceptEncodingMethods::disabled });
+        session.SetOption(mcr::options::ReserveSize{ 4096 });
+        session.SetOption(mcr::options::ConnectTimeout{ 1000ms });
+        session.SetOption(mcr::options::LimitRate{ 0, 0 });
         auto response{ session.Get() };
         bool passed{ check(response.header["X-Target"] == "/echo?existing=1&a%20b=x%2By&flag" && session.GetFullRequestUrl() == server.Url("/echo?existing=1&a%20b=x%2By&flag#fragment").Str(), "parameters must merge with existing queries before fragments") };
         passed &= check(response.header["X-Request-X-Custom"] == "new" && response.header["X-Request-User-Agent"] == "session-test" && response.header["X-Request-Accept-Encoding"].empty(), "header replacement, user agent, and disabled encoding must reach the server");
         passed &= check(std::as_const(session).GetHeader().size() == 3, "case-insensitive header merging must retain unrelated entries");
         session.SetParameters({});
         session.SetUrl(server.Url("/echo"));
-        session.SetOption(mcr::Authentication{ "user", "password", mcr::AuthMode::BASIC });
+        session.SetOption(mcr::options::Authentication{ "user", "password", mcr::options::AuthMode::BASIC });
         passed &= check(session.Get().header["X-Request-Authorization"] == "Basic dXNlcjpwYXNzd29yZA==", "basic authentication must reach the server");
-        session.SetOption(mcr::Bearer{ "token" });
+        session.SetOption(mcr::options::Bearer{ "token" });
         passed &= check(session.Get().header["X-Request-Authorization"] == "Bearer token", "bearer authentication must replace basic authentication");
         session.SetUrl(server.Url("/cookie"));
         auto cookie{ session.Get() };
@@ -158,7 +158,7 @@ namespace {
         });
         passed &= check(session.Get().header["X-Request-Cookie"] == "explicit=a%20b;", "SetCookies must replace stored cookies and retain cpr's trailing separator");
         session.SetUrl(server.Url("/range"));
-        session.SetOption(mcr::Range{ 2, 5 });
+        session.SetOption(mcr::options::Range{ 2, 5 });
         auto range{ session.Get() };
         passed &= check(range.status_code == 206 && range.text == "2345", "byte ranges must reach curl");
         session.SetUrl(server.Url("/echo"));
@@ -177,18 +177,18 @@ namespace {
         auto redirect{ session.Get() };
         bool passed{ check(!redirect.error && redirect.status_code == 200 && redirect.redirect_count == 1 && redirect.url == server.Url() && redirect.text == "Hello session!", "default redirects must follow Location") };
         passed &= check(redirect.raw_header.contains("302 Found") && !redirect.header.contains("X-Intermediate"), "raw headers retain redirects while parsed headers describe the final response");
-        session.SetOption(mcr::Redirect{ false });
+        session.SetOption(mcr::options::Redirect{ false });
         passed &= check(session.Get().status_code == 302, "redirect following may be disabled");
-        session.SetRedirect(mcr::Redirect{ 1L });
+        session.SetRedirect(mcr::options::Redirect{ 1L });
         session.SetUrl(server.Url("/loop"));
         passed &= check(session.Get().error.code == mcr::ErrorCode::TOO_MANY_REDIRECTS, "redirect limits must surface as transport errors");
         session.SetUrl(server.Url("/partial"));
         auto partial{ session.Get() };
         passed &= check(partial.error.code == mcr::ErrorCode::PARTIAL_FILE && partial.text == "short", "partial transfer failures must preserve received bytes");
         session.SetUrl(server.Url("/slow"));
-        session.SetTimeout(mcr::Timeout{ 25ms });
+        session.SetTimeout(mcr::options::Timeout{ 25ms });
         passed &= check(session.Get().error.code == mcr::ErrorCode::OPERATION_TIMEDOUT, "timeouts must cancel a delayed local response");
-        session.SetTimeout(mcr::Timeout{ 3000ms });
+        session.SetTimeout(mcr::options::Timeout{ 3000ms });
         session.SetUrl(server.Url());
         auto cancellation{ std::make_shared<std::atomic_bool>(true) };
         session.SetCancellationParam(cancellation);
@@ -336,11 +336,11 @@ namespace {
         configure(session, server);
         auto const address{ server.Url("").Str() };
         auto const port{ static_cast<std::uint16_t>(std::stoul(address.substr(address.rfind(':') + 1))) };
-        session.SetOption(mcr::Resolve{ "session.test.invalid", "127.0.0.1", { port } });
+        session.SetOption(mcr::options::Resolve{ "session.test.invalid", "127.0.0.1", { port } });
         session.SetUrl(mcr::Url{ std::format("http://session.test.invalid:{}/hello", port) });
         auto response{ session.Get() };
         passed &= check(!response.error && response.text == "Hello session!", "DNS overrides must resolve a controlled hostname to the fixture");
-        session.SetOption(std::vector<mcr::Resolve>{});
+        session.SetOption(std::vector<mcr::options::Resolve>{});
         session.SetUrl(server.Url());
         passed &= check(!session.Get().error, "clearing the configured resolve list must permit ordinary loopback requests");
         session.SetProxies({
@@ -443,9 +443,9 @@ namespace {
     }
 
     auto check_proxy_auth(HttpServer const& server) -> bool {
-        mcr::EncodedAuthentication encoded{ "u$er", "p@ss" };
+        mcr::options::EncodedAuthentication encoded{ "u$er", "p@ss" };
         bool                       passed{ check(encoded.GetUsername() == "u%24er" && encoded.GetPassword() == "p%40ss", "credential accessors must retain cpr's percent-encoded storage") };
-        mcr::ProxyAuthentication   auth{
+        mcr::options::ProxyAuthentication   auth{
             { "http", encoded }
         };
         passed &= check(auth.Has("http") && !auth.Has("HTTP") && auth.GetUsername("absent").empty() && auth.Has("absent"), "proxy lookup must retain exact keys and insertion semantics");
@@ -463,8 +463,8 @@ namespace {
         session.SetProxyAuth({});
         response  = session.Get();
         passed   &= check(response.status_code == 407 && response.header["X-Request-Proxy-Authorization"].empty(), "replacing proxy credentials must remove the previous authorization");
-        session.SetProxyAuth(mcr::ProxyAuthentication{
-            { "http", mcr::EncodedAuthentication{ "u$er", "p@ss" } }
+        session.SetProxyAuth(mcr::options::ProxyAuthentication{
+            { "http", mcr::options::EncodedAuthentication{ "u$er", "p@ss" } }
         });
         passed &= check(session.Get().status_code == 200, "proxy authentication must recover after credentials are restored");
         session.SetUrl(server.Url());

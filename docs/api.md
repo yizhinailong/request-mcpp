@@ -15,7 +15,7 @@ HTTP 入口保留 cpr 的 `Get`、`Post` 等名称。
 | `Download(std::ofstream&, ...)` / `Download(WriteCallback const&, ...)` | `Response` | 同步下载，正文交给指定消费者 |
 | `DownloadAsync(fs::path, ...)` | `AsyncResponse` | 在线程池中打开、下载并关闭目标文件 |
 
-请求选项沿用 Session 的 `SetOption`：
+请求选项沿用 Session 的 `SetOption`。传输配置类型位于 `mcr::options`，详见[选项命名空间](options.md)：
 
 ```cpp
 import std;
@@ -23,7 +23,7 @@ import mcr;
 
 auto response = mcr::Post(
     mcr::Url{ "http://127.0.0.1:8080/echo" },
-    mcr::Timeout{ std::chrono::seconds{ 3 } },
+    mcr::options::Timeout{ std::chrono::seconds{ 3 } },
     mcr::Header{ { "Content-Type", "application/json" } },
     mcr::Body{ R"({"message":"hello"})" }
 );
@@ -55,7 +55,7 @@ std::println("{} bytes", length.Get());
 ```cpp
 auto first = std::tuple{
     mcr::Url{ "http://127.0.0.1:8080/first" },
-    mcr::Timeout{ std::chrono::seconds{ 3 } }
+    mcr::options::Timeout{ std::chrono::seconds{ 3 } }
 };
 auto second = std::tuple{ mcr::Url{ "http://127.0.0.1:8080/second" } };
 auto responses = mcr::MultiGet(first, second);
@@ -135,7 +135,7 @@ curl_easy_setopt(handle, CURLOPT_SSL_CTX_DATA, ca_pem.data());
   manifest 与当前 compat.curl 的后端一致：Linux/macOS 直接声明 OpenSSL 3.5.1
   依赖并定义 `MCR_SSL_CTX_OPENSSL`；Windows 使用 Schannel，入口返回
   `CURLE_NOT_BUILT_IN`。不支持的后端不会假装已经装载 CA。
-- 通用请求使用 `Ssl(ssl::CaBuffer{...})` 或 `ssl::CaInfoBlob`，由 curl 复制并管理 CA 数据，
+- 通用请求使用 `mcr::options::Ssl(mcr::options::ssl::CaBuffer{...})` 或 `mcr::options::ssl::CaInfoBlob`，由 curl 复制并管理 CA 数据，
   无需直接操作 SSL_CTX。Session 继续使用这条路径。
 
 验证：

@@ -6,7 +6,7 @@ export module mcr.redirect;
 
 import std;
 
-export namespace mcr {
+export namespace mcr::options {
 
     /**
      * @brief Flags selecting which redirects preserve POST, following cpr's bit values.
@@ -158,4 +158,4 @@ export namespace mcr {
         explicit Redirect(PostRedirectFlags post_flags_param) : post_flags{ post_flags_param } {}
     };
 
-} // namespace mcr
+} // namespace mcr::options

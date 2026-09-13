@@ -1,7 +1,7 @@
 # Request and connection timeouts
 
-Import `mcr` or `mcr.timeout` to use `mcr::Timeout`.
-Import `mcr` or `mcr.connect_timeout` to use `mcr::ConnectTimeout`; the latter
+Import `mcr` or `mcr.timeout` to use `mcr::options::Timeout`.
+Import `mcr` or `mcr.connect_timeout` to use `mcr::options::ConnectTimeout`; the latter
 also re-exports `mcr.timeout`.
 
 ```cpp
@@ -10,8 +10,8 @@ import mcr;
 
 using namespace std::chrono_literals;
 
-mcr::Timeout const from_integer{ 1500 };
-mcr::Timeout timeout{ 2s };
+mcr::options::Timeout const from_integer{ 1500 };
+mcr::options::Timeout timeout{ 2s };
 std::println("{} ms", timeout.Milliseconds()); // 2000 ms
 timeout.ms = 500ms;
 ```
@@ -36,7 +36,7 @@ Zero and representable negative values are preserved without validation.
 
 The interface and behavior follow cpr's `include/cpr/timeout.h` and
 `cpr/timeout.cpp`. Intentional differences are the C++23 module exports,
-namespace `mcr`, diagnostic prefix `mcr::Timeout`, and passing the integer
+namespace `mcr::options`, diagnostic prefix `mcr::options::Timeout`, and passing the integer
 constructor argument by value instead of by const reference.
 
 `ConnectTimeout` publicly derives from `Timeout`, following cpr's
@@ -46,9 +46,9 @@ Its distinct type allows a session to distinguish connection timeout options
 from overall request timeout options.
 
 ```cpp
-mcr::ConnectTimeout connect{ 1500 };
-mcr::ConnectTimeout from_milliseconds = 500ms;
-mcr::ConnectTimeout from_seconds{ 2s };
+mcr::options::ConnectTimeout connect{ 1500 };
+mcr::options::ConnectTimeout from_milliseconds = 500ms;
+mcr::options::ConnectTimeout from_seconds{ 2s };
 connect.ms = 750ms;
 ```
 

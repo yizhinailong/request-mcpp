@@ -8,7 +8,7 @@ export import mcr.types;
 
 import std;
 
-export namespace mcr {
+export namespace mcr::options {
 
     /**
      * @brief Store a network interface selector, following cpr's Interface option.
@@ -62,4 +62,4 @@ export namespace mcr {
         auto operator=(Interface&& other) noexcept -> Interface& = default;
     };
 
-} // namespace mcr
+} // namespace mcr::options

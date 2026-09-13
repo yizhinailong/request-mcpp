@@ -7,7 +7,7 @@ export import mcr.secure_string;
 import mcr.util;
 import std;
 
-export namespace mcr {
+export namespace mcr::options {
     /**
      * @brief Own percent-encoded proxy credentials, preserving cpr's credential accessors.
      */
@@ -121,9 +121,9 @@ export namespace mcr {
         auto find(std::string_view protocol) const -> EncodedAuthentication const& {
             auto const entry{ m_auths.find(protocol) };
             if (entry == m_auths.end()) {
-                throw std::out_of_range{ "mcr::ProxyAuthentication: protocol not configured." };
+                throw std::out_of_range{ "mcr::options::ProxyAuthentication: protocol not configured." };
             }
             return entry->second;
         }
     };
-} // namespace mcr
+} // namespace mcr::options

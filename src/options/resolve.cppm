@@ -6,7 +6,7 @@ export module mcr.resolve;
 
 import std;
 
-export namespace mcr {
+export namespace mcr::options {
 
     /**
      * @brief Store a custom address mapping, following cpr's Resolve option.
@@ -36,4 +36,4 @@ export namespace mcr {
         }
     };
 
-} // namespace mcr
+} // namespace mcr::options

@@ -12,7 +12,7 @@ export import mcr.secure_string;
 
 import std;
 
-export namespace mcr {
+export namespace mcr::options {
 
 #if LIBCURL_VERSION_NUM >= 0x073D00 // HTTP bearer authentication was added in 7.61.0.
     /**
@@ -76,4 +76,4 @@ export namespace mcr {
     };
 #endif
 
-} // namespace mcr
+} // namespace mcr::options

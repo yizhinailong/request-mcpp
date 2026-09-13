@@ -8,7 +8,7 @@ import mcr.secure_string;
 
 import std;
 
-export namespace mcr {
+export namespace mcr::options {
 
     /**
      * @brief Authentication policies retaining cpr's uint8_t names and ordinal values.
@@ -65,4 +65,4 @@ export namespace mcr {
         }
     };
 
-} // namespace mcr
+} // namespace mcr::options

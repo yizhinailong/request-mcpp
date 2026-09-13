@@ -6,7 +6,7 @@ export module mcr.local_port;
 
 import std;
 
-export namespace mcr {
+export namespace mcr::options {
 
     /**
      * @brief Store a local source port, following cpr's LocalPort option.
@@ -32,4 +32,4 @@ export namespace mcr {
         }
     };
 
-} // namespace mcr
+} // namespace mcr::options

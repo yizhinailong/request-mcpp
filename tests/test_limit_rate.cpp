@@ -5,15 +5,15 @@
 import std;
 import mcr;
 
-static_assert(!std::is_default_constructible_v<mcr::LimitRate>);
-static_assert(!std::is_constructible_v<mcr::LimitRate, int>);
-static_assert(std::is_same_v<decltype(mcr::LimitRate::downrate), std::int64_t>);
-static_assert(std::is_same_v<decltype(mcr::LimitRate::uprate), std::int64_t>);
+static_assert(!std::is_default_constructible_v<mcr::options::LimitRate>);
+static_assert(!std::is_constructible_v<mcr::options::LimitRate, int>);
+static_assert(std::is_same_v<decltype(mcr::options::LimitRate::downrate), std::int64_t>);
+static_assert(std::is_same_v<decltype(mcr::options::LimitRate::uprate), std::int64_t>);
 
 int main() {
-    using Rate = decltype(mcr::LimitRate::downrate);
+    using Rate = decltype(mcr::options::LimitRate::downrate);
     static_assert(std::signed_integral<Rate>);
-    static_assert(std::is_same_v<Rate, decltype(mcr::LimitRate::uprate)>);
+    static_assert(std::is_same_v<Rate, decltype(mcr::options::LimitRate::uprate)>);
 
     std::pair<Rate, Rate> const cases[]{
         {                                  0,                                  0 },
@@ -27,21 +27,21 @@ int main() {
         { (std::numeric_limits<Rate>::max)(), (std::numeric_limits<Rate>::min)() },
     };
     for (auto const& [downrate, uprate] : cases) {
-        mcr::LimitRate const option = { downrate, uprate };
+        mcr::options::LimitRate const option = { downrate, uprate };
         if (option.downrate != downrate || option.uprate != uprate) {
             std::println("test_limit_rate: construction must preserve download {} and upload {} without swapping or normalization", downrate, uprate);
             return 1;
         }
     }
 
-    mcr::LimitRate original{ 1024, 2048 };
-    mcr::LimitRate copied{ original };
+    mcr::options::LimitRate original{ 1024, 2048 };
+    mcr::options::LimitRate copied{ original };
     original.downrate = 0;
     original.uprate   = -1;
-    mcr::LimitRate moved{ std::move(copied) };
-    mcr::LimitRate assigned{ 0, 0 };
+    mcr::options::LimitRate moved{ std::move(copied) };
+    mcr::options::LimitRate assigned{ 0, 0 };
     assigned = moved;
-    mcr::LimitRate move_assigned{ 0, 0 };
+    mcr::options::LimitRate move_assigned{ 0, 0 };
     move_assigned     = std::move(moved);
     assigned.downrate = 4096;
     assigned.uprate   = 8192;

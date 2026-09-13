@@ -1,12 +1,12 @@
 # Proxies
 
-Import `mcr` or `mcr.proxies` to use `mcr::Proxies`.
+Import `mcr` or `mcr.proxies` to use `mcr::options::Proxies`.
 
 ```cpp
 import std;
 import mcr.proxies;
 
-mcr::Proxies proxies{
+mcr::options::Proxies proxies{
     { "http", "http://proxy.test:8080" },
     { "https", "socks5://proxy.test:1080" },
     { "no_proxy", "" },
@@ -38,7 +38,7 @@ Session interprets those keys as proxy exclusions, preferring `no_proxy` when
 both exist; an empty exclusion value overrides the environment's exclusion
 list. This option does not itself read or modify the environment.
 
-Intentional API differences are C++23 modules, namespace `mcr`, the private
+Intentional API differences are C++23 modules, namespace `mcr::options`, the private
 member name `m_hosts`, `Has()` replacing `has()`, and `std::string_view` query
 parameters. A transparent `std::less<>` map comparator permits bounded views
 without allocating a key during lookups. Missing-key subscript copies the view

@@ -1,16 +1,16 @@
 # Interface
 
-Import `mcr` or `mcr.interface` to use `mcr::Interface`. The option follows
+Import `mcr` or `mcr.interface` to use `mcr::options::Interface`. The option follows
 cpr's `include/cpr/interface.h` and derives from `StringHolder<Interface>`.
 
 ```cpp
 import std;
 import mcr.interface;
 
-mcr::Interface automatic;
-mcr::Interface device{ "eth0" };
-mcr::Interface from_view{ std::string_view{ "eth0" } };
-mcr::Interface fragments{ "if!", "eth", "0" };
+mcr::options::Interface automatic;
+mcr::options::Interface device{ "eth0" };
+mcr::options::Interface from_view{ std::string_view{ "eth0" } };
+mcr::options::Interface fragments{ "if!", "eth", "0" };
 std::println("{}", device.Str());
 ```
 

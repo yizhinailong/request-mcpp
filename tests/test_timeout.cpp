@@ -5,23 +5,23 @@
 import std;
 import mcr;
 
-static_assert(!std::is_default_constructible_v<mcr::Timeout>);
-static_assert(std::is_convertible_v<std::int32_t, mcr::Timeout>);
-static_assert(std::is_convertible_v<std::chrono::seconds, mcr::Timeout>);
-static_assert(std::is_same_v<decltype(std::declval<mcr::Timeout const&>().Milliseconds()), long>);
-static_assert(std::is_base_of_v<mcr::Timeout, mcr::ConnectTimeout>);
-static_assert(!std::is_same_v<mcr::Timeout, mcr::ConnectTimeout>);
-static_assert(std::is_convertible_v<mcr::ConnectTimeout*, mcr::Timeout*>);
-static_assert(!std::is_default_constructible_v<mcr::ConnectTimeout>);
-static_assert(std::is_convertible_v<std::int32_t, mcr::ConnectTimeout>);
-static_assert(std::is_convertible_v<std::chrono::milliseconds, mcr::ConnectTimeout>);
-static_assert(std::is_constructible_v<mcr::ConnectTimeout, std::chrono::seconds>);
-static_assert(!std::is_convertible_v<std::chrono::seconds, mcr::ConnectTimeout>);
-static_assert(!std::is_constructible_v<mcr::ConnectTimeout, std::chrono::microseconds>);
-static_assert(!std::is_constructible_v<mcr::ConnectTimeout, std::chrono::duration<double>>);
-static_assert(!std::is_constructible_v<mcr::ConnectTimeout, mcr::Timeout>);
-static_assert(std::is_same_v<decltype(mcr::ConnectTimeout::ms), std::chrono::milliseconds>);
-static_assert(std::is_same_v<decltype(std::declval<mcr::ConnectTimeout const&>().Milliseconds()), long>);
+static_assert(!std::is_default_constructible_v<mcr::options::Timeout>);
+static_assert(std::is_convertible_v<std::int32_t, mcr::options::Timeout>);
+static_assert(std::is_convertible_v<std::chrono::seconds, mcr::options::Timeout>);
+static_assert(std::is_same_v<decltype(std::declval<mcr::options::Timeout const&>().Milliseconds()), long>);
+static_assert(std::is_base_of_v<mcr::options::Timeout, mcr::options::ConnectTimeout>);
+static_assert(!std::is_same_v<mcr::options::Timeout, mcr::options::ConnectTimeout>);
+static_assert(std::is_convertible_v<mcr::options::ConnectTimeout*, mcr::options::Timeout*>);
+static_assert(!std::is_default_constructible_v<mcr::options::ConnectTimeout>);
+static_assert(std::is_convertible_v<std::int32_t, mcr::options::ConnectTimeout>);
+static_assert(std::is_convertible_v<std::chrono::milliseconds, mcr::options::ConnectTimeout>);
+static_assert(std::is_constructible_v<mcr::options::ConnectTimeout, std::chrono::seconds>);
+static_assert(!std::is_convertible_v<std::chrono::seconds, mcr::options::ConnectTimeout>);
+static_assert(!std::is_constructible_v<mcr::options::ConnectTimeout, std::chrono::microseconds>);
+static_assert(!std::is_constructible_v<mcr::options::ConnectTimeout, std::chrono::duration<double>>);
+static_assert(!std::is_constructible_v<mcr::options::ConnectTimeout, mcr::options::Timeout>);
+static_assert(std::is_same_v<decltype(mcr::options::ConnectTimeout::ms), std::chrono::milliseconds>);
+static_assert(std::is_same_v<decltype(std::declval<mcr::options::ConnectTimeout const&>().Milliseconds()), long>);
 
 namespace {
 
@@ -37,37 +37,37 @@ namespace {
 
         bool passed{ true };
         for (std::int32_t const count : { 0, 1, -1, 1500, (std::numeric_limits<std::int32_t>::min)(), (std::numeric_limits<std::int32_t>::max)() }) {
-            mcr::Timeout const timeout{ count };
+            mcr::options::Timeout const timeout{ count };
             passed &= check(
                 timeout.ms.count() == count && timeout.Milliseconds() == count,
                 "integer construction must preserve the full int32 millisecond range"
             );
         }
 
-        passed &= check(mcr::Timeout{ 1250ms }.Milliseconds() == 1250, "milliseconds must preserve their count");
-        passed &= check(mcr::Timeout{ 2s }.Milliseconds() == 2000, "seconds must convert to milliseconds");
-        passed &= check(mcr::Timeout{ 3min }.Milliseconds() == 180000, "minutes must convert to milliseconds");
-        passed &= check(mcr::Timeout{ 1h }.Milliseconds() == 3600000, "hours must convert to milliseconds");
+        passed &= check(mcr::options::Timeout{ 1250ms }.Milliseconds() == 1250, "milliseconds must preserve their count");
+        passed &= check(mcr::options::Timeout{ 2s }.Milliseconds() == 2000, "seconds must convert to milliseconds");
+        passed &= check(mcr::options::Timeout{ 3min }.Milliseconds() == 180000, "minutes must convert to milliseconds");
+        passed &= check(mcr::options::Timeout{ 1h }.Milliseconds() == 3600000, "hours must convert to milliseconds");
         passed &= check(
-            mcr::Timeout{ 1999us }.Milliseconds() == 1 && mcr::Timeout{ -1999us }.Milliseconds() == -1,
+            mcr::options::Timeout{ 1999us }.Milliseconds() == 1 && mcr::options::Timeout{ -1999us }.Milliseconds() == -1,
             "sub-millisecond remainders must truncate toward zero"
         );
         passed &= check(
-            mcr::Timeout{ 999999ns }.Milliseconds() == 0 && mcr::Timeout{ -999999ns }.Milliseconds() == 0,
+            mcr::options::Timeout{ 999999ns }.Milliseconds() == 0 && mcr::options::Timeout{ -999999ns }.Milliseconds() == 0,
             "durations shorter than one millisecond must truncate to zero"
         );
         passed &= check(
-            mcr::Timeout{ std::chrono::duration<double>{ 1.2345 } }.Milliseconds() == 1234 &&
-                mcr::Timeout{ std::chrono::duration<double>{ -1.2345 } }.Milliseconds() == -1234,
+            mcr::options::Timeout{ std::chrono::duration<double>{ 1.2345 } }.Milliseconds() == 1234 &&
+                mcr::options::Timeout{ std::chrono::duration<double>{ -1.2345 } }.Milliseconds() == -1234,
             "finite floating-point durations must truncate fractional milliseconds toward zero"
         );
         passed &= check(
-            mcr::Timeout{ std::chrono::duration<int, std::ratio<1, 3>>{ 2 } }.Milliseconds() == 666,
+            mcr::options::Timeout{ std::chrono::duration<int, std::ratio<1, 3>>{ 2 } }.Milliseconds() == 666,
             "custom duration periods must convert to whole milliseconds"
         );
 
-        mcr::Timeout       timeout = 1500;
-        mcr::Timeout const copied{ timeout };
+        mcr::options::Timeout       timeout = 1500;
+        mcr::options::Timeout const copied{ timeout };
         timeout.ms  = 2s;
         passed     &= check(
             copied.Milliseconds() == 1500 && timeout.Milliseconds() == 2000,
@@ -83,16 +83,16 @@ namespace {
 
         bool passed{ true };
         for (std::int32_t const count : { 0, 1, -1, 1500, (std::numeric_limits<std::int32_t>::min)(), (std::numeric_limits<std::int32_t>::max)() }) {
-            mcr::ConnectTimeout const integer  = count;
-            mcr::ConnectTimeout const chrono   = std::chrono::milliseconds{ count };
+            mcr::options::ConnectTimeout const integer  = count;
+            mcr::options::ConnectTimeout const chrono   = std::chrono::milliseconds{ count };
             passed                            &= check(integer.ms == chrono.ms && integer.Milliseconds() == count, "both connection timeout constructors must preserve the full int32 millisecond range");
         }
-        passed &= check(mcr::ConnectTimeout{ 2s }.Milliseconds() == 2000 && mcr::ConnectTimeout{ 1min }.Milliseconds() == 60000, "whole-millisecond chrono conversions must work through the milliseconds constructor");
-        passed &= check(mcr::ConnectTimeout{ std::chrono::duration_cast<std::chrono::milliseconds>(1999us) }.Milliseconds() == 1, "sub-millisecond durations require an explicit cast for connection timeouts");
+        passed &= check(mcr::options::ConnectTimeout{ 2s }.Milliseconds() == 2000 && mcr::options::ConnectTimeout{ 1min }.Milliseconds() == 60000, "whole-millisecond chrono conversions must work through the milliseconds constructor");
+        passed &= check(mcr::options::ConnectTimeout{ std::chrono::duration_cast<std::chrono::milliseconds>(1999us) }.Milliseconds() == 1, "sub-millisecond durations require an explicit cast for connection timeouts");
 
-        mcr::ConnectTimeout original{ 1500ms };
-        mcr::ConnectTimeout copied{ original };
-        mcr::Timeout&       base{ original };
+        mcr::options::ConnectTimeout original{ 1500ms };
+        mcr::options::ConnectTimeout copied{ original };
+        mcr::options::Timeout&       base{ original };
         base.ms   = 2s;
         passed   &= check(original.Milliseconds() == 2000 && copied.Milliseconds() == 1500, "the derived option must use inherited storage and retain independent copies");
         copied    = 42;
@@ -123,7 +123,7 @@ namespace {
                 passed &= check(false, "a count above long max must throw overflow_error");
             } catch (std::overflow_error const& error) {
                 passed &= check(
-                    std::string_view{ error.what() } == std::format("mcr::Timeout: timeout value overflow: {} ms.", timeout.ms.count()),
+                    std::string_view{ error.what() } == std::format("mcr::options::Timeout: timeout value overflow: {} ms.", timeout.ms.count()),
                     "overflow diagnostics must include the original millisecond count"
                 );
             }
@@ -135,7 +135,7 @@ namespace {
                 passed &= check(false, "a count below long min must throw underflow_error");
             } catch (std::underflow_error const& error) {
                 passed &= check(
-                    std::string_view{ error.what() } == std::format("mcr::Timeout: timeout value underflow: {} ms.", timeout.ms.count()),
+                    std::string_view{ error.what() } == std::format("mcr::options::Timeout: timeout value underflow: {} ms.", timeout.ms.count()),
                     "underflow diagnostics must include the original millisecond count"
                 );
             }
@@ -151,8 +151,8 @@ namespace {
 int main() {
     bool passed{ check_construction() };
     passed &= check_connection_construction();
-    passed &= check_range<mcr::Timeout>();
-    passed &= check_range<mcr::ConnectTimeout>();
+    passed &= check_range<mcr::options::Timeout>();
+    passed &= check_range<mcr::options::ConnectTimeout>();
     if (!passed) {
         return 1;
     }

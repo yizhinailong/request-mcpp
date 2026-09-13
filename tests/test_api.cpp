@@ -22,8 +22,8 @@ namespace {
     auto options(HttpServer const& server, std::string_view path = "/echo") {
         return std::tuple{
             server.Url(path),
-            mcr::Proxies{ { "http", "" }, { "no_proxy", "*" } },
-            mcr::Timeout{ 3000ms },
+            mcr::options::Proxies{ { "http", "" }, { "no_proxy", "*" } },
+            mcr::options::Timeout{ 3000ms },
             mcr::Body{ "payload" }
         };
     }
@@ -129,11 +129,11 @@ namespace {
         async_concurrent.Check();
         batch         = mcr::MultiGet(options(server, "/error"), std::tuple{ mcr::Url{ "invalid-scheme://localhost/" } }, options(server));
         passed       &= check(batch.size() == 3 && batch[0].status_code == 404 && !batch[0].error && bool(batch[1].error) && batch[2].text == "payload", "HTTP and transfer errors must keep their input positions");
-        auto movable  = [&] {
+        auto movable   = [&] {
             return std::tuple{
                 MoveOnlyUrl{ server.Url() },
-                mcr::Proxies{ { "http", "" }, { "no_proxy", "*" } },
-                mcr::Timeout{ 3000ms }
+                mcr::options::Proxies{ { "http", "" }, { "no_proxy", "*" } },
+                mcr::options::Timeout{ 3000ms }
             };
         };
         passed &= check(mcr::MultiGet(movable())[0].status_code == 200 && mcr::MultiGetAsync(movable())[0].Get().status_code == 200, "both batch APIs must accept move-only rvalue option tuples");
@@ -160,7 +160,7 @@ namespace {
         passed &= check(mcr::GetCallback(LvalueContinuation{
         },
                                          server.Url(),
-                                         mcr::Proxies{ { "http", "" } })
+                                         mcr::options::Proxies{ { "http", "" } })
                                 .Get() == 200,
                         "owned continuations must be invoked as lvalues, as in cpr");
         int  value{};
@@ -178,7 +178,7 @@ namespace {
         } catch (std::runtime_error const& error) {
             passed &= check(std::string_view{ error.what() } == "continuation", "the original continuation exception must be retained");
         }
-        auto preparation{ mcr::GetAsync(mcr::HttpVersion{ static_cast<mcr::HttpVersionCode>(255) }) };
+        auto preparation{ mcr::GetAsync(mcr::options::HttpVersion{ static_cast<mcr::options::HttpVersionCode>(255) }) };
         try {
             (void)preparation.Get();
             passed &= check(false, "async preparation failures must surface through Get");
@@ -217,7 +217,7 @@ namespace {
         bool called{ false };
         auto callback{
             mcr::GetCallback([&](mcr::Response response) { called = true; return response.status_code;             },
-              server.Url(), mcr::Proxies{ { "http", "" } }
+              server.Url(), mcr::options::Proxies{ { "http", "" } }
               )
         };
         (void)callback.Cancel();

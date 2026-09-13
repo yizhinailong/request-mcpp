@@ -6,7 +6,7 @@ export module mcr.reserve_size;
 
 import std;
 
-export namespace mcr {
+export namespace mcr::options {
 
     /**
      * @brief Store a response capacity hint, following cpr's ReserveSize interface.
@@ -23,4 +23,4 @@ export namespace mcr {
         std::size_t size{ 0 }; ///< Requested response string capacity in bytes.
     };
 
-} // namespace mcr
+} // namespace mcr::options

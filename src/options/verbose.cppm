@@ -4,7 +4,7 @@
  */
 export module mcr.verbose;
 
-export namespace mcr {
+export namespace mcr::options {
 
     /**
      * @brief Enable or disable verbose transfer diagnostics, following cpr's Verbose interface.
@@ -25,4 +25,4 @@ export namespace mcr {
         bool verbose{ true }; ///< Whether verbose diagnostics are enabled; defaults to true.
     };
 
-} // namespace mcr
+} // namespace mcr::options

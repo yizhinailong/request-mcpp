@@ -1,14 +1,14 @@
 # Local port options
 
-Import `mcr` to use `mcr::LocalPort` and `mcr::LocalPortRange`, or import their
+Import `mcr` to use `mcr::options::LocalPort` and `mcr::options::LocalPortRange`, or import their
 individual modules `mcr.local_port` and `mcr.local_port_range`.
 
 ```cpp
 import std;
 import mcr;
 
-mcr::LocalPort port = std::uint16_t{ 50000 };
-mcr::LocalPortRange range = std::uint16_t{ 100 };
+mcr::options::LocalPort port = std::uint16_t{ 50000 };
+mcr::options::LocalPortRange range = std::uint16_t{ 100 };
 std::uint16_t port_number = port;
 std::uint16_t range_value = range;
 ```
@@ -21,7 +21,7 @@ normalization, socket binding, or port probing. Neither class has a default
 constructor. Ordinary copying, moving, and assignment are supported; assigning
 a `uint16_t` implicitly constructs a replacement option.
 
-Intentional differences are the C++23 modules, namespace `mcr`, private member
+Intentional differences are the C++23 modules, namespace `mcr::options`, private member
 names `m_local_port` / `m_local_port_range`, and `[[nodiscard]]` on conversion
 operators. No runtime behavior is changed.
 

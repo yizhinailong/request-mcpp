@@ -6,7 +6,7 @@ export module mcr.range;
 
 import std;
 
-export namespace mcr {
+export namespace mcr::options {
 
     /**
      * @brief Store a transfer range, following cpr's optional endpoint defaults.
@@ -74,4 +74,4 @@ export namespace mcr {
         }
     };
 
-} // namespace mcr
+} // namespace mcr::options

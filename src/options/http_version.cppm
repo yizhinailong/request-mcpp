@@ -10,7 +10,7 @@ export module mcr.http_version;
 
 import std;
 
-export namespace mcr {
+export namespace mcr::options {
 
     /**
      * @brief Select an HTTP protocol policy using cpr's enum names and ordinal values.
@@ -63,4 +63,4 @@ export namespace mcr {
         constexpr explicit HttpVersion(HttpVersionCode code_param) noexcept : code{ code_param } {}
     };
 
-} // namespace mcr
+} // namespace mcr::options
