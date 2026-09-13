@@ -6,7 +6,7 @@ export module mcr.async_wrapper;
 
 import std;
 
-export namespace mcr {
+export namespace mcr::utils {
 
     /**
      * @brief Cancellation outcomes retaining cpr's names and numeric values.
@@ -61,7 +61,7 @@ export namespace mcr {
          * @note Exceptions stored in the future propagate and also consume its state.
          */
         [[nodiscard]] auto Get() -> RetType {
-            checkValid("mcr::AsyncWrapper::Get: associated future is invalid.");
+            checkValid("mcr::utils::AsyncWrapper::Get: associated future is invalid.");
             return m_future.get();
         }
 
@@ -78,7 +78,7 @@ export namespace mcr {
          * @throws std::logic_error If the future has no shared state.
          */
         auto Wait() const -> void {
-            checkValid("mcr::AsyncWrapper::Wait: associated future is invalid.");
+            checkValid("mcr::utils::AsyncWrapper::Wait: associated future is invalid.");
             m_future.wait();
         }
 
@@ -92,7 +92,7 @@ export namespace mcr {
          */
         template <typename Rep, typename Period>
         auto WaitFor(std::chrono::duration<Rep, Period> const& timeout_duration) const -> std::future_status {
-            checkValid("mcr::AsyncWrapper::WaitFor: associated future is invalid.");
+            checkValid("mcr::utils::AsyncWrapper::WaitFor: associated future is invalid.");
             return m_future.wait_for(timeout_duration);
         }
 
@@ -106,7 +106,7 @@ export namespace mcr {
          */
         template <typename Clock, typename Duration>
         auto WaitUntil(std::chrono::time_point<Clock, Duration> const& timeout_time) const -> std::future_status {
-            checkValid("mcr::AsyncWrapper::WaitUntil: associated future is invalid.");
+            checkValid("mcr::utils::AsyncWrapper::WaitUntil: associated future is invalid.");
             return m_future.wait_until(timeout_time);
         }
 
@@ -156,7 +156,7 @@ export namespace mcr {
         AsyncWrapper(std::future<RetType>&& future, std::shared_ptr<std::atomic_bool>&& cancellation_state)
             : m_cancellation_state{ std::move(cancellation_state) } {
             if (!m_cancellation_state) {
-                throw std::invalid_argument{ "mcr::AsyncWrapper: cancellation state must not be null." };
+                throw std::invalid_argument{ "mcr::utils::AsyncWrapper: cancellation state must not be null." };
             }
             Base::operator=(Base{ std::move(future) });
         }
@@ -194,7 +194,7 @@ export namespace mcr {
          * @note A task exception propagates from the future when access is permitted.
          */
         [[nodiscard]] auto Get() -> RetType {
-            checkCancelled("mcr::AsyncWrapper::Get: request is cancelled.");
+            checkCancelled("mcr::utils::AsyncWrapper::Get: request is cancelled.");
             return Base::Get();
         }
 
@@ -211,7 +211,7 @@ export namespace mcr {
          * @throws std::logic_error If cancelled or the future has no shared state.
          */
         auto Wait() const -> void {
-            checkCancelled("mcr::AsyncWrapper::Wait: request is cancelled.");
+            checkCancelled("mcr::utils::AsyncWrapper::Wait: request is cancelled.");
             Base::Wait();
         }
 
@@ -225,7 +225,7 @@ export namespace mcr {
          */
         template <typename Rep, typename Period>
         auto WaitFor(std::chrono::duration<Rep, Period> const& timeout_duration) const -> std::future_status {
-            checkCancelled("mcr::AsyncWrapper::WaitFor: request is cancelled.");
+            checkCancelled("mcr::utils::AsyncWrapper::WaitFor: request is cancelled.");
             return Base::WaitFor(timeout_duration);
         }
 
@@ -239,7 +239,7 @@ export namespace mcr {
          */
         template <typename Clock, typename Duration>
         auto WaitUntil(std::chrono::time_point<Clock, Duration> const& timeout_time) const -> std::future_status {
-            checkCancelled("mcr::AsyncWrapper::WaitUntil: request is cancelled.");
+            checkCancelled("mcr::utils::AsyncWrapper::WaitUntil: request is cancelled.");
             return Base::WaitUntil(timeout_time);
         }
 
@@ -299,4 +299,4 @@ export namespace mcr {
     template <typename RetType>
     AsyncWrapper(std::future<RetType>&&, std::shared_ptr<std::atomic_bool>&&) -> AsyncWrapper<RetType, true>;
 
-} // namespace mcr
+} // namespace mcr::utils

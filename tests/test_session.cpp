@@ -14,7 +14,7 @@ import mcr.util;
 
 static_assert(!std::is_copy_constructible_v<mcr::Session> && !std::is_move_constructible_v<mcr::Session>);
 static_assert(std::is_copy_constructible_v<mcr::Response> && std::is_move_constructible_v<mcr::Response>);
-static_assert(std::is_same_v<mcr::AsyncResponse, mcr::AsyncWrapper<mcr::Response>>);
+static_assert(std::is_same_v<mcr::AsyncResponse, mcr::utils::AsyncWrapper<mcr::Response>>);
 static_assert(std::variant_size_v<mcr::Content> == 5);
 
 namespace {

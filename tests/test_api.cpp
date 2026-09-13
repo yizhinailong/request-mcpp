@@ -92,7 +92,7 @@ namespace {
         pool->Wait();
         (void)pool->Pause();
         mcr::AsyncResponse                                  copied;
-        std::vector<mcr::AsyncWrapper<mcr::Response, true>> batch;
+        std::vector<mcr::utils::AsyncWrapper<mcr::Response, true>> batch;
         {
             auto args{ options(server) };
             copied                    = std::apply([&](auto&... values) { return mcr::PostAsync(values..., first); }, args);
@@ -165,10 +165,10 @@ namespace {
                         "owned continuations must be invoked as lvalues, as in cpr");
         int  value{};
         auto reference{ std::apply([&](auto const&... values) { return mcr::GetCallback([&](mcr::Response) -> int& { return value; }, values...); }, args) };
-        static_assert(std::same_as<decltype(reference), mcr::AsyncWrapper<int&, true>>);
+        static_assert(std::same_as<decltype(reference), mcr::utils::AsyncWrapper<int&, true>>);
         reference.Get() = 17;
         auto no_result{ std::apply([&](auto const&... values) { return mcr::GetCallback([&](mcr::Response) { ++value; }, values...); }, args) };
-        static_assert(std::same_as<decltype(no_result), mcr::AsyncWrapper<void, true>>);
+        static_assert(std::same_as<decltype(no_result), mcr::utils::AsyncWrapper<void, true>>);
         no_result.Get();
         passed &= check(value == 18, "continuations must preserve reference and void returns");
         auto throwing{ std::apply([](auto const&... values) { return mcr::GetCallback([](mcr::Response) -> int { throw std::runtime_error{ "continuation" }; }, values...); }, args) };
@@ -192,7 +192,7 @@ namespace {
         (void)pool->Pause();
         int const before{ server.Connections() };
         auto      queued{ mcr::MultiGetAsync(options(server)) };
-        bool      passed{ check(queued[0].Cancel() == mcr::CancellationResult::success, "queued batch requests must be cancellable") };
+        bool      passed{ check(queued[0].Cancel() == mcr::utils::CancellationResult::success, "queued batch requests must be cancellable") };
         auto      queued_result{ queued[0].Share() };
         (void)pool->Resume();
         passed &= check(queued_result.get().status_code == 0 && server.Connections() == before, "cancellation before execution must avoid a network request");
@@ -208,7 +208,7 @@ namespace {
                                        } } }) };
         auto active{ mcr::MultiGetAsync(std::move(arguments), options(server)) };
         passed &= check(signal.wait_for(5s) == std::future_status::ready, "streaming transfer must start before cancellation");
-        passed &= check(active[0].Cancel() == mcr::CancellationResult::success, "active batch requests must be cancellable");
+        passed &= check(active[0].Cancel() == mcr::utils::CancellationResult::success, "active batch requests must be cancellable");
         auto cancelled{ active[0].Share().get() };
         passed &= check(cancelled.error.code == mcr::ErrorCode::ABORTED_BY_CALLBACK && active[1].Get().status_code == 200, "cancelling one transfer must abort it without affecting another request");
 
@@ -228,21 +228,21 @@ namespace {
     }
 
     struct TempDirectory {
-        mcr::fs::path path{ mcr::fs::temp_directory_path() / std::format("mcr-api-{}", std::chrono::steady_clock::now().time_since_epoch().count()) };
+        mcr::utils::fs::path path{ mcr::utils::fs::temp_directory_path() / std::format("mcr-api-{}", std::chrono::steady_clock::now().time_since_epoch().count()) };
 
         TempDirectory() {
-            if (!mcr::fs::create_directory(path)) {
+            if (!mcr::utils::fs::create_directory(path)) {
                 throw std::runtime_error{ "Could not create an exclusive test directory." };
             }
         }
 
         ~TempDirectory() {
             std::error_code error;
-            mcr::fs::remove_all(path, error);
+            mcr::utils::fs::remove_all(path, error);
         }
     };
 
-    auto read_file(mcr::fs::path const& path) -> std::string {
+    auto read_file(mcr::utils::fs::path const& path) -> std::string {
         std::ifstream file{ path, std::ios::binary };
         return { std::istreambuf_iterator<char>{ file }, {} };
     }

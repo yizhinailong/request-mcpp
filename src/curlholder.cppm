@@ -97,7 +97,7 @@ export namespace mcr {
          * @note Empty views are handled directly so curl cannot fall back to strlen().
          * Curl's temporary allocation is freed even if constructing the result throws.
          */
-        [[nodiscard]] auto UrlEncode(std::string_view input) const -> util::SecureString {
+        [[nodiscard]] auto UrlEncode(std::string_view input) const -> utils::SecureString {
             auto const length{ checkedLength(input) };
             if (input.empty()) {
                 return {};
@@ -106,7 +106,7 @@ export namespace mcr {
             if (!output) {
                 return {};
             }
-            return util::SecureString{ output.get() };
+            return utils::SecureString{ output.get() };
         }
 
         /**
@@ -118,7 +118,7 @@ export namespace mcr {
          * @note Uses curl's output length to retain embedded nulls, unlike cpr's null-terminated copy.
          * Curl's temporary allocation is freed even if constructing the result throws.
          */
-        [[nodiscard]] auto UrlDecode(std::string_view input) const -> util::SecureString {
+        [[nodiscard]] auto UrlDecode(std::string_view input) const -> utils::SecureString {
             auto const length{ checkedLength(input) };
             if (input.empty()) {
                 return {};
@@ -128,7 +128,7 @@ export namespace mcr {
             if (!output) {
                 return {};
             }
-            return util::SecureString{ output.get(), static_cast<std::size_t>(output_length) };
+            return utils::SecureString{ output.get(), static_cast<std::size_t>(output_length) };
         }
 
     private:

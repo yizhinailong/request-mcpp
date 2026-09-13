@@ -221,7 +221,7 @@ namespace mcr::test {
                     }
                     raw_headers += field + "\r\n";
                 }
-                auto headers{ mcr::util::parse_header(raw_headers) };
+                auto headers{ mcr::utils::parse_header(raw_headers) };
                 if (headers["Expect"] == "100-continue" && !sendAll(socket, "HTTP/1.1 100 Continue\r\n\r\n")) {
                     return;
                 }

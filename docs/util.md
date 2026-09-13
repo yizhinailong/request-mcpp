@@ -1,6 +1,7 @@
 # Utilities
 
-Import `mcr` or `mcr.util` to use the free functions in `mcr::util`.
+Import `mcr` or `mcr.util` to use the free functions in `mcr::utils`.
+See [utility namespaces](utils.md) for the shared namespace and migration details.
 The implementation follows cpr's `include/cpr/util.h`, `cpr/util.cpp`, and
 `test/util_tests.cpp`.
 
@@ -10,16 +11,16 @@ import mcr;
 
 std::string status;
 std::string reason;
-auto headers = mcr::util::parse_header(
+auto headers = mcr::utils::parse_header(
     "HTTP/1.1 200 OK\r\nContent-Type: application/json\r\n\r\n",
     &status, &reason);
 std::println("{}: {}", reason, headers.at("content-type"));
 ```
 
-The API uses C++23 modules, namespace `mcr::util`, snake_case free functions,
+The API uses C++23 modules, namespace `mcr::utils`, snake_case free functions,
 and `std::string_view` for borrowed input. Name mappings are:
 
-| cpr | mcr::util |
+| cpr | mcr::utils |
 | --- | --- |
 | `parseHeader` | `parse_header` |
 | `parseCookies` | `parse_cookies` |

@@ -13,8 +13,8 @@ export namespace mcr::options {
      */
     class EncodedAuthentication {
     private:
-        util::SecureString m_username; ///< Encoded username.
-        util::SecureString m_password; ///< Encoded password.
+        utils::SecureString m_username; ///< Encoded username.
+        utils::SecureString m_password; ///< Encoded password.
 
     public:
         EncodedAuthentication() = default;
@@ -25,7 +25,7 @@ export namespace mcr::options {
          * @param password Raw password.
          */
         EncodedAuthentication(std::string_view username, std::string_view password)
-            : m_username{ util::url_encode(username) }, m_password{ util::url_encode(password) } {}
+            : m_username{ utils::url_encode(username) }, m_password{ utils::url_encode(password) } {}
 
         virtual ~EncodedAuthentication()                                           = default;
         EncodedAuthentication(EncodedAuthentication const&)                        = default;
@@ -49,13 +49,13 @@ export namespace mcr::options {
          * @brief Borrow secure username storage.
          * @return Encoded username.
          */
-        [[nodiscard]] auto GetUsernameUnderlying() const noexcept -> util::SecureString const& { return m_username; }
+        [[nodiscard]] auto GetUsernameUnderlying() const noexcept -> utils::SecureString const& { return m_username; }
 
         /**
          * @brief Borrow secure password storage.
          * @return Encoded password.
          */
-        [[nodiscard]] auto GetPasswordUnderlying() const noexcept -> util::SecureString const& { return m_password; }
+        [[nodiscard]] auto GetPasswordUnderlying() const noexcept -> utils::SecureString const& { return m_password; }
     };
 
     /**
@@ -107,7 +107,7 @@ export namespace mcr::options {
          * @return Encoded username.
          * @throws std::out_of_range If absent.
          */
-        [[nodiscard]] auto GetUsernameUnderlying(std::string_view protocol) const -> util::SecureString const& { return find(protocol).GetUsernameUnderlying(); }
+        [[nodiscard]] auto GetUsernameUnderlying(std::string_view protocol) const -> utils::SecureString const& { return find(protocol).GetUsernameUnderlying(); }
 
         /**
          * @brief Borrow existing secure password storage.
@@ -115,7 +115,7 @@ export namespace mcr::options {
          * @return Encoded password.
          * @throws std::out_of_range If absent.
          */
-        [[nodiscard]] auto GetPasswordUnderlying(std::string_view protocol) const -> util::SecureString const& { return find(protocol).GetPasswordUnderlying(); }
+        [[nodiscard]] auto GetPasswordUnderlying(std::string_view protocol) const -> utils::SecureString const& { return find(protocol).GetPasswordUnderlying(); }
 
     private:
         auto find(std::string_view protocol) const -> EncodedAuthentication const& {

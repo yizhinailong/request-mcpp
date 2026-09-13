@@ -104,7 +104,7 @@ export namespace mcr::options {
         class KeyFile {
         public:
             std::filesystem::path filename; ///< Owned key path.
-            util::SecureString    password; ///< Owned passphrase in secure storage.
+            utils::SecureString   password; ///< Owned passphrase in secure storage.
 
             /**
              * @brief Own a key path and passphrase.
@@ -140,7 +140,7 @@ export namespace mcr::options {
         class KeyBlob {
         public:
             std::string        blob;     ///< Owned private-key bytes.
-            util::SecureString password; ///< Owned passphrase in secure storage.
+            utils::SecureString password; ///< Owned passphrase in secure storage.
 
             /**
              * @brief Own key bytes and a passphrase.
@@ -460,12 +460,12 @@ export namespace mcr::options {
      */
     struct SslOptions {
         std::string        cert_file;                                  ///< Client certificate path.
-        util::SecureString cert_blob;                                  ///< In-memory client certificate.
+        utils::SecureString cert_blob;                                  ///< In-memory client certificate.
         std::string        cert_type;                                  ///< Client certificate encoding.
         std::string        key_file;                                   ///< Private-key path.
-        util::SecureString key_blob;                                   ///< In-memory private key.
+        utils::SecureString key_blob;                                   ///< In-memory private key.
         std::string        key_type;                                   ///< Private-key encoding.
-        util::SecureString key_pass;                                   ///< Private-key password.
+        utils::SecureString key_pass;                                   ///< Private-key password.
         std::string        pinned_public_key;                          ///< Public-key pin specification.
         bool               enable_alpn{ true };                        ///< Advertise ALPN.
         bool               verify_host{ true };                        ///< Verify the requested hostname.

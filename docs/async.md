@@ -3,6 +3,8 @@
 Import `mcr` or `mcr.async` to use `GlobalThreadPool`, `async`, and `Async`.
 The module re-exports `mcr.async_wrapper`, `mcr.singleton`, and `mcr.threadpool`
 and follows cpr's `include/cpr/async.h` and `cpr/async.cpp`.
+These library-level entry points use namespace `mcr`; the underlying thread pool,
+singleton, future wrapper, and their constants use `mcr::utils` (see [utility namespaces](utils.md)).
 
 ```cpp
 import std;
@@ -25,7 +27,7 @@ pool lazily; it does not start workers until `Startup`, `Start`, or submission.
 Copying and moving the pool are unavailable.
 
 `async<is_cancellable = false>(fn, args...)` forwards the callable and arguments
-to `ThreadPool::Submit` and returns `AsyncWrapper<Result, is_cancellable>`.
+to `mcr::utils::ThreadPool::Submit` and returns `mcr::utils::AsyncWrapper<Result, is_cancellable>`.
 The pool starts automatically if stopped. Arguments are decay-copied or moved,
 and member pointers, move-only callables/arguments/results, `void`, and reference
 results are supported. Use `std::ref` or `std::cref` to retain argument references.

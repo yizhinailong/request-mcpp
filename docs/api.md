@@ -9,11 +9,11 @@ HTTP 入口保留 cpr 的 `Get`、`Post` 等名称。
 | --- | --- | --- |
 | `Get` / `Post` / `Put` / `Head` / `Delete` / `Options` / `Patch` | `Response` | 临时 Session，同步请求 |
 | 各方法的 `*Async` | `AsyncResponse` | 全局线程池中的独立请求 |
-| 各方法的 `*Callback` | `AsyncWrapper<回调返回类型, true>` | 请求完成后在线程池任务中调用 continuation |
+| 各方法的 `*Callback` | `mcr::utils::AsyncWrapper<回调返回类型, true>` | 请求完成后在线程池任务中调用 continuation |
 | `MultiGet` / `MultiPost` / `MultiPut` / `MultiHead` / `MultiDelete` / `MultiOptions` / `MultiPatch` | `std::vector<Response>` | 由 MultiPerform 并发执行，结果保持参数顺序 |
-| 各批量方法的 `Multi*Async` | `std::vector<AsyncWrapper<Response, true>>` | 独立提交，可分别取消 |
+| 各批量方法的 `Multi*Async` | `std::vector<mcr::utils::AsyncWrapper<Response, true>>` | 独立提交，可分别取消 |
 | `Download(std::ofstream&, ...)` / `Download(WriteCallback const&, ...)` | `Response` | 同步下载，正文交给指定消费者 |
-| `DownloadAsync(fs::path, ...)` | `AsyncResponse` | 在线程池中打开、下载并关闭目标文件 |
+| `DownloadAsync(mcr::utils::fs::path, ...)` | `AsyncResponse` | 在线程池中打开、下载并关闭目标文件 |
 
 请求选项沿用 Session 的 `SetOption`。传输配置类型位于 `mcr::options`，详见[选项命名空间](options.md)：
 
@@ -80,7 +80,7 @@ auto result = tasks[0].Get();
 
 ```cpp
 auto task = mcr::DownloadAsync(
-    mcr::fs::path{ "response.bin" },
+    mcr::utils::fs::path{ "response.bin" },
     mcr::Url{ "http://127.0.0.1:8080/binary" }
 );
 auto metadata = task.Get();
@@ -100,7 +100,7 @@ curl 的全局初始化、清理和全局线程池生命周期沿用 [Session �
 
 | cpr 入口 | mcr 对应项 |
 | --- | --- |
-| `cpr::fs` | `mcr::fs = std::filesystem` |
+| `cpr::fs` | `mcr::utils::fs = std::filesystem` |
 | `CPR_VERSION` | `mcr::VERSION`，`std::string_view` |
 | `CPR_VERSION_MAJOR` / `MINOR` / `PATCH` | `mcr::VERSION_MAJOR` / `VERSION_MINOR` / `VERSION_PATCH` |
 | `CPR_VERSION_NUM` | `mcr::VERSION_NUM`，`0xAABBCC` |

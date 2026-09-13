@@ -64,7 +64,7 @@ export namespace mcr {
             if (!curl || !curl->handle) {
                 throw std::invalid_argument{ "mcr::Response requires an active curl holder." };
             }
-            header = util::parse_header(raw_header, &status_line, &reason);
+            header = utils::parse_header(raw_header, &status_line, &reason);
             auto* handle{ curl->handle };
             (void)curl_easy_getinfo(handle, CURLINFO_RESPONSE_CODE, &status_code);
             (void)curl_easy_getinfo(handle, CURLINFO_TOTAL_TIME, &elapsed);

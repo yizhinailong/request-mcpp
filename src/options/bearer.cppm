@@ -72,7 +72,7 @@ export namespace mcr::options {
         }
 
     protected:
-        util::SecureString m_token_string; ///< Owned token bytes, available for derived customization.
+        utils::SecureString m_token_string; ///< Owned token bytes, available for derived customization.
     };
 #endif
 

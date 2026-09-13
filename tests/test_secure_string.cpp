@@ -86,8 +86,8 @@ void operator delete[](void* storage, std::size_t) noexcept {
 
 namespace {
 
-    using mcr::util::SecureAllocator;
-    using mcr::util::SecureString;
+    using mcr::utils::SecureAllocator;
+    using mcr::utils::SecureString;
     using CharTraits = std::allocator_traits<SecureAllocator<char>>;
 
     static_assert(std::is_same_v<CharTraits::value_type, char>);

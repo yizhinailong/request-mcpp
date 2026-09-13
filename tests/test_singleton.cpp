@@ -14,9 +14,9 @@ namespace {
     }
 
     template <int Tag>
-    class TestSingleton final : public mcr::Singleton<TestSingleton<Tag>> {
+    class TestSingleton final : public mcr::utils::Singleton<TestSingleton<Tag>> {
     private:
-        friend mcr::Singleton<TestSingleton<Tag>>;
+        friend mcr::utils::Singleton<TestSingleton<Tag>>;
 
         TestSingleton() {
             if (++attempts == 1 && fail_first) {
@@ -36,9 +36,9 @@ namespace {
         ~TestSingleton() { ++destructions; }
     };
 
-    class PrivateSingleton final : public mcr::Singleton<PrivateSingleton> {
+    class PrivateSingleton final : public mcr::utils::Singleton<PrivateSingleton> {
     private:
-        friend mcr::Singleton<PrivateSingleton>;
+        friend mcr::utils::Singleton<PrivateSingleton>;
 
         PrivateSingleton() = default;
 
@@ -53,8 +53,8 @@ namespace {
     static_assert(!std::is_move_constructible_v<TestSingleton<0>>);
     static_assert(!std::is_copy_assignable_v<TestSingleton<0>>);
     static_assert(!std::is_move_assignable_v<TestSingleton<0>>);
-    static_assert(!std::is_default_constructible_v<mcr::Singleton<TestSingleton<0>>>);
-    static_assert(!std::is_destructible_v<mcr::Singleton<TestSingleton<0>>>);
+    static_assert(!std::is_default_constructible_v<mcr::utils::Singleton<TestSingleton<0>>>);
+    static_assert(!std::is_destructible_v<mcr::utils::Singleton<TestSingleton<0>>>);
     static_assert(!std::is_destructible_v<PrivateSingleton>);
     static_assert(std::is_same_v<decltype(TestSingleton<0>::GetInstance()), TestSingleton<0>*>);
     static_assert(std::is_same_v<decltype(TestSingleton<0>::ExitInstance()), void>);

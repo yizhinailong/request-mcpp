@@ -28,7 +28,7 @@ that choice. Actual support depends on the linked curl build and server.
 
 `Authentication` requires a username view, password view, and mode; there is
 no default constructor or default mode. It copies exactly the view lengths
-into owned `util::SecureString` storage, inserting one colon. Both empty views
+into owned `utils::SecureString` storage, inserting one colon. Both empty views
 produce `":"`; an empty username produces `":password"`; an empty password
 produces `"username:"`. Views need not be null-terminated. No URL encoding,
 Base64 encoding, escaping, trimming, or mode validation occurs.

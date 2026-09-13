@@ -17,9 +17,9 @@ export namespace mcr {
      * @note Singleton shutdown is explicit and permanent. Returned pointers are borrowed.
      * Shutdown must occur outside pool workers after other pool users stop accessing the instance.
      */
-    class GlobalThreadPool : public ThreadPool, public Singleton<GlobalThreadPool> {
+    class GlobalThreadPool : public utils::ThreadPool, public utils::Singleton<GlobalThreadPool> {
     private:
-        friend Singleton<GlobalThreadPool>;
+        friend utils::Singleton<GlobalThreadPool>;
 
     protected:
         /**
@@ -48,7 +48,7 @@ export namespace mcr {
      * not prevent or interrupt task execution. Submission and allocation exceptions propagate.
      */
     template <bool is_cancellable = false, typename Fn, typename... Args>
-    [[nodiscard]] auto async(Fn&& fn, Args&&... args) -> AsyncWrapper<std::invoke_result_t<std::decay_t<Fn>, std::decay_t<Args>...>, is_cancellable> {
+    [[nodiscard]] auto async(Fn&& fn, Args&&... args) -> utils::AsyncWrapper<std::invoke_result_t<std::decay_t<Fn>, std::decay_t<Args>...>, is_cancellable> {
         auto* pool{ GlobalThreadPool::GetInstance() };
         if (!pool) {
             throw std::logic_error{ "mcr::async: global thread pool has been cleaned up." };
@@ -58,9 +58,9 @@ export namespace mcr {
             // Allocate before submission so allocation failure cannot leave an unreturned task running.
             auto state{ std::make_shared<std::atomic_bool>(false) };
             auto future{ pool->Submit(std::forward<Fn>(fn), std::forward<Args>(args)...) };
-            return AsyncWrapper<ReturnType, true>{ std::move(future), std::move(state) };
+            return utils::AsyncWrapper<ReturnType, true>{ std::move(future), std::move(state) };
         } else {
-            return AsyncWrapper<ReturnType, false>{ pool->Submit(std::forward<Fn>(fn), std::forward<Args>(args)...) };
+            return utils::AsyncWrapper<ReturnType, false>{ pool->Submit(std::forward<Fn>(fn), std::forward<Args>(args)...) };
         }
     }
 
@@ -82,9 +82,9 @@ export namespace mcr {
          * Initialization and worker creation exceptions propagate.
          */
         static auto Startup(
-            std::size_t               min_threads = DEFAULT_THREAD_POOL_MIN_THREAD_NUM,
-            std::size_t               max_threads = DEFAULT_THREAD_POOL_MAX_THREAD_NUM,
-            std::chrono::milliseconds max_idle_ms = DEFAULT_THREAD_POOL_MAX_IDLE_TIME
+            std::size_t               min_threads = utils::DEFAULT_THREAD_POOL_MIN_THREAD_NUM,
+            std::size_t               max_threads = utils::DEFAULT_THREAD_POOL_MAX_THREAD_NUM,
+            std::chrono::milliseconds max_idle_ms = utils::DEFAULT_THREAD_POOL_MAX_IDLE_TIME
         ) -> void {
             auto* pool{ GlobalThreadPool::GetInstance() };
             if (!pool) {

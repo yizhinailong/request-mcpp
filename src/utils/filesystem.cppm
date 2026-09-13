@@ -5,6 +5,6 @@
 export module mcr.filesystem;
 import std;
 
-export namespace mcr {
+export namespace mcr::utils {
     namespace fs = std::filesystem; ///< C++23 always provides the standard filesystem API.
 }

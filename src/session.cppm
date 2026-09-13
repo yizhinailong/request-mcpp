@@ -50,7 +50,7 @@ import std;
 
 export namespace mcr {
 
-    using AsyncResponse = AsyncWrapper<Response>;                                           ///< Asynchronous transfer result.
+    using AsyncResponse = utils::AsyncWrapper<Response>;                                    ///< Asynchronous transfer result.
     using Content       = std::variant<std::monostate, Payload, Body, BodyView, Multipart>; ///< Persistent request content.
 
     class Session;
@@ -754,7 +754,7 @@ export namespace mcr {
             curl_slist* raw_cookies{ nullptr };
             checkCurl(curl_easy_getinfo(m_curl->handle, CURLINFO_COOKIELIST, &raw_cookies));
             CurlList    owned_cookies{ raw_cookies, &curl_slist_free_all };
-            auto        cookies{ util::parse_cookies(owned_cookies.get()) };
+            auto        cookies{ utils::parse_cookies(owned_cookies.get()) };
             std::string error_message{ m_curl->error.data() };
             if (curl_error != CURLE_OK && error_message.empty()) {
                 error_message = curl_easy_strerror(curl_error);
@@ -1357,8 +1357,8 @@ export namespace mcr {
             setOption(CURLOPT_PROXY, m_proxies.Has(protocol) ? m_proxies[protocol].c_str() : nullptr);
             if (m_proxies.Has(protocol) && m_proxy_auth.Has(protocol)) {
                 // CURLOPT_PROXYUSERNAME/PASSWORD expect raw bytes, unlike credentials inside a proxy URL.
-                auto const username{ util::url_decode(m_proxy_auth.GetUsernameUnderlying(protocol)) };
-                auto const password{ util::url_decode(m_proxy_auth.GetPasswordUnderlying(protocol)) };
+                auto const username{ utils::url_decode(m_proxy_auth.GetUsernameUnderlying(protocol)) };
+                auto const password{ utils::url_decode(m_proxy_auth.GetPasswordUnderlying(protocol)) };
                 setOption(CURLOPT_PROXYUSERNAME, username.c_str());
                 setOption(CURLOPT_PROXYPASSWORD, password.c_str());
             } else {
@@ -1520,7 +1520,7 @@ export namespace mcr {
                 std::string_view const bytes{ data, length };
                 if (self.m_downloading) {
                     if (self.m_download_file) {
-                        return util::write_file_function(data, size, count, self.m_download_file);
+                        return utils::write_file_function(data, size, count, self.m_download_file);
                     }
                     return self.m_download_write(bytes) ? length : 0;
                 }

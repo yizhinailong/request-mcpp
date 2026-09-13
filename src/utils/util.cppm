@@ -17,7 +17,7 @@ export import mcr.types;
 
 import std;
 
-namespace mcr::util::detail {
+namespace mcr::utils::detail {
 
     /**
      * @brief Remove trailing HTTP whitespace.
@@ -29,7 +29,7 @@ namespace mcr::util::detail {
         return end == std::string_view::npos ? std::string_view{} : text.substr(0, end + 1);
     }
 
-} // namespace mcr::util::detail
+} // namespace mcr::utils::detail
 
 /**
  * @brief Utilities following cpr::util, with snake_case free-function names.
@@ -37,7 +37,7 @@ namespace mcr::util::detail {
  * throughout invocation. As in cpr, exceptions propagate on direct calls; callbacks installed
  * in curl must not throw across the C library boundary. Buffer sizes must fit std::size_t.
  */
-export namespace mcr::util {
+export namespace mcr::utils {
 
     /**
      * @brief Parse the last response header block, replacing duplicate names without regard to case.
@@ -139,7 +139,7 @@ export namespace mcr::util {
         std::string const text{ timestamp };
         auto const        checked = [](auto value) -> std::time_t {
             if (!std::in_range<std::time_t>(value)) {
-                throw std::out_of_range{ "mcr::util::s_timestamp_to_t: timestamp exceeds time_t range." };
+                throw std::out_of_range{ "mcr::utils::s_timestamp_to_t: timestamp exceeds time_t range." };
             }
             return static_cast<std::time_t>(value);
         };
@@ -312,4 +312,4 @@ export namespace mcr::util {
         return holder.UrlDecode(input);
     }
 
-} // namespace mcr::util
+} // namespace mcr::utils

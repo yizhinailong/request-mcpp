@@ -13,8 +13,8 @@ static_assert(std::is_nothrow_move_constructible_v<mcr::CurlHolder>);
 static_assert(std::is_nothrow_move_assignable_v<mcr::CurlHolder>);
 static_assert(std::is_nothrow_destructible_v<mcr::CurlHolder>);
 static_assert(std::is_same_v<decltype(mcr::CurlHolder::error), std::array<char, CURL_ERROR_SIZE>>);
-static_assert(std::is_same_v<decltype(std::declval<mcr::CurlHolder const&>().UrlEncode({})), mcr::util::SecureString>);
-static_assert(std::is_same_v<decltype(std::declval<mcr::CurlHolder const&>().UrlDecode({})), mcr::util::SecureString>);
+static_assert(std::is_same_v<decltype(std::declval<mcr::CurlHolder const&>().UrlEncode({})), mcr::utils::SecureString>);
+static_assert(std::is_same_v<decltype(std::declval<mcr::CurlHolder const&>().UrlDecode({})), mcr::utils::SecureString>);
 
 namespace {
 
@@ -86,7 +86,7 @@ namespace {
         return condition;
     }
 
-    auto view(mcr::util::SecureString const& value) -> std::string_view {
+    auto view(mcr::utils::SecureString const& value) -> std::string_view {
         return { value.data(), value.size() };
     }
 

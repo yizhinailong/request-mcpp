@@ -6,7 +6,7 @@ export module mcr.threadpool;
 
 import std;
 
-export namespace mcr {
+export namespace mcr::utils {
 
     inline constexpr std::size_t               DEFAULT_THREAD_POOL_MIN_THREAD_NUM{ 1 };                                                   ///< Default minimum worker count.
     inline const std::size_t                   DEFAULT_THREAD_POOL_MAX_THREAD_NUM{ (std::max)(1u, std::thread::hardware_concurrency()) }; ///< Default maximum, including a fallback when hardware concurrency is unknown.
@@ -308,7 +308,7 @@ export namespace mcr {
             try {
                 std::scoped_lock lock{ m_mutex };
                 if (m_status == Status::STOPPING) {
-                    throw std::runtime_error{ "mcr::ThreadPool: cannot submit while stopping" };
+                    throw std::runtime_error{ "mcr::utils::ThreadPool: cannot submit while stopping" };
                 }
                 collectFinished(retired);
                 if (m_status == Status::STOPPED) {
@@ -336,7 +336,7 @@ export namespace mcr {
          */
         static void validateLimits(std::size_t min_threads, std::size_t max_threads) {
             if (max_threads == 0 || min_threads > max_threads) {
-                throw std::invalid_argument{ "mcr::ThreadPool: require 0 <= min_threads <= max_threads and max_threads > 0" };
+                throw std::invalid_argument{ "mcr::utils::ThreadPool: require 0 <= min_threads <= max_threads and max_threads > 0" };
             }
         }
 
@@ -345,7 +345,7 @@ export namespace mcr {
          */
         static void validateIdleTime(std::chrono::milliseconds ms) {
             if (ms <= std::chrono::milliseconds::zero()) {
-                throw std::invalid_argument{ "mcr::ThreadPool: max idle time must be positive" };
+                throw std::invalid_argument{ "mcr::utils::ThreadPool: max idle time must be positive" };
             }
         }
 
@@ -354,7 +354,7 @@ export namespace mcr {
          */
         void checkExternalWait() const {
             if (s_current_pool == this) {
-                throw std::logic_error{ "mcr::ThreadPool: a worker cannot Wait or Stop its own pool" };
+                throw std::logic_error{ "mcr::utils::ThreadPool: a worker cannot Wait or Stop its own pool" };
             }
         }
 
@@ -481,4 +481,4 @@ export namespace mcr {
         }
     };
 
-} // namespace mcr
+} // namespace mcr::utils

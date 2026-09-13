@@ -5,15 +5,15 @@
 import std;
 import mcr;
 
-static_assert(std::is_base_of_v<mcr::ThreadPool, mcr::GlobalThreadPool>);
-static_assert(std::is_base_of_v<mcr::Singleton<mcr::GlobalThreadPool>, mcr::GlobalThreadPool>);
+static_assert(std::is_base_of_v<mcr::utils::ThreadPool, mcr::GlobalThreadPool>);
+static_assert(std::is_base_of_v<mcr::utils::Singleton<mcr::GlobalThreadPool>, mcr::GlobalThreadPool>);
 static_assert(!std::is_default_constructible_v<mcr::GlobalThreadPool>);
 static_assert(!std::is_copy_constructible_v<mcr::GlobalThreadPool>);
 static_assert(!std::is_move_constructible_v<mcr::GlobalThreadPool>);
 static_assert(std::has_virtual_destructor_v<mcr::GlobalThreadPool>);
-static_assert(std::is_same_v<decltype(mcr::async([] { return 42; })), mcr::AsyncWrapper<int, false>>);
-static_assert(std::is_same_v<decltype(mcr::async<true>([] {})), mcr::AsyncWrapper<void, true>>);
-static_assert(std::is_same_v<decltype(mcr::async([](int& value) -> int& { return value; }, std::declval<std::reference_wrapper<int>>())), mcr::AsyncWrapper<int&, false>>);
+static_assert(std::is_same_v<decltype(mcr::async([] { return 42; })), mcr::utils::AsyncWrapper<int, false>>);
+static_assert(std::is_same_v<decltype(mcr::async<true>([] {})), mcr::utils::AsyncWrapper<void, true>>);
+static_assert(std::is_same_v<decltype(mcr::async([](int& value) -> int& { return value; }, std::declval<std::reference_wrapper<int>>())), mcr::utils::AsyncWrapper<int&, false>>);
 
 namespace {
 
@@ -41,9 +41,9 @@ namespace {
         require(worker.Get() != std::this_thread::get_id(), "async must lazily start the global pool and run on a worker");
         auto* pool{ mcr::GlobalThreadPool::GetInstance() };
         require(pool && pool == mcr::GlobalThreadPool::GetInstance() && pool->IsStarted(), "submissions and direct access must share one started pool");
-        require(pool->GetMinThreadNum() == mcr::DEFAULT_THREAD_POOL_MIN_THREAD_NUM && pool->GetMaxThreadNum() == mcr::DEFAULT_THREAD_POOL_MAX_THREAD_NUM && pool->GetMaxIdleTime() == mcr::DEFAULT_THREAD_POOL_MAX_IDLE_TIME, "lazy startup must use the existing thread-pool defaults");
+        require(pool->GetMinThreadNum() == mcr::utils::DEFAULT_THREAD_POOL_MIN_THREAD_NUM && pool->GetMaxThreadNum() == mcr::utils::DEFAULT_THREAD_POOL_MAX_THREAD_NUM && pool->GetMaxIdleTime() == mcr::utils::DEFAULT_THREAD_POOL_MAX_IDLE_TIME, "lazy startup must use the existing thread-pool defaults");
         mcr::Async::Startup(99, 0, 0ms);
-        require(pool->GetMinThreadNum() == mcr::DEFAULT_THREAD_POOL_MIN_THREAD_NUM, "startup must ignore arguments when the pool is already running");
+        require(pool->GetMinThreadNum() == mcr::utils::DEFAULT_THREAD_POOL_MIN_THREAD_NUM, "startup must ignore arguments when the pool is already running");
         pool->Stop();
         pool->SetMinThreadNum(0);
         pool->SetMaxThreadNum(1);
@@ -65,7 +65,7 @@ namespace {
         require(mcr::async([] { return 7; }).Get() == 7, "submission must create a worker when the started pool has no workers");
         pool->Stop();
         mcr::Async::Startup();
-        require(pool->GetMinThreadNum() == mcr::DEFAULT_THREAD_POOL_MIN_THREAD_NUM && pool->GetMaxThreadNum() == mcr::DEFAULT_THREAD_POOL_MAX_THREAD_NUM && pool->GetMaxIdleTime() == mcr::DEFAULT_THREAD_POOL_MAX_IDLE_TIME, "default startup must restore all default settings on a stopped pool");
+        require(pool->GetMinThreadNum() == mcr::utils::DEFAULT_THREAD_POOL_MIN_THREAD_NUM && pool->GetMaxThreadNum() == mcr::utils::DEFAULT_THREAD_POOL_MAX_THREAD_NUM && pool->GetMaxIdleTime() == mcr::utils::DEFAULT_THREAD_POOL_MAX_IDLE_TIME, "default startup must restore all default settings on a stopped pool");
         pool->Stop();
         mcr::Async::Startup(1, 3, 100ms);
     }
@@ -131,8 +131,8 @@ namespace {
         auto calls{ std::make_shared<std::atomic_int>(0) };
         auto cancelled{ mcr::async<true>([calls] { return ++*calls; }) };
         auto unaffected{ mcr::async<true>([] { return 42; }) };
-        require(cancelled.Cancel() == mcr::CancellationResult::success && cancelled.IsCancelled() && !cancelled.Valid(), "cancelling must update wrapper state before queued execution");
-        require(cancelled.Cancel() == mcr::CancellationResult::invalid_operation && unaffected.Valid() && !unaffected.IsCancelled(), "cancellation flags must be independent and repeated requests must report invalid_operation");
+        require(cancelled.Cancel() == mcr::utils::CancellationResult::success && cancelled.IsCancelled() && !cancelled.Valid(), "cancelling must update wrapper state before queued execution");
+        require(cancelled.Cancel() == mcr::utils::CancellationResult::invalid_operation && unaffected.Valid() && !unaffected.IsCancelled(), "cancellation flags must be independent and repeated requests must report invalid_operation");
         require(rejects<std::logic_error>([&] { (void)cancelled.Get(); }) && rejects<std::logic_error>([&] { cancelled.Wait(); }), "cancelled wrappers must reject result access and waits");
         auto shared{ cancelled.Share() };
         {
@@ -158,7 +158,7 @@ namespace {
         auto const cancellation{ running.Cancel() };
         auto       running_result{ running.Share() };
         release->set_value();
-        require(did_start && cancellation == mcr::CancellationResult::success && running_result.get() == 23, "cancelling an active wrapper must not interrupt its callable");
+        require(did_start && cancellation == mcr::utils::CancellationResult::success && running_result.get() == 23, "cancelling an active wrapper must not interrupt its callable");
     }
 
     auto check_cleanup() -> void {

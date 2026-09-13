@@ -5,9 +5,9 @@
 import std;
 import mcr;
 
-static_assert(!std::is_copy_constructible_v<mcr::ThreadPool>);
-static_assert(!std::is_move_constructible_v<mcr::ThreadPool>);
-static_assert(std::has_virtual_destructor_v<mcr::ThreadPool>);
+static_assert(!std::is_copy_constructible_v<mcr::utils::ThreadPool>);
+static_assert(!std::is_move_constructible_v<mcr::utils::ThreadPool>);
+static_assert(std::has_virtual_destructor_v<mcr::utils::ThreadPool>);
 
 namespace {
     using namespace std::chrono_literals;
@@ -54,12 +54,12 @@ namespace {
     }
 
     void check_configuration() {
-        rejects_configuration([] { mcr::ThreadPool pool{ 0, 0 }; });
-        rejects_configuration([] { mcr::ThreadPool pool{ 3, 2 }; });
-        rejects_configuration([] { mcr::ThreadPool pool{ 1, 2, 0ms }; });
-        rejects_configuration([] { mcr::ThreadPool pool{ 1, 2, -1ms }; });
+        rejects_configuration([] { mcr::utils::ThreadPool pool{ 0, 0 }; });
+        rejects_configuration([] { mcr::utils::ThreadPool pool{ 3, 2 }; });
+        rejects_configuration([] { mcr::utils::ThreadPool pool{ 1, 2, 0ms }; });
+        rejects_configuration([] { mcr::utils::ThreadPool pool{ 1, 2, -1ms }; });
 
-        mcr::ThreadPool pool{ 1, 3, 40ms };
+        mcr::utils::ThreadPool pool{ 1, 3, 40ms };
         require(pool.IsStopped() && !pool.IsStarted(), "construction must not start workers");
         require(pool.GetCurrentThreadNum() == 0 && pool.GetIdleThreadNum() == 0, "a stopped pool must have no workers");
         rejects_configuration([&] { pool.SetMinThreadNum(4); });
@@ -80,7 +80,7 @@ namespace {
     }
 
     void check_tasks() {
-        mcr::ThreadPool pool{ 1, 4 };
+        mcr::utils::ThreadPool pool{ 1, 4 };
         require(pool.Submit([](int a, int b) { return a + b; }, 20, 22).get() == 42, "Submit must automatically start a stopped pool and return a result");
 
         auto moved_argument = pool.Submit([](std::unique_ptr<int> value) { return *value; }, std::make_unique<int>(7));
@@ -134,7 +134,7 @@ namespace {
     }
 
     void check_pause_and_wait() {
-        mcr::ThreadPool pool{ 1, 3 };
+        mcr::utils::ThreadPool pool{ 1, 3 };
         pool.Start();
         for (int round{ 0 }; round < 20; ++round) {
             pool.Pause();
@@ -157,7 +157,7 @@ namespace {
     }
 
     void check_growth_and_retirement() {
-        mcr::ThreadPool                pool{ 1, 4, 30ms };
+        mcr::utils::ThreadPool         pool{ 1, 4, 30ms };
         std::promise<void>             release;
         auto                           gate = release.get_future().share();
         std::atomic<int>               entered{ 0 };
@@ -180,11 +180,11 @@ namespace {
         require(eventually([&] { return pool.GetCurrentThreadNum() == 0; }), "a zero minimum must allow all idle workers to retire");
         require(pool.IsStarted() && pool.Submit([] { return 17; }).get() == 17, "a pool with no remaining workers must accept new tasks");
 
-        mcr::ThreadPool dormant{ 0, 2, 10ms };
+        mcr::utils::ThreadPool dormant{ 0, 2, 10ms };
         dormant.Start();
         require(dormant.GetCurrentThreadNum() == 0 && dormant.Submit([] { return true; }).get(), "zero-minimum startup must still schedule the first task");
 
-        mcr::ThreadPool long_idle{ 0, 1, std::chrono::milliseconds::max() };
+        mcr::utils::ThreadPool long_idle{ 0, 1, std::chrono::milliseconds::max() };
         long_idle.Start(1);
         std::this_thread::sleep_for(10ms);
         require(long_idle.GetCurrentThreadNum() == 1, "large idle durations must not overflow into immediate retirement");
@@ -193,7 +193,7 @@ namespace {
     }
 
     void check_concurrent_submit() {
-        mcr::ThreadPool                              pool{ 1, 4, 20ms };
+        mcr::utils::ThreadPool                       pool{ 1, 4, 20ms };
         std::array<std::atomic<int>, 400>            counts{};
         std::array<std::vector<std::future<int>>, 4> results;
         std::vector<std::jthread>                    producers;
@@ -217,7 +217,7 @@ namespace {
     }
 
     void check_stop_and_restart() {
-        mcr::ThreadPool    pool{ 1, 1 };
+        mcr::utils::ThreadPool pool{ 1, 1 };
         std::promise<void> release;
         auto               gate = release.get_future().share();
         std::atomic<bool>  entered{ false };
@@ -248,7 +248,7 @@ namespace {
         std::future<int> abandoned;
         std::atomic<int> canceled_runs{ 0 };
         {
-            mcr::ThreadPool paused{ 1, 1 };
+            mcr::utils::ThreadPool paused{ 1, 1 };
             paused.Start();
             paused.Pause();
             abandoned = paused.Submit([] { return 5; });

@@ -6,7 +6,7 @@ export module mcr.singleton;
 
 import std;
 
-export namespace mcr {
+export namespace mcr::utils {
 
     /**
      * @brief Provide cpr's singleton lifecycle without declaration or implementation macros.
@@ -61,7 +61,7 @@ export namespace mcr {
         static void ExitInstance() {
             std::call_once(s_exit_flag, [] {
                 if (s_instance == nullptr) {
-                    throw std::logic_error{ "mcr::Singleton: ExitInstance requires successful initialization" };
+                    throw std::logic_error{ "mcr::utils::Singleton: ExitInstance requires successful initialization" };
                 }
                 delete s_instance;
                 s_instance = nullptr;
@@ -69,4 +69,4 @@ export namespace mcr {
         }
     };
 
-} // namespace mcr
+} // namespace mcr::utils

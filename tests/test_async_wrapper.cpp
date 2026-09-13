@@ -5,11 +5,11 @@
 import std;
 import mcr;
 
-using PlainResult       = mcr::AsyncWrapper<int>;
-using CancellableResult = mcr::AsyncWrapper<int, true>;
+using PlainResult       = mcr::utils::AsyncWrapper<int>;
+using CancellableResult = mcr::utils::AsyncWrapper<int, true>;
 
-static_assert(std::is_same_v<decltype(mcr::AsyncWrapper{ std::future<int>{} }), PlainResult>);
-static_assert(std::is_same_v<decltype(mcr::AsyncWrapper{ std::future<int>{}, std::shared_ptr<std::atomic_bool>{} }), CancellableResult>);
+static_assert(std::is_same_v<decltype(mcr::utils::AsyncWrapper{ std::future<int>{} }), PlainResult>);
+static_assert(std::is_same_v<decltype(mcr::utils::AsyncWrapper{ std::future<int>{}, std::shared_ptr<std::atomic_bool>{} }), CancellableResult>);
 static_assert(std::is_default_constructible_v<PlainResult>);
 static_assert(!std::is_default_constructible_v<CancellableResult>);
 static_assert(!std::is_convertible_v<std::future<int>, PlainResult>);
@@ -18,19 +18,19 @@ static_assert(!std::is_copy_constructible_v<PlainResult> && !std::is_copy_assign
 static_assert(!std::is_copy_constructible_v<CancellableResult> && !std::is_copy_assignable_v<CancellableResult>);
 static_assert(std::is_nothrow_move_constructible_v<PlainResult> && std::is_nothrow_move_assignable_v<PlainResult>);
 static_assert(std::is_nothrow_move_constructible_v<CancellableResult> && std::is_nothrow_move_assignable_v<CancellableResult>);
-static_assert(std::is_same_v<decltype(std::declval<mcr::AsyncWrapper<void>&>().Get()), void>);
-static_assert(std::is_same_v<decltype(std::declval<mcr::AsyncWrapper<int&>&>().Get()), int&>);
+static_assert(std::is_same_v<decltype(std::declval<mcr::utils::AsyncWrapper<void>&>().Get()), void>);
+static_assert(std::is_same_v<decltype(std::declval<mcr::utils::AsyncWrapper<int&>&>().Get()), int&>);
 static_assert(noexcept(std::declval<PlainResult&>().Share()));
 static_assert(noexcept(std::declval<CancellableResult const&>().Valid()));
-static_assert(std::is_same_v<std::underlying_type_t<mcr::CancellationResult>, std::uint8_t>);
-static_assert(static_cast<int>(mcr::CancellationResult::failure) == 0);
-static_assert(static_cast<int>(mcr::CancellationResult::success) == 1);
-static_assert(static_cast<int>(mcr::CancellationResult::invalid_operation) == 2);
+static_assert(std::is_same_v<std::underlying_type_t<mcr::utils::CancellationResult>, std::uint8_t>);
+static_assert(static_cast<int>(mcr::utils::CancellationResult::failure) == 0);
+static_assert(static_cast<int>(mcr::utils::CancellationResult::success) == 1);
+static_assert(static_cast<int>(mcr::utils::CancellationResult::invalid_operation) == 2);
 
 namespace {
 
     using namespace std::chrono_literals;
-    using CancelResult = mcr::CancellationResult;
+    using CancelResult = mcr::utils::CancellationResult;
 
     auto require(bool condition, std::string_view message) -> void {
         if (!condition) {
@@ -44,7 +44,7 @@ namespace {
             function();
         } catch (std::logic_error const& error) {
             std::string_view const message{ error.what() };
-            require(message.starts_with("mcr::AsyncWrapper::") && message.contains(reason), "invalid/cancelled access must provide the wrapper's operation diagnostic");
+            require(message.starts_with("mcr::utils::AsyncWrapper::") && message.contains(reason), "invalid/cancelled access must provide the wrapper's operation diagnostic");
             return;
         }
         throw std::runtime_error{ "invalid/cancelled access must throw logic_error" };
@@ -60,11 +60,11 @@ namespace {
     }
 
     template <bool Cancellable, typename T>
-    auto wrap(std::future<T>&& future) -> mcr::AsyncWrapper<T, Cancellable> {
+    auto wrap(std::future<T>&& future) -> mcr::utils::AsyncWrapper<T, Cancellable> {
         if constexpr (Cancellable) {
-            return mcr::AsyncWrapper{ std::move(future), std::make_shared<std::atomic_bool>(false) };
+            return mcr::utils::AsyncWrapper{ std::move(future), std::make_shared<std::atomic_bool>(false) };
         } else {
-            return mcr::AsyncWrapper{ std::move(future) };
+            return mcr::utils::AsyncWrapper{ std::move(future) };
         }
     }
 
@@ -364,11 +364,11 @@ namespace {
     }
 
     auto check_thread_pool_results() -> void {
-        mcr::ThreadPool pool{ 1, 1 };
-        auto            result{ mcr::AsyncWrapper{ pool.Submit([] { return 84; }) } };
+        mcr::utils::ThreadPool pool{ 1, 1 };
+        auto                   result{ mcr::utils::AsyncWrapper{ pool.Submit([] { return 84; }) } };
         require(result.Get() == 84, "wrappers must accept futures returned by the existing thread pool");
         (void)pool.Pause();
-        auto cancelled{ mcr::AsyncWrapper{ pool.Submit([] { return 0; }) } };
+        auto cancelled{ mcr::utils::AsyncWrapper{ pool.Submit([] { return 0; }) } };
         (void)pool.Stop();
         bool propagated{ false };
         try {

@@ -6,7 +6,7 @@ export module mcr.secure_string;
 
 import std;
 
-export namespace mcr::util {
+export namespace mcr::utils {
 
     /**
      * @brief Overwrite every allocated byte before returning storage to std::allocator.
@@ -127,4 +127,4 @@ export namespace mcr::util {
      */
     using SecureString = std::basic_string<char, std::char_traits<char>, SecureAllocator<char>>;
 
-} // namespace mcr::util
+} // namespace mcr::utils

@@ -8,7 +8,7 @@ import mcr;
 import mcr.version;
 import mcr.filesystem;
 
-static_assert(std::same_as<mcr::fs::path, std::filesystem::path>);
+static_assert(std::same_as<mcr::utils::fs::path, std::filesystem::path>);
 static_assert(mcr::VERSION_NUM == (mcr::VERSION_MAJOR << 16 | mcr::VERSION_MINOR << 8 | mcr::VERSION_PATCH));
 static_assert(mcr::CURL_VERSION_NUM == LIBCURL_VERSION_NUM);
 static_assert(!mcr::VERSION.empty());

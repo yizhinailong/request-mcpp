@@ -1,0 +1,33 @@
+# 基础工具命名空间
+
+`src/utils/` 中的公开类型、函数和常量统一使用 `mcr::utils` 命名空间。
+各模块保持现有导入名，`import mcr;` 仍导出全部工具接口。
+
+| 模块导入名 | 主要接口 |
+| --- | --- |
+| `mcr.secure_string` | `mcr::utils::SecureAllocator<T>`、`mcr::utils::SecureString` |
+| `mcr.singleton` | `mcr::utils::Singleton<T>` |
+| `mcr.threadpool` | `mcr::utils::ThreadPool` 和 `DEFAULT_THREAD_POOL_*` 常量 |
+| `mcr.async_wrapper` | `mcr::utils::AsyncWrapper<T>`、`mcr::utils::CancellationResult` |
+| `mcr.filesystem` | `mcr::utils::fs`，即 `std::filesystem` 的别名 |
+| `mcr.util` | `mcr::utils::parse_header`、URL 编解码和 curl 回调适配函数 |
+
+```cpp
+import std;
+import mcr;
+
+mcr::utils::ThreadPool pool{ 1, 2 };
+auto result = mcr::utils::AsyncWrapper{ pool.Submit([] { return 42; }) };
+std::println("{}", result.Get());
+
+mcr::utils::SecureString token{ "example-token" };
+mcr::utils::fs::path destination{ "response.bin" };
+auto encoded = mcr::utils::url_encode("hello world");
+```
+
+迁移调用时，将原 `mcr::util` 下的名称改为 `mcr::utils`，将原 `mcr` 下的
+`ThreadPool`、`Singleton`、`AsyncWrapper`、`CancellationResult`、
+`DEFAULT_THREAD_POOL_*` 和 `fs` 移至 `mcr::utils`。旧命名空间不提供兼容别名。
+
+库级异步入口继续使用 `mcr::async`、`mcr::Async` 和 `mcr::GlobalThreadPool`。
+`mcr::AsyncResponse` 是 `mcr::utils::AsyncWrapper<mcr::Response>` 的别名。

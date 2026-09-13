@@ -20,7 +20,7 @@ Older headers produce a module without `Bearer`. Importing the module does
 not export the version macro or reevaluate the condition in the consumer.
 
 The non-explicit constructor copies exactly the bytes of a `std::string_view`
-into `util::SecureString`. Views need not be null-terminated, and their backing
+into `utils::SecureString`. Views need not be null-terminated, and their backing
 storage need not outlive the object. There is no default constructor; use an
 empty view to store an empty token. Whitespace, UTF-8, colons, and embedded nulls
 are preserved without normalization or validation. No `Bearer ` prefix, URL

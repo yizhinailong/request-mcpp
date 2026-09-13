@@ -1,6 +1,6 @@
 # AsyncWrapper
 
-Import `mcr` or `mcr.async_wrapper` to use `AsyncWrapper<RetType, is_cancellable>`.
+Import `mcr` or `mcr.async_wrapper` to use `mcr::utils::AsyncWrapper<RetType, is_cancellable>`.
 It follows cpr's `include/cpr/async_wrapper.h` and owns a `std::future<RetType>`.
 Wrappers can be moved, but cannot be copied. Results may be values, references,
 `void`, or move-only types.
@@ -9,14 +9,14 @@ Wrappers can be moved, but cannot be copied. Results may be values, references,
 import std;
 import mcr;
 
-mcr::ThreadPool pool{ 1, 2 };
-auto result = mcr::AsyncWrapper{ pool.Submit([] { return 42; }) };
+mcr::utils::ThreadPool pool{ 1, 2 };
+auto result = mcr::utils::AsyncWrapper{ pool.Submit([] { return 42; }) };
 result.Wait();
 std::println("{}", result.Get());
 
 auto state = std::make_shared<std::atomic_bool>(false);
 auto future = pool.Submit([state] { return state->load() ? 0 : 7; });
-auto cancellable = mcr::AsyncWrapper{ std::move(future), std::shared_ptr{ state } };
+auto cancellable = mcr::utils::AsyncWrapper{ std::move(future), std::shared_ptr{ state } };
 auto cancellation = cancellable.Cancel();
 ```
 

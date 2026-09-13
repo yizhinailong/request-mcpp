@@ -24,12 +24,12 @@ export namespace mcr::options {
 
     /**
      * @brief Own raw username:password bytes and an authentication policy, following cpr.
-     * @note Uses util::SecureString storage; its allocator wipes released heap allocations.
+     * @note Uses utils::SecureString storage; its allocator wipes released heap allocations.
      * Credentials and mode are retained without encoding, normalization, or validation.
      */
     class Authentication {
     private:
-        util::SecureString m_auth_string; ///< Owned credentials, including the colon separator.
+        utils::SecureString m_auth_string; ///< Owned credentials, including the colon separator.
         AuthMode           m_auth_mode;   ///< Selected authentication policy.
 
     public:

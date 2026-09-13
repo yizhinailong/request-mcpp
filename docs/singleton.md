@@ -1,12 +1,12 @@
 # Singleton
 
-Import `mcr` or `mcr.singleton` and derive from `mcr::Singleton<T>`:
+Import `mcr` or `mcr.singleton` and derive from `mcr::utils::Singleton<T>`:
 
 ```cpp
 import mcr;
 
-class Service final : public mcr::Singleton<Service> {
-    friend mcr::Singleton<Service>;
+class Service final : public mcr::utils::Singleton<Service> {
+    friend mcr::utils::Singleton<Service>;
 
     Service() = default;
     ~Service() = default;
@@ -40,7 +40,7 @@ Concurrent `GetInstance()` calls are supported, as are concurrent
 all `GetInstance()` calls before starting shutdown. Returned pointers do not
 extend the lifetime of the instance.
 
-Intentional differences from cpr are the C++23 modules, namespace `mcr`, and
+Intentional differences from cpr are the C++23 modules, namespace `mcr::utils`, and
 CRTP inheritance instead of macros. Calling `ExitInstance()` before successful
 initialization throws `std::logic_error` instead of using cpr's debug-only
 assertion. This rejected call leaves both initialization and shutdown available.

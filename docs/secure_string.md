@@ -1,14 +1,14 @@
 # Secure string
 
-Import `mcr` or `mcr.secure_string` to use `mcr::util::SecureAllocator<T>` and
-`mcr::util::SecureString`, following cpr's `include/cpr/secure_string.h`.
+Import `mcr` or `mcr.secure_string` to use `mcr::utils::SecureAllocator<T>` and
+`mcr::utils::SecureString`, following cpr's `include/cpr/secure_string.h`.
 
 ```cpp
 import std;
 import mcr;
 
 int main() {
-    mcr::util::SecureString credentials{ "username" };
+    mcr::utils::SecureString credentials{ "username" };
     credentials += ':';
     credentials += std::string_view{ "password" };
     std::string_view view{ credentials }; // Borrows storage; does not extend its lifetime.
@@ -41,7 +41,7 @@ passes through the allocator and is not wiped. `clear()`, `erase()`, shrinking
 `resize()`, and assignment can retain allocations and old text. This alias
 does not lock memory, clear source buffers, or erase external copies.
 
-Intentional differences from cpr are C++23 modules and namespace `mcr::util`,
+Intentional differences from cpr are C++23 modules and namespace `mcr::utils`,
 plus volatile byte stores in place of `std::fill_n(p, n, T{})`. Byte stores
 avoid removable ordinary clearing writes, cover the complete allocation,
 and do not assign to elements after their lifetimes have ended. Allocation
