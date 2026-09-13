@@ -6,11 +6,14 @@
 
 ## Project Structure & Module Organization
 
-The current tree is an initial scaffold; `mcpp.toml` still names the package `hello`.
+Source files are grouped by responsibility. Moving a file between directories does not change its public module name or namespace.
 
-- `src/main.cpp`: application entry point; uses `import std;` and `std::println`.
-- `tests/test_smoke.cpp`: standalone smoke test. Add tests under `tests/`.
-- `mcpp.toml`: package metadata and future dependency declarations.
+- `src/mcr.cppm`: library entry module re-exporting the public interfaces.
+- `src/options/`: request transfer configuration, including verbosity, timeouts, redirects, protocol selection, authentication, proxies, and TLS options. Each option keeps its own module file.
+- `src/utils/`: HTTP parsing and curl callback utility functions.
+- `src/`: sessions, responses, request data, callbacks, and supporting runtime modules.
+- `tests/test_*.cpp`: standalone tests, with shared local HTTP fixtures under `tests/fixtures/`.
+- `mcpp.toml`: package metadata and dependency declarations for `mcr`.
 - `.clang-format`: repository formatting configuration.
 - `target/`, `.mcpp/`, and `compile_commands.json`: generated output or local state ignored by Git; do not commit them.
 
