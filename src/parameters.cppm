@@ -12,10 +12,10 @@ export namespace mcr {
 
     /**
      * @brief Own query parameters, following cpr's Parameters interface.
-     * @note Inherits encode, Add(), and both GetContent() overloads from CurlContainer.
+     * @note Inherits encode, Add(), and both GetContent() overloads from curl::CurlContainer.
      * Order and duplicate keys are retained; empty values are emitted without an equals sign.
      */
-    class Parameters : public CurlContainer<Parameter> {
+    class Parameters : public curl::CurlContainer<Parameter> {
     public:
         /**
          * @brief Construct an empty parameter collection with encoding enabled.
@@ -26,7 +26,7 @@ export namespace mcr {
          * @brief Copy query parameters in their supplied order.
          * @param parameters Initial key/value entries, including an empty list or duplicate keys.
          */
-        Parameters(std::initializer_list<Parameter> const& parameters) : CurlContainer<Parameter>{ parameters } {}
+        Parameters(std::initializer_list<Parameter> const& parameters) : curl::CurlContainer<Parameter>{ parameters } {}
     };
 
 } // namespace mcr

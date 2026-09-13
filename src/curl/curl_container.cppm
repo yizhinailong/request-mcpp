@@ -42,6 +42,10 @@ export namespace mcr {
         std::string value; ///< Publicly mutable, owned value bytes.
     };
 
+} // namespace mcr
+
+export namespace mcr::curl {
+
     /**
      * @brief Own ordered query parameters or form pairs with optional percent encoding.
      * @tparam T Parameter or Pair, the two element types supported by cpr's implementation.
@@ -90,7 +94,7 @@ export namespace mcr {
          * @note Parameter encodes keys and nonempty values; Pair only encodes values.
          * Curl encoding allocation failures retain CurlHolder's empty-component behavior.
          */
-        [[nodiscard]] auto GetContent(curl::CurlHolder const& holder) const -> std::string {
+        [[nodiscard]] auto GetContent(CurlHolder const& holder) const -> std::string {
             return getContent(encode ? &holder : nullptr);
         }
 
@@ -112,7 +116,7 @@ export namespace mcr {
          * @param input Component bytes, including embedded nulls.
          * @param holder Encoding helper, or null to append the input verbatim.
          */
-        static auto appendComponent(std::string& output, std::string_view input, curl::CurlHolder const* holder) -> void {
+        static auto appendComponent(std::string& output, std::string_view input, CurlHolder const* holder) -> void {
             if (holder) {
                 auto const escaped{ holder->UrlEncode(input) };
                 output.append(escaped.data(), escaped.size());
@@ -126,7 +130,7 @@ export namespace mcr {
          * @param holder Encoding helper, or null to disable encoding for this call.
          * @return A newly allocated string without changing stored elements.
          */
-        auto getContent(curl::CurlHolder const* holder) const -> std::string {
+        auto getContent(CurlHolder const* holder) const -> std::string {
             std::string content;
             for (auto const& element : m_container_list) {
                 // cpr bases separators on emitted text, so leading empty parameters disappear.
@@ -148,4 +152,4 @@ export namespace mcr {
         }
     };
 
-} // namespace mcr
+} // namespace mcr::curl

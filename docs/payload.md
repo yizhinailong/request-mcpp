@@ -23,7 +23,7 @@ auto encoded = form.GetContent(holder);
 // name=hello%20world&flag=&name=x%2By
 ```
 
-`Payload` is a distinct public subclass of `CurlContainer<Pair>`. The
+`mcr::Payload` is a distinct public subclass of `mcr::curl::CurlContainer<mcr::Pair>`. The
 non-explicit `std::initializer_list<Pair> const&` constructor copies the
 supplied entries, preserving order, duplicate keys, and empty strings.
 There is no default constructor, matching cpr: `Payload payload;` is invalid

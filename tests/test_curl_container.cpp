@@ -10,14 +10,14 @@ import mcr;
 using Parameters = mcr::Parameters;
 using Pairs      = mcr::Payload;
 
-static_assert(std::derived_from<Parameters, mcr::CurlContainer<mcr::Parameter>>);
-static_assert(!std::is_same_v<Parameters, mcr::CurlContainer<mcr::Parameter>>);
+static_assert(std::derived_from<Parameters, mcr::curl::CurlContainer<mcr::Parameter>>);
+static_assert(!std::is_same_v<Parameters, mcr::curl::CurlContainer<mcr::Parameter>>);
 static_assert(std::is_convertible_v<std::initializer_list<mcr::Parameter>, Parameters>);
 static_assert(!std::is_convertible_v<mcr::Parameter, Parameters>);
 static_assert(std::is_nothrow_move_constructible_v<Parameters>);
 static_assert(std::is_nothrow_move_assignable_v<Parameters>);
-static_assert(std::derived_from<Pairs, mcr::CurlContainer<mcr::Pair>>);
-static_assert(!std::is_same_v<Pairs, mcr::CurlContainer<mcr::Pair>>);
+static_assert(std::derived_from<Pairs, mcr::curl::CurlContainer<mcr::Pair>>);
+static_assert(!std::is_same_v<Pairs, mcr::curl::CurlContainer<mcr::Pair>>);
 static_assert(std::is_convertible_v<std::initializer_list<mcr::Pair>, Pairs>);
 static_assert(!std::is_convertible_v<mcr::Pair, Pairs>);
 static_assert(!std::is_default_constructible_v<Pairs>);
@@ -34,7 +34,7 @@ static_assert(std::is_same_v<decltype(std::declval<Pairs const&>().GetContent(st
 namespace {
 
     template <typename T>
-    concept ContainerElement = requires { typename mcr::CurlContainer<T>; };
+    concept ContainerElement = requires { typename mcr::curl::CurlContainer<T>; };
 
     static_assert(ContainerElement<mcr::Parameter> && ContainerElement<mcr::Pair>);
     static_assert(!ContainerElement<int> && !ContainerElement<std::pair<std::string, std::string>>);

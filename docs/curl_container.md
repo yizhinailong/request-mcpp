@@ -1,7 +1,9 @@
 # CurlContainer
 
-Import `mcr` or `mcr.curl_container` to use `Parameter`, `Pair`, and
-`CurlContainer<T>`. The module also re-exports `mcr.curlholder`.
+Import `mcr` or `mcr.curl_container` to use `mcr::Parameter`, `mcr::Pair`, and
+`mcr::curl::CurlContainer<T>`. The module lives in `src/curl/curl_container.cppm`
+and also re-exports `mcr.curlholder`. The request record types retain namespace
+`mcr`; the container uses namespace `mcr::curl` for its encoding adapter.
 It follows cpr's `include/cpr/curl_container.h` and `cpr/curl_container.cpp`.
 
 `Parameter` and `Pair` are distinct types with two public, owned `std::string`
@@ -12,7 +14,7 @@ Neither element type has a default constructor.
 ```cpp
 import mcr.curl_container;
 
-mcr::CurlContainer<mcr::Parameter> query{ { "q", "hello world" }, { "flag", "" } };
+mcr::curl::CurlContainer<mcr::Parameter> query{ { "q", "hello world" }, { "flag", "" } };
 query.Add(mcr::Parameter{ "q", "another value" });
 auto raw = query.GetContent(); // q=hello world&flag&q=another value
 

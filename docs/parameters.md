@@ -18,7 +18,7 @@ auto encoded = query.GetContent(holder);
 // q=hello%20world&flag&q=x%2By
 ```
 
-`Parameters` is a distinct public subclass of `CurlContainer<Parameter>`.
+`mcr::Parameters` is a distinct public subclass of `mcr::curl::CurlContainer<mcr::Parameter>`.
 Its default constructor creates an empty collection with `encode == true`.
 The non-explicit `std::initializer_list<Parameter> const&` constructor copies
 the supplied entries, preserving order, duplicate keys, and empty strings.

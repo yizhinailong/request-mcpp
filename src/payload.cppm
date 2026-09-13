@@ -12,10 +12,10 @@ export namespace mcr {
 
     /**
      * @brief Own form pairs, following cpr's Payload interface.
-     * @note Inherits encode, Add(), and both GetContent() overloads from CurlContainer.
+     * @note Inherits encode, Add(), and both GetContent() overloads from curl::CurlContainer.
      * Keys are emitted verbatim; values are optionally encoded and always follow an equals sign.
      */
-    class Payload : public CurlContainer<Pair> {
+    class Payload : public curl::CurlContainer<Pair> {
     public:
         /**
          * @brief Copy a range of form pairs in one pass, retaining order and duplicate keys.
@@ -36,7 +36,7 @@ export namespace mcr {
          * @brief Copy a list of form pairs with encoding enabled.
          * @param pairs Initial entries; an empty list also permits construction as Payload{}.
          */
-        Payload(std::initializer_list<Pair> const& pairs) : CurlContainer<Pair>{ pairs } {}
+        Payload(std::initializer_list<Pair> const& pairs) : curl::CurlContainer<Pair>{ pairs } {}
     };
 
 } // namespace mcr
