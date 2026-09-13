@@ -10,7 +10,7 @@ Source files are grouped by responsibility. Public module names are independent 
 
 - `src/mcr.cppm`: library entry module re-exporting the public interfaces.
 - `src/options/`: request transfer configuration in namespace `mcr::options`, including verbosity, timeouts, redirects, protocol selection, authentication, proxies, and TLS options. Each option keeps its existing module name, such as `mcr.verbose` or `mcr.timeout`.
-- `src/utils/`: HTTP parsing and curl callback utility functions.
+- `src/utils/`: reusable utilities for secure strings, singleton lifecycle, thread pools, future wrappers, and the filesystem alias, alongside HTTP parsing and curl callback helpers. Utility modules retain their existing module names and namespaces.
 - `src/`: sessions, responses, request data, callbacks, and supporting runtime modules.
 - `tests/test_*.cpp`: standalone tests, with shared local HTTP fixtures under `tests/fixtures/`.
 - `mcpp.toml`: package metadata and dependency declarations for `mcr`.
